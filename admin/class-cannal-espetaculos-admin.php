@@ -91,8 +91,6 @@ class Cannal_Espetaculos_Admin {
 
         wp_send_json_success( array( 'content' => $espetaculo->post_content ) );
     }
-}
-
 
     /**
      * AJAX: Salvar temporada.
