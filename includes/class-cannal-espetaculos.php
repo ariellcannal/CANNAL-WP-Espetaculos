@@ -104,6 +104,7 @@ class Cannal_Espetaculos {
         $this->loader->add_action( 'init', $post_types, 'register_post_types' );
         $this->loader->add_action( 'init', $post_types, 'register_taxonomies' );
         $this->loader->add_filter( 'admin_post_thumbnail_html', $post_types, 'rename_featured_image' );
+        $this->loader->add_action( 'template_redirect', $post_types, 'redirect_temporada_to_404' );
 
         // Registrar meta boxes
         $meta_boxes = new Cannal_Espetaculos_Meta_Boxes();

@@ -108,8 +108,7 @@ class Cannal_Espetaculos_Meta_Boxes {
      * Renderiza o meta box de galeria do espetáculo.
      */
     public function render_espetaculo_galeria_meta_box( $post ) {
-        // Usar o mesmo nonce do meta box de detalhes
-        // Não criar outro nonce, pois já existe um
+        wp_nonce_field( 'cannal_espetaculo_galeria_meta_box', 'cannal_espetaculo_galeria_meta_box_nonce' );
         
         $galeria = get_post_meta( $post->ID, '_espetaculo_galeria', true );
         $galeria_ids = ! empty( $galeria ) ? explode( ',', $galeria ) : array();
@@ -400,11 +399,19 @@ class Cannal_Espetaculos_Meta_Boxes {
      */
     public function save_espetaculo_meta( $post_id ) {
         
-        if ( ! isset( $_POST['cannal_espetaculo_meta_box_nonce'] ) ) {
+        // Verificar se pelo menos um dos nonces está presente
+        $has_detalhes_nonce = isset( $_POST['cannal_espetaculo_meta_box_nonce'] );
+        $has_galeria_nonce = isset( $_POST['cannal_espetaculo_galeria_meta_box_nonce'] );
+        
+        if ( ! $has_detalhes_nonce && ! $has_galeria_nonce ) {
             return;
         }
 
-        if ( ! wp_verify_nonce( $_POST['cannal_espetaculo_meta_box_nonce'], 'cannal_espetaculo_meta_box' ) ) {
+        // Verificar nonces
+        $detalhes_valid = $has_detalhes_nonce && wp_verify_nonce( $_POST['cannal_espetaculo_meta_box_nonce'], 'cannal_espetaculo_meta_box' );
+        $galeria_valid = $has_galeria_nonce && wp_verify_nonce( $_POST['cannal_espetaculo_galeria_meta_box_nonce'], 'cannal_espetaculo_galeria_meta_box' );
+        
+        if ( ! $detalhes_valid && ! $galeria_valid ) {
             return;
         }
 

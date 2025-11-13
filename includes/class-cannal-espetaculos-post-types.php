@@ -45,7 +45,7 @@ class Cannal_Espetaculos_Post_Types {
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-tickets-alt',
-            'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+            'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ),
             'show_in_rest'          => true,
             'taxonomies'            => array( 'post_tag' )
         );
@@ -129,16 +129,36 @@ class Cannal_Espetaculos_Post_Types {
     }
 
     /**
+     * Redireciona tentativas de acessar temporadas publicamente para 404.
+     */
+    public function redirect_temporada_to_404() {
+        if ( is_singular( 'temporada' ) ) {
+            global $wp_query;
+            $wp_query->set_404();
+            status_header( 404 );
+            get_template_part( 404 );
+            exit;
+        }
+    }
+    
+    /**
      * Renomeia "Imagem Destacada" para "Banner" no post type Espetáculo.
      */
     public function rename_featured_image( $content ) {
         global $post_type;
         
         if ( $post_type === 'espetaculo' ) {
+            // Todas as variações possíveis
             $content = str_replace( 'Imagem destacada', 'Banner', $content );
             $content = str_replace( 'imagem destacada', 'banner', $content );
+            $content = str_replace( 'Imagem Destacada', 'Banner', $content );
+            $content = str_replace( 'IMAGEM DESTACADA', 'BANNER', $content );
             $content = str_replace( 'Definir imagem destacada', 'Definir banner', $content );
             $content = str_replace( 'Remover imagem destacada', 'Remover banner', $content );
+            $content = str_replace( 'Alterar imagem destacada', 'Alterar banner', $content );
+            $content = str_replace( 'Featured Image', 'Banner', $content );
+            $content = str_replace( 'Set featured image', 'Definir banner', $content );
+            $content = str_replace( 'Remove featured image', 'Remover banner', $content );
         }
         
         return $content;
