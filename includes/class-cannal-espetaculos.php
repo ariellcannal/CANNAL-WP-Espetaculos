@@ -85,11 +85,6 @@ class Cannal_Espetaculos {
          */
         require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-revslider.php';
 
-        /**
-         * A classe responsável pelo widget de temporadas.
-         */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-widget.php';
-
         $this->loader = new Cannal_Espetaculos_Loader();
     }
 
@@ -104,10 +99,11 @@ class Cannal_Espetaculos {
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
         
         // Registrar hooks AJAX
-        $this->loader->add_action( 'wp_ajax_get_espetaculo_content', $plugin_admin, 'ajax_get_espetaculo_content' );
-        $this->loader->add_action( 'wp_ajax_save_temporada', $plugin_admin, 'ajax_save_temporada' );
-        $this->loader->add_action( 'wp_ajax_get_temporada', $plugin_admin, 'ajax_get_temporada' );
-        $this->loader->add_action( 'wp_ajax_delete_temporada', $plugin_admin, 'ajax_delete_temporada' );
+        $this->loader->add_action( 'wp_ajax_cannal_get_espetaculo_content', $plugin_admin, 'ajax_get_espetaculo_content' );
+        $this->loader->add_action( 'wp_ajax_cannal_save_temporada', $plugin_admin, 'ajax_save_temporada' );
+        $this->loader->add_action( 'wp_ajax_cannal_get_temporada', $plugin_admin, 'ajax_get_temporada' );
+        $this->loader->add_action( 'wp_ajax_cannal_delete_temporada', $plugin_admin, 'ajax_delete_temporada' );
+        $this->loader->add_action( 'wp_ajax_cannal_save_galeria', $plugin_admin, 'ajax_save_galeria' );
 
         // Registrar post types e taxonomias
         $post_types = new Cannal_Espetaculos_Post_Types();

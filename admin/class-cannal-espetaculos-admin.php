@@ -192,6 +192,33 @@ class Cannal_Espetaculos_Admin {
     }
 
     /**
+     * AJAX: Salvar galeria.
+     */
+    public function ajax_save_galeria() {
+        check_ajax_referer( 'cannal_espetaculos_nonce', 'nonce' );
+
+        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        $galeria_ids = isset( $_POST['galeria_ids'] ) ? sanitize_text_field( $_POST['galeria_ids'] ) : '';
+
+        if ( ! $post_id ) {
+            wp_send_json_error( array( 'message' => 'ID do post inválido' ) );
+        }
+
+        // Salvar galeria
+        $result = update_post_meta( $post_id, '_espetaculo_galeria', $galeria_ids );
+
+        error_log( '[CANNAL AJAX GALERIA] Post ID: ' . $post_id );
+        error_log( '[CANNAL AJAX GALERIA] Galeria IDs recebidos: ' . $galeria_ids );
+        error_log( '[CANNAL AJAX GALERIA] Update result: ' . ( $result ? 'SUCESSO' : 'FALHOU' ) );
+
+        wp_send_json_success( array( 
+            'message' => 'Galeria salva com sucesso',
+            'galeria_ids' => $galeria_ids,
+            'result' => $result
+        ) );
+    }
+
+    /**
      * AJAX: Excluir temporada.
      */
     public function ajax_delete_temporada() {

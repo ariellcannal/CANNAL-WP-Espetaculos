@@ -43,8 +43,12 @@
                         }
                     });
 
-                    $('#espetaculo_galeria').val(ids.join(','));
-                    console.log('CANNAL: Galeria atualizada. IDs:', ids.join(','));
+                    var idsString = ids.join(',');
+                    $('#espetaculo_galeria').val(idsString);
+                    console.log('CANNAL: Galeria atualizada. IDs:', idsString);
+                    
+                    // Salvar via AJAX imediatamente
+                    salvarGaleriaAjax(idsString);
                 });
 
                 galeriaFrame.open();
@@ -61,20 +65,49 @@
                 ids = ids.filter(function(id) {
                     return id != imageId;
                 });
-                $('#espetaculo_galeria').val(ids.join(','));
-                console.log('CANNAL: Imagem removida. IDs restantes:', ids.join(','));
+                var idsString = ids.join(',');
+                $('#espetaculo_galeria').val(idsString);
+                console.log('CANNAL: Imagem removida. IDs restantes:', idsString);
+                
+                // Salvar via AJAX imediatamente
+                salvarGaleriaAjax(idsString);
             });
             
-            // Garantir que o valor da galeria seja enviado no submit
-            $('#post').on('submit', function() {
-                var galeriaVal = $('#espetaculo_galeria').val();
-                console.log('CANNAL: Submit do formulário. Valor da galeria:', galeriaVal);
+            // Função para salvar galeria via AJAX
+            function salvarGaleriaAjax(galeriaIds) {
+                var postId = $('#post_ID').val();
                 
-                // Forçar atualização do campo
-                if (galeriaVal) {
-                    $('#espetaculo_galeria').attr('value', galeriaVal);
+                if (!postId) {
+                    console.log('CANNAL: Post ID não encontrado, aguardando salvamento...');
+                    return;
                 }
-            });
+                
+                console.log('CANNAL: Salvando galeria via AJAX...');
+                console.log('CANNAL: Post ID:', postId);
+                console.log('CANNAL: Galeria IDs:', galeriaIds);
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'cannal_save_galeria',
+                        nonce: cannalAjax.espetaculo_nonce,
+                        post_id: postId,
+                        galeria_ids: galeriaIds
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('CANNAL: Galeria salva com sucesso via AJAX!');
+                            console.log('CANNAL: Resposta:', response.data);
+                        } else {
+                            console.error('CANNAL: Erro ao salvar galeria:', response.data);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('CANNAL: Erro AJAX:', error);
+                    }
+                });
+            }
         }
 
         // Gerenciamento de sessões
