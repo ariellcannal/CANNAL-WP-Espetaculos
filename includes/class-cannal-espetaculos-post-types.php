@@ -127,8 +127,6 @@ class Cannal_Espetaculos_Post_Types {
 
         register_taxonomy( 'espetaculo_categoria', array( 'espetaculo' ), $args_categoria );
     }
-}
-
 
     /**
      * Renomeia "Imagem Destacada" para "Banner" no post type Espetáculo.
