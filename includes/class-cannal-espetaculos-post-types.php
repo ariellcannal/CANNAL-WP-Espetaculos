@@ -128,3 +128,21 @@ class Cannal_Espetaculos_Post_Types {
         register_taxonomy( 'espetaculo_categoria', array( 'espetaculo' ), $args_categoria );
     }
 }
+
+
+    /**
+     * Renomeia "Imagem Destacada" para "Banner" no post type Espetáculo.
+     */
+    public function rename_featured_image( $content ) {
+        global $post_type;
+        
+        if ( $post_type === 'espetaculo' ) {
+            $content = str_replace( 'Imagem destacada', 'Banner', $content );
+            $content = str_replace( 'imagem destacada', 'banner', $content );
+            $content = str_replace( 'Definir imagem destacada', 'Definir banner', $content );
+            $content = str_replace( 'Remover imagem destacada', 'Remover banner', $content );
+        }
+        
+        return $content;
+    }
+}

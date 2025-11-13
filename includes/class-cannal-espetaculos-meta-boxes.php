@@ -230,7 +230,8 @@ class Cannal_Espetaculos_Meta_Boxes {
                             </td>
                             <td><?php echo esc_html( $status ); ?></td>
                             <td>
-                                <a href="<?php echo get_edit_post_link( $temporada->ID ); ?>" class="button button-small">Editar</a>
+                                <button type="button" class="button button-small edit-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Editar</button>
+                                <button type="button" class="button button-small button-link-delete delete-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Excluir</button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -240,18 +241,78 @@ class Cannal_Espetaculos_Meta_Boxes {
                 <p>Nenhuma temporada cadastrada ainda.</p>
             <?php endif; ?>
             <p style="margin-top: 15px;">
-                <a href="<?php echo admin_url( 'post-new.php?post_type=temporada&espetaculo_id=' . $post->ID ); ?>" class="button button-primary">Adicionar Nova Temporada</a>
+                <button type="button" class="button button-primary open-temporada-modal" data-espetaculo-id="<?php echo $post->ID; ?>">Adicionar Nova Temporada</button>
             </p>
+        </div>
+        
+        <!-- Modal para adicionar/editar temporada -->
+        <div id="temporada-modal" class="temporada-modal" style="display: none;">
+            <div class="temporada-modal-content">
+                <span class="temporada-modal-close">&times;</span>
+                <h2 id="temporada-modal-title">Nova Temporada</h2>
+                <form id="temporada-form">
+                    <input type="hidden" id="modal_temporada_id" name="temporada_id" value="" />
+                    <input type="hidden" id="modal_espetaculo_id" name="espetaculo_id" value="<?php echo $post->ID; ?>" />
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="modal_teatro_nome">Nome do Teatro *</label></th>
+                            <td><input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_teatro_endereco">Endereço do Teatro</label></th>
+                            <td><input type="text" id="modal_teatro_endereco" name="teatro_endereco" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_inicio">Data de Início *</label></th>
+                            <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_fim">Data Final *</label></th>
+                            <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_valores">Valores</label></th>
+                            <td><textarea id="modal_valores" name="valores" rows="3" class="large-text"></textarea></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_link_vendas">Link de Vendas</label></th>
+                            <td><input type="url" id="modal_link_vendas" name="link_vendas" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_link_texto">Texto do Link</label></th>
+                            <td><input type="text" id="modal_link_texto" name="link_texto" class="regular-text" placeholder="Ingressos Aqui" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_inicio_banner">Data de Início do Banner</label></th>
+                            <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
+                        </tr>
+                    </table>
+                    
+                    <p class="submit">
+                        <button type="submit" class="button button-primary">Salvar Temporada</button>
+                        <button type="button" class="button temporada-modal-close">Cancelar</button>
+                    </p>
+                </form>
+            </div>
         </div>
         <?php
     }
 
     /**
-     * Renderiza o meta box de espetáculo da temporada.
+     * Renderiza o meta box de espetáculo da temporada (agora vazio, campo movido).
      */
     public function render_temporada_espetaculo_meta_box( $post ) {
-        wp_nonce_field( 'cannal_temporada_meta_box', 'cannal_temporada_meta_box_nonce' );
+        // Campo movido para os detalhes da temporada
+        echo '<p style="color: #666; font-style: italic;">O campo "Espetáculo" foi movido para "Detalhes da Temporada"</p>';
+    }
 
+    /**
+     * Renderiza o meta box de detalhes da temporada.
+     */
+    public function render_temporada_detalhes_meta_box( $post ) {
+        wp_nonce_field( 'cannal_temporada_meta_box', 'cannal_temporada_meta_box_nonce' );
+        
         $espetaculo_id = get_post_meta( $post->ID, '_temporada_espetaculo_id', true );
         
         // Se vier da URL
@@ -265,32 +326,7 @@ class Cannal_Espetaculos_Meta_Boxes {
             'orderby' => 'title',
             'order' => 'ASC'
         ) );
-
-        ?>
-        <p>
-            <label for="temporada_espetaculo_id"><strong>Espetáculo *</strong></label><br>
-            <select id="temporada_espetaculo_id" name="temporada_espetaculo_id" style="width: 100%;" required>
-                <option value="">Selecione um espetáculo</option>
-                <?php foreach ( $espetaculos as $espetaculo ) : ?>
-                    <option value="<?php echo esc_attr( $espetaculo->ID ); ?>" <?php selected( $espetaculo_id, $espetaculo->ID ); ?>>
-                        <?php echo esc_html( $espetaculo->post_title ); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
-        <p>
-            <label>
-                <input type="checkbox" id="temporada_copiar_conteudo" name="temporada_copiar_conteudo" value="1" />
-                Copiar conteúdo do espetáculo
-            </label>
-        </p>
-        <?php
-    }
-
-    /**
-     * Renderiza o meta box de detalhes da temporada.
-     */
-    public function render_temporada_detalhes_meta_box( $post ) {
+        
         $teatro_nome = get_post_meta( $post->ID, '_temporada_teatro_nome', true );
         $teatro_endereco = get_post_meta( $post->ID, '_temporada_teatro_endereco', true );
         $data_inicio = get_post_meta( $post->ID, '_temporada_data_inicio', true );
@@ -302,6 +338,28 @@ class Cannal_Espetaculos_Meta_Boxes {
 
         ?>
         <table class="form-table">
+            <tr>
+                <th><label for="temporada_espetaculo_id">Espetáculo *</label></th>
+                <td>
+                    <select id="temporada_espetaculo_id" name="temporada_espetaculo_id" style="width: 100%; max-width: 400px;" required>
+                        <option value="">Selecione um espetáculo</option>
+                        <?php foreach ( $espetaculos as $espetaculo ) : ?>
+                            <option value="<?php echo esc_attr( $espetaculo->ID ); ?>" <?php selected( $espetaculo_id, $espetaculo->ID ); ?>>
+                                <?php echo esc_html( $espetaculo->post_title ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label>Copiar Conteúdo</label></th>
+                <td>
+                    <button type="button" id="btn-copiar-conteudo" class="button" <?php echo empty( $espetaculo_id ) ? 'disabled' : ''; ?>>
+                        Copiar conteúdo do espetáculo
+                    </button>
+                    <p class="description">Copia o conteúdo (release) do espetáculo selecionado para esta temporada.</p>
+                </td>
+            </tr>
             <tr>
                 <th><label for="temporada_teatro_nome">Nome do Teatro *</label></th>
                 <td><input type="text" id="temporada_teatro_nome" name="temporada_teatro_nome" value="<?php echo esc_attr( $teatro_nome ); ?>" class="regular-text" required /></td>
@@ -424,18 +482,24 @@ class Cannal_Espetaculos_Meta_Boxes {
         }
 
         // Salvar campos
-        $fields = array(
-            'espetaculo_autor' => '_espetaculo_autor',
-            'espetaculo_ano_estreia' => '_espetaculo_ano_estreia',
-            'espetaculo_duracao' => '_espetaculo_duracao',
-            'espetaculo_classificacao' => '_espetaculo_classificacao',
-            'espetaculo_galeria' => '_espetaculo_galeria'
-        );
-
-        foreach ( $fields as $field => $meta_key ) {
-            if ( isset( $_POST[ $field ] ) ) {
-                update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field ] ) );
-            }
+        if ( isset( $_POST['espetaculo_autor'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_autor', sanitize_text_field( $_POST['espetaculo_autor'] ) );
+        }
+        
+        if ( isset( $_POST['espetaculo_ano_estreia'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_ano_estreia', sanitize_text_field( $_POST['espetaculo_ano_estreia'] ) );
+        }
+        
+        if ( isset( $_POST['espetaculo_duracao'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_duracao', sanitize_text_field( $_POST['espetaculo_duracao'] ) );
+        }
+        
+        if ( isset( $_POST['espetaculo_classificacao'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_classificacao', sanitize_text_field( $_POST['espetaculo_classificacao'] ) );
+        }
+        
+        if ( isset( $_POST['espetaculo_galeria'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_galeria', sanitize_text_field( $_POST['espetaculo_galeria'] ) );
         }
     }
 
@@ -490,27 +554,44 @@ class Cannal_Espetaculos_Meta_Boxes {
         }
 
         // Salvar campos da temporada
-        $fields = array(
-            'temporada_teatro_nome' => '_temporada_teatro_nome',
-            'temporada_teatro_endereco' => '_temporada_teatro_endereco',
-            'temporada_data_inicio' => '_temporada_data_inicio',
-            'temporada_data_fim' => '_temporada_data_fim',
-            'temporada_valores' => '_temporada_valores',
-            'temporada_link_vendas' => '_temporada_link_vendas',
-            'temporada_link_texto' => '_temporada_link_texto',
-            'temporada_data_inicio_banner' => '_temporada_data_inicio_banner',
-            'temporada_tipo_sessao' => '_temporada_tipo_sessao',
-            'temporada_sessoes_data' => '_temporada_sessoes_data'
-        );
-
-        foreach ( $fields as $field => $meta_key ) {
-            if ( isset( $_POST[ $field ] ) ) {
-                if ( $field === 'temporada_valores' ) {
-                    update_post_meta( $post_id, $meta_key, sanitize_textarea_field( $_POST[ $field ] ) );
-                } else {
-                    update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field ] ) );
-                }
-            }
+        if ( isset( $_POST['temporada_teatro_nome'] ) ) {
+            update_post_meta( $post_id, '_temporada_teatro_nome', sanitize_text_field( $_POST['temporada_teatro_nome'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_teatro_endereco'] ) ) {
+            update_post_meta( $post_id, '_temporada_teatro_endereco', sanitize_text_field( $_POST['temporada_teatro_endereco'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_data_inicio'] ) ) {
+            update_post_meta( $post_id, '_temporada_data_inicio', sanitize_text_field( $_POST['temporada_data_inicio'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_data_fim'] ) ) {
+            update_post_meta( $post_id, '_temporada_data_fim', sanitize_text_field( $_POST['temporada_data_fim'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_valores'] ) ) {
+            update_post_meta( $post_id, '_temporada_valores', sanitize_textarea_field( $_POST['temporada_valores'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_link_vendas'] ) ) {
+            update_post_meta( $post_id, '_temporada_link_vendas', esc_url_raw( $_POST['temporada_link_vendas'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_link_texto'] ) ) {
+            update_post_meta( $post_id, '_temporada_link_texto', sanitize_text_field( $_POST['temporada_link_texto'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_data_inicio_banner'] ) ) {
+            update_post_meta( $post_id, '_temporada_data_inicio_banner', sanitize_text_field( $_POST['temporada_data_inicio_banner'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_tipo_sessao'] ) ) {
+            update_post_meta( $post_id, '_temporada_tipo_sessao', sanitize_text_field( $_POST['temporada_tipo_sessao'] ) );
+        }
+        
+        if ( isset( $_POST['temporada_sessoes_data'] ) ) {
+            update_post_meta( $post_id, '_temporada_sessoes_data', wp_kses_post( $_POST['temporada_sessoes_data'] ) );
         }
 
         // Processar e salvar sessões

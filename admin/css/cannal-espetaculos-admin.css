@@ -90,3 +90,51 @@
 #sessoes-temporada-container table.form-table th {
     width: 150px;
 }
+
+
+/* Modal de Temporadas */
+.temporada-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.temporada-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.temporada-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 20px;
+}
+
+.temporada-modal-close:hover,
+.temporada-modal-close:focus {
+    color: #000;
+}
+
+#temporada-modal-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+#temporada-form .form-table {
+    margin-top: 20px;
+}

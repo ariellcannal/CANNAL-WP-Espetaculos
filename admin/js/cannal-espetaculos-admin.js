@@ -212,4 +212,185 @@
         });
     });
 
+        // Botão copiar conteúdo do espetáculo (na tela de temporada)
+        $('#temporada_espetaculo_id').on('change', function() {
+            var espetaculoId = $(this).val();
+            if (espetaculoId) {
+                $('#btn-copiar-conteudo').prop('disabled', false);
+            } else {
+                $('#btn-copiar-conteudo').prop('disabled', true);
+            }
+        });
+
+        $('#btn-copiar-conteudo').on('click', function(e) {
+            e.preventDefault();
+            var espetaculoId = $('#temporada_espetaculo_id').val();
+            
+            if (!espetaculoId) {
+                alert('Por favor, selecione um espetáculo primeiro.');
+                return;
+            }
+            
+            if (!confirm('Isso irá substituir o conteúdo atual da temporada. Continuar?')) {
+                return;
+            }
+            
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'get_espetaculo_content',
+                    espetaculo_id: espetaculoId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Usar o editor do WordPress
+                        if (typeof tinymce !== 'undefined') {
+                            var editor = tinymce.get('content');
+                            if (editor) {
+                                editor.setContent(response.data.content);
+                            } else {
+                                $('#content').val(response.data.content);
+                            }
+                        } else {
+                            $('#content').val(response.data.content);
+                        }
+                        alert('Conteúdo copiado com sucesso!');
+                    } else {
+                        alert('Erro ao copiar conteúdo.');
+                    }
+                },
+                error: function() {
+                    alert('Erro de comunicação com o servidor.');
+                }
+            });
+        });
+
+        // Gerenciamento de Modal de Temporadas
+        if ($('.espetaculo-temporadas-list').length) {
+            
+            // Abrir modal para nova temporada
+            $('.open-temporada-modal').on('click', function(e) {
+                e.preventDefault();
+                $('#temporada-modal-title').text('Nova Temporada');
+                $('#temporada-form')[0].reset();
+                $('#modal_temporada_id').val('');
+                $('#temporada-modal').fadeIn();
+            });
+
+            // Editar temporada
+            $(document).on('click', '.edit-temporada-btn', function(e) {
+                e.preventDefault();
+                var temporadaId = $(this).data('temporada-id');
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'get_temporada',
+                        nonce: cannalAjax.nonce,
+                        temporada_id: temporadaId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#temporada-modal-title').text('Editar Temporada');
+                            $('#modal_temporada_id').val(temporadaId);
+                            $('#modal_teatro_nome').val(response.data.teatro_nome);
+                            $('#modal_teatro_endereco').val(response.data.teatro_endereco);
+                            $('#modal_data_inicio').val(response.data.data_inicio);
+                            $('#modal_data_fim').val(response.data.data_fim);
+                            $('#modal_valores').val(response.data.valores);
+                            $('#modal_link_vendas').val(response.data.link_vendas);
+                            $('#modal_link_texto').val(response.data.link_texto);
+                            $('#modal_data_inicio_banner').val(response.data.data_inicio_banner);
+                            $('#temporada-modal').fadeIn();
+                        } else {
+                            alert('Erro ao carregar temporada: ' + response.data.message);
+                        }
+                    }
+                });
+            });
+
+            // Excluir temporada
+            $(document).on('click', '.delete-temporada-btn', function(e) {
+                e.preventDefault();
+                if (!confirm('Tem certeza que deseja excluir esta temporada?')) {
+                    return;
+                }
+                
+                var temporadaId = $(this).data('temporada-id');
+                var $row = $(this).closest('tr');
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'delete_temporada',
+                        nonce: cannalAjax.nonce,
+                        temporada_id: temporadaId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $row.fadeOut(function() {
+                                $(this).remove();
+                            });
+                            alert('Temporada excluída com sucesso!');
+                        } else {
+                            alert('Erro ao excluir temporada: ' + response.data.message);
+                        }
+                    }
+                });
+            });
+
+            // Fechar modal
+            $('.temporada-modal-close').on('click', function() {
+                $('#temporada-modal').fadeOut();
+            });
+
+            // Fechar modal ao clicar fora
+            $(window).on('click', function(e) {
+                if ($(e.target).is('#temporada-modal')) {
+                    $('#temporada-modal').fadeOut();
+                }
+            });
+
+            // Salvar temporada via AJAX
+            $('#temporada-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = {
+                    action: 'save_temporada',
+                    nonce: cannalAjax.nonce,
+                    temporada_id: $('#modal_temporada_id').val(),
+                    espetaculo_id: $('#modal_espetaculo_id').val(),
+                    teatro_nome: $('#modal_teatro_nome').val(),
+                    teatro_endereco: $('#modal_teatro_endereco').val(),
+                    data_inicio: $('#modal_data_inicio').val(),
+                    data_fim: $('#modal_data_fim').val(),
+                    valores: $('#modal_valores').val(),
+                    link_vendas: $('#modal_link_vendas').val(),
+                    link_texto: $('#modal_link_texto').val(),
+                    data_inicio_banner: $('#modal_data_inicio_banner').val()
+                };
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Temporada salva com sucesso!');
+                            $('#temporada-modal').fadeOut();
+                            location.reload(); // Recarregar para atualizar a lista
+                        } else {
+                            alert('Erro ao salvar temporada: ' + response.data.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro de comunicação com o servidor.');
+                    }
+                });
+            });
+        }
+
 })(jQuery);
