@@ -474,7 +474,8 @@ class Cannal_Espetaculos_Public {
         $link_vendas = get_post_meta( $temporada->ID, '_temporada_link_vendas', true );
         $link_texto = get_post_meta( $temporada->ID, '_temporada_link_texto', true );
         ?>
-        <div class="cannal-temporada-info">
+        <div class="widget cannal-widget-temporada">
+            <div class="cannal-temporada-info">
             <?php if ( $teatro_nome ) : ?>
             <div class="cannal-info-box">
                 <h3>Teatro</h3>
@@ -517,6 +518,7 @@ class Cannal_Espetaculos_Public {
                 </a>
             </div>
             <?php endif; ?>
+            </div>
         </div>
         <?php
     }
@@ -526,18 +528,29 @@ class Cannal_Espetaculos_Public {
      */
     private function render_proximas_temporadas( $temporadas ) {
         ?>
-        <div class="cannal-temporada-info">
-            <div class="cannal-info-box">
-                <h3>Próximas Temporadas</h3>
+        <div class="widget cannal-widget-temporada">
+            <h3 class="widget-title">Próximas Temporadas</h3>
+            <div class="cannal-temporada-info">
                 <?php foreach ( $temporadas as $temporada ) : 
                     $teatro_nome = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
                     $data_inicio = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
                     $data_inicio_formatada = date_i18n( 'd/m/Y', strtotime( $data_inicio ) );
+                    $link_vendas = get_post_meta( $temporada->ID, '_temporada_link_vendas', true );
+                    $link_texto = get_post_meta( $temporada->ID, '_temporada_link_texto', true );
                 ?>
-                <p>
-                    <strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
-                    Início: <?php echo esc_html( $data_inicio_formatada ); ?>
-                </p>
+                <div class="cannal-info-box">
+                    <p>
+                        <strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
+                        Início: <?php echo esc_html( $data_inicio_formatada ); ?>
+                    </p>
+                    <?php if ( $link_vendas ) : ?>
+                    <p>
+                        <a href="<?php echo esc_url( $link_vendas ); ?>" class="button-ingressos" target="_blank" rel="noopener">
+                            <?php echo esc_html( ! empty( $link_texto ) ? $link_texto : 'Ingressos Aqui' ); ?>
+                        </a>
+                    </p>
+                    <?php endif; ?>
+                </div>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -549,18 +562,20 @@ class Cannal_Espetaculos_Public {
      */
     private function render_ultimas_temporadas( $temporadas ) {
         ?>
-        <div class="cannal-temporada-info">
-            <div class="cannal-info-box">
-                <h3>Últimas Temporadas</h3>
+        <div class="widget cannal-widget-temporada">
+            <h3 class="widget-title">Últimas Temporadas</h3>
+            <div class="cannal-temporada-info">
                 <?php foreach ( $temporadas as $temporada ) : 
                     $teatro_nome = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
                     $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
                     $data_fim_formatada = date_i18n( 'd/m/Y', strtotime( $data_fim ) );
                 ?>
-                <p>
-                    <strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
-                    Término: <?php echo esc_html( $data_fim_formatada ); ?>
-                </p>
+                <div class="cannal-info-box">
+                    <p>
+                        <strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
+                        Término: <?php echo esc_html( $data_fim_formatada ); ?>
+                    </p>
+                </div>
                 <?php endforeach; ?>
             </div>
         </div>

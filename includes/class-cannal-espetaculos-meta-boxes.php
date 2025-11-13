@@ -496,17 +496,8 @@ class Cannal_Espetaculos_Meta_Boxes {
         $exibir_galeria = isset( $_POST['espetaculo_exibir_galeria'] ) ? '1' : '0';
         update_post_meta( $post_id, '_espetaculo_exibir_galeria', $exibir_galeria );
         
-        // DEBUG: Log detalhado da galeria
-        error_log( '=== CANNAL DEBUG GALERIA ===' );
-        error_log( 'Post ID: ' . $post_id );
-        error_log( 'Galeria isset: ' . ( isset( $_POST['espetaculo_galeria'] ) ? 'SIM' : 'NÃO' ) );
-        if ( isset( $_POST['espetaculo_galeria'] ) ) {
-            error_log( 'Galeria valor: ' . $_POST['espetaculo_galeria'] );
-            $result = update_post_meta( $post_id, '_espetaculo_galeria', sanitize_text_field( $_POST['espetaculo_galeria'] ) );
-            error_log( 'Update result: ' . ( $result ? 'SUCESSO' : 'FALHOU' ) );
-            error_log( 'Valor salvo: ' . get_post_meta( $post_id, '_espetaculo_galeria', true ) );
-        }
-        error_log( '=== FIM DEBUG GALERIA ===' );
+        // GALERIA: Agora é salva via AJAX, não pelo formulário
+        // O salvamento via formulário foi removido para evitar sobrescrever o valor salvo via AJAX
     }
 
     /**
