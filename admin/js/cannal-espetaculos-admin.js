@@ -64,6 +64,17 @@
                 $('#espetaculo_galeria').val(ids.join(','));
                 console.log('CANNAL: Imagem removida. IDs restantes:', ids.join(','));
             });
+            
+            // Garantir que o valor da galeria seja enviado no submit
+            $('#post').on('submit', function() {
+                var galeriaVal = $('#espetaculo_galeria').val();
+                console.log('CANNAL: Submit do formulário. Valor da galeria:', galeriaVal);
+                
+                // Forçar atualização do campo
+                if (galeriaVal) {
+                    $('#espetaculo_galeria').attr('value', galeriaVal);
+                }
+            });
         }
 
         // Gerenciamento de sessões
@@ -399,7 +410,9 @@
             // Duplicar temporada
             $(document).on('click', '.duplicate-temporada-btn', function(e) {
                 e.preventDefault();
+                console.log('CANNAL: Botão Duplicar clicado');
                 var temporadaId = $(this).data('temporada-id');
+                console.log('CANNAL: Temporada ID:', temporadaId);
                 
                 $.ajax({
                     url: cannalAjax.ajaxurl,

@@ -33,6 +33,111 @@ $temporadas = get_posts( array(
 ) );
 
 $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
+
+// Função para formatar dias e horários de forma legível
+function format_dias_horarios_legivel( $sessoes ) {
+    if ( empty( $sessoes ) ) return '';
+    
+    $output = '';
+    
+    if ( $sessoes['tipo'] === 'avulsas' && ! empty( $sessoes['avulsas'] ) ) {
+        // Agrupar por mês
+        $por_mes = array();
+        foreach ( $sessoes['avulsas'] as $sessao ) {
+            $mes = date_i18n( 'F', strtotime( $sessao['data'] ) ); // Nome do mês
+            $dia = date_i18n( 'j', strtotime( $sessao['data'] ) ); // Dia sem zero à esquerda
+            $horario = $sessao['horario'];
+            
+            if ( ! isset( $por_mes[$mes] ) ) {
+                $por_mes[$mes] = array();
+            }
+            
+            $por_mes[$mes][] = array( 'dia' => $dia, 'horario' => $horario );
+        }
+        
+        $partes = array();
+        foreach ( $por_mes as $mes => $datas ) {
+            $dias = array_unique( array_column( $datas, 'dia' ) );
+            sort( $dias );
+            
+            if ( count( $dias ) === 1 ) {
+                $dias_texto = $dias[0];
+            } elseif ( count( $dias ) === 2 ) {
+                $dias_texto = $dias[0] . ' e ' . $dias[1];
+            } else {
+                $ultimo = array_pop( $dias );
+                $dias_texto = implode( ', ', $dias ) . ' e ' . $ultimo;
+            }
+            
+            $partes[] = $dias_texto . ' de ' . $mes;
+        }
+        
+        $output = implode( ', ', $partes );
+        
+    } elseif ( $sessoes['tipo'] === 'temporada' && ! empty( $sessoes['temporada'] ) ) {
+        // Agrupar por horário
+        $por_horario = array();
+        $dias_semana_map = array(
+            'domingo' => 'dom',
+            'segunda' => 'seg',
+            'terca' => 'ter',
+            'quarta' => 'qua',
+            'quinta' => 'qui',
+            'sexta' => 'sex',
+            'sabado' => 'sáb'
+        );
+        
+        foreach ( $sessoes['temporada'] as $dia => $horarios_str ) {
+            if ( empty( $horarios_str ) ) continue;
+            
+            $dia_abrev = isset( $dias_semana_map[$dia] ) ? $dias_semana_map[$dia] : $dia;
+            
+            if ( ! isset( $por_horario[$horarios_str] ) ) {
+                $por_horario[$horarios_str] = array();
+            }
+            
+            $por_horario[$horarios_str][] = $dia_abrev;
+        }
+        
+        $partes = array();
+        foreach ( $por_horario as $horarios => $dias ) {
+            if ( count( $dias ) === 1 ) {
+                $dias_texto = $dias[0];
+            } elseif ( count( $dias ) === 2 ) {
+                $dias_texto = $dias[0] . ' e ' . $dias[1];
+            } else {
+                // Verificar se são dias consecutivos
+                $dias_ordem = array( 'dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb' );
+                $indices = array();
+                foreach ( $dias as $dia ) {
+                    $indices[] = array_search( $dia, $dias_ordem );
+                }
+                sort( $indices );
+                
+                $consecutivos = true;
+                for ( $i = 1; $i < count( $indices ); $i++ ) {
+                    if ( $indices[$i] !== $indices[$i-1] + 1 ) {
+                        $consecutivos = false;
+                        break;
+                    }
+                }
+                
+                if ( $consecutivos ) {
+                    $dias_texto = $dias_ordem[$indices[0]] . ' a ' . $dias_ordem[$indices[count($indices)-1]];
+                } else {
+                    $ultimo = array_pop( $dias );
+                    $dias_texto = implode( ', ', $dias ) . ' e ' . $ultimo;
+                }
+            }
+            
+            $partes[] = $dias_texto . ' às ' . $horarios;
+        }
+        
+        $output = implode( ', ', $partes );
+    }
+    
+    return $output;
+}
 ?>
 
 <div id="primary" class="content-area">
@@ -47,7 +152,6 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
             $duracao = get_post_meta( get_the_ID(), '_espetaculo_duracao', true );
             $classificacao = get_post_meta( get_the_ID(), '_espetaculo_classificacao', true );
             ?>
-
             <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
                 
                 <div class="espetaculo-layout">
@@ -129,8 +233,6 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
                         <?php if ( $temporada_ativa ) : 
                             $teatro_nome = get_post_meta( $temporada_ativa->ID, '_temporada_teatro_nome', true );
                             $teatro_endereco = get_post_meta( $temporada_ativa->ID, '_temporada_teatro_endereco', true );
-                            $data_inicio = get_post_meta( $temporada_ativa->ID, '_temporada_data_inicio', true );
-                            $data_fim = get_post_meta( $temporada_ativa->ID, '_temporada_data_fim', true );
                             $valores = get_post_meta( $temporada_ativa->ID, '_temporada_valores', true );
                             $link_vendas = get_post_meta( $temporada_ativa->ID, '_temporada_link_vendas', true );
                             $link_texto = get_post_meta( $temporada_ativa->ID, '_temporada_link_texto', true );
@@ -138,72 +240,31 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
                             
                             // Decodificar sessões
                             $sessoes = ! empty( $sessoes_data ) ? json_decode( $sessoes_data, true ) : null;
-                            $dias_horarios = '';
-                            
-                            if ( $sessoes ) {
-                                if ( $sessoes['tipo'] === 'avulsas' && ! empty( $sessoes['avulsas'] ) ) {
-                                    $dias_horarios = '<ul>';
-                                    foreach ( $sessoes['avulsas'] as $sessao ) {
-                                        $data_formatada = date_i18n( 'd/m/Y', strtotime( $sessao['data'] ) );
-                                        $dias_horarios .= '<li>' . $data_formatada . ' às ' . $sessao['horario'] . '</li>';
-                                    }
-                                    $dias_horarios .= '</ul>';
-                                } elseif ( $sessoes['tipo'] === 'temporada' && ! empty( $sessoes['temporada'] ) ) {
-                                    $dias_semana_labels = array(
-                                        'domingo' => 'Domingo',
-                                        'segunda' => 'Segunda',
-                                        'terca' => 'Terça',
-                                        'quarta' => 'Quarta',
-                                        'quinta' => 'Quinta',
-                                        'sexta' => 'Sexta',
-                                        'sabado' => 'Sábado'
-                                    );
-                                    $dias_horarios = '<ul>';
-                                    foreach ( $sessoes['temporada'] as $dia => $horarios ) {
-                                        if ( ! empty( $horarios ) ) {
-                                            $label = isset( $dias_semana_labels[$dia] ) ? $dias_semana_labels[$dia] : ucfirst($dia);
-                                            $dias_horarios .= '<li>' . $label . ': ' . esc_html( $horarios ) . '</li>';
-                                        }
-                                    }
-                                    $dias_horarios .= '</ul>';
-                                }
-                            }
+                            $dias_horarios = format_dias_horarios_legivel( $sessoes );
                         ?>
                         
-                        <div class="temporada-info-box">
-                            <h3>Informações da Temporada</h3>
+                        <!-- Informações da Temporada -->
+                        <div class="espetaculo-info-box">
+                            <h3>Informações</h3>
                             
-                            <?php if ( $teatro_nome ) : ?>
+                            <?php if ( $teatro_nome || $teatro_endereco ) : ?>
                             <div class="info-item">
                                 <strong>Teatro:</strong>
-                                <span><?php echo esc_html( $teatro_nome ); ?></span>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ( $teatro_endereco ) : ?>
-                            <div class="info-item">
-                                <strong>Endereço:</strong>
-                                <span><?php echo esc_html( $teatro_endereco ); ?></span>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ( $data_inicio || $data_fim ) : ?>
-                            <div class="info-item">
-                                <strong>Período:</strong>
-                                <span>
-                                    <?php 
-                                    if ( $data_inicio ) echo date_i18n( 'd/m/Y', strtotime( $data_inicio ) );
-                                    if ( $data_inicio && $data_fim ) echo ' a ';
-                                    if ( $data_fim ) echo date_i18n( 'd/m/Y', strtotime( $data_fim ) );
-                                    ?>
-                                </span>
+                                <div>
+                                    <?php if ( $teatro_nome ) : ?>
+                                        <?php echo esc_html( $teatro_nome ); ?><br/>
+                                    <?php endif; ?>
+                                    <?php if ( $teatro_endereco ) : ?>
+                                        <?php echo esc_html( $teatro_endereco ); ?>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             <?php endif; ?>
                             
                             <?php if ( $dias_horarios ) : ?>
                             <div class="info-item">
                                 <strong>Dias e Horários:</strong>
-                                <?php echo $dias_horarios; ?>
+                                <span><?php echo esc_html( $dias_horarios ); ?></span>
                             </div>
                             <?php endif; ?>
                             
@@ -215,9 +276,11 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
                             <?php endif; ?>
                             
                             <?php if ( $classificacao ) : ?>
-                            <div class="info-item">
-                                <strong>Classificação:</strong>
-                                <span><?php echo esc_html( $classificacao ); ?></span>
+                            <div class="info-item classificacao-item">
+                                <strong>Classificação Indicativa:</strong>
+                                <div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
+                                    <?php echo esc_html( $classificacao ); ?>
+                                </div>
                             </div>
                             <?php endif; ?>
                             
@@ -230,7 +293,7 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
                             
                             <?php if ( $link_vendas ) : ?>
                             <div class="info-item-cta">
-                                <a href="<?php echo esc_url( $link_vendas ); ?>" class="btn-comprar" target="_blank" rel="noopener">
+                                <a href="<?php echo esc_url( $link_vendas ); ?>" class="btn-comprar-ingressos" target="_blank" rel="noopener">
                                     <?php echo esc_html( $link_texto ? $link_texto : 'Comprar Ingressos' ); ?>
                                 </a>
                             </div>
@@ -251,9 +314,11 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
                             <?php endif; ?>
                             
                             <?php if ( $classificacao ) : ?>
-                            <div class="info-item">
-                                <strong>Classificação:</strong>
-                                <span><?php echo esc_html( $classificacao ); ?></span>
+                            <div class="info-item classificacao-item">
+                                <strong>Classificação Indicativa:</strong>
+                                <div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
+                                    <?php echo esc_html( $classificacao ); ?>
+                                </div>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -264,7 +329,9 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
 
             </article>
 
-        <?php endwhile; ?>
+        <?php
+        endwhile;
+        ?>
 
     </main>
 </div>
@@ -272,8 +339,10 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
 <style>
 .espetaculo-layout {
     display: flex;
-    gap: 40px;
-    margin: 20px 0;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
 .espetaculo-content {
@@ -286,22 +355,21 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
     flex-shrink: 0;
 }
 
-.temporada-info-box,
 .espetaculo-info-box {
     background: #f9f9f9;
     border: 1px solid #ddd;
-    padding: 20px;
     border-radius: 8px;
+    padding: 20px;
     position: sticky;
     top: 20px;
 }
 
-.temporada-info-box h3,
 .espetaculo-info-box h3 {
-    margin: 0 0 20px 0;
-    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
     border-bottom: 2px solid #333;
-    font-size: 1.2em;
+    padding-bottom: 10px;
 }
 
 .info-item {
@@ -310,7 +378,7 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
     border-bottom: 1px solid #e0e0e0;
 }
 
-.info-item:last-child {
+.info-item:last-of-type {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
@@ -325,32 +393,66 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
     letter-spacing: 0.5px;
 }
 
-.info-item ul {
-    margin: 5px 0 0 0;
-    padding-left: 20px;
-}
-
-.info-item ul li {
-    margin-bottom: 5px;
-}
-
 .info-item-cta {
     margin-top: 20px;
-    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #333;
 }
 
-.btn-comprar {
-    display: inline-block;
+.btn-comprar-ingressos {
+    display: block;
     background: #e74c3c;
     color: white !important;
-    padding: 15px 30px;
-    text-decoration: none;
+    text-align: center;
+    padding: 15px 20px;
     border-radius: 5px;
+    text-decoration: none;
     font-weight: bold;
+    font-size: 1.1em;
     transition: background 0.3s;
 }
 
-.btn-comprar:hover {
+.btn-comprar-ingressos:hover {
+    background: #c0392b;
+}
+
+.classificacao-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.classificacao-selo {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+    color: white;
+    background: #2c3e50;
+}
+
+.classificacao-livre {
+    background: #27ae60;
+}
+
+.classificacao-10-anos {
+    background: #3498db;
+}
+
+.classificacao-12-anos {
+    background: #f39c12;
+}
+
+.classificacao-14-anos {
+    background: #e67e22;
+}
+
+.classificacao-16-anos {
+    background: #e74c3c;
+}
+
+.classificacao-18-anos {
     background: #c0392b;
 }
 
@@ -380,10 +482,6 @@ $temporada_ativa = ! empty( $temporadas ) ? $temporadas[0] : null;
     
     .espetaculo-sidebar {
         width: 100%;
-    }
-    
-    .temporada-info-box,
-    .espetaculo-info-box {
         position: static;
     }
 }

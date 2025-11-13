@@ -65,7 +65,17 @@ class Cannal_Espetaculos_Public {
     public function template_loader( $template ) {
         
         if ( is_singular( 'espetaculo' ) ) {
-            // Verificar se o tema tem um template personalizado
+            // Verificar se há um template de página personalizado definido
+            $page_template = get_post_meta( get_the_ID(), '_wp_page_template', true );
+            
+            if ( $page_template && $page_template !== 'default' ) {
+                $custom_template = locate_template( array( $page_template ) );
+                if ( $custom_template ) {
+                    return $custom_template;
+                }
+            }
+            
+            // Verificar se o tema tem um template single-espetaculo.php
             $theme_template = locate_template( array( 'single-espetaculo.php' ) );
             
             if ( $theme_template ) {
