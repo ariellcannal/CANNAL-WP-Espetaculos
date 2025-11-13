@@ -2,7 +2,24 @@
     'use strict';
 
     $(document).ready(function() {
-        // Funcionalidades JavaScript para o frontend podem ser adicionadas aqui
+        // Inicializar Fancybox para galeria de espetáculos
+        if (typeof Fancybox !== 'undefined') {
+            Fancybox.bind('[data-fancybox="galeria-espetaculo"]', {
+                Toolbar: {
+                    display: {
+                        left: [],
+                        middle: [],
+                        right: ["close"],
+                    },
+                },
+                Images: {
+                    zoom: true,
+                },
+                Thumbs: {
+                    autoStart: true,
+                },
+            });
+        }
     });
 
 })(jQuery);

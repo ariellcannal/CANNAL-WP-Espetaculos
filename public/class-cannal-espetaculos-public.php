@@ -50,12 +50,28 @@ class Cannal_Espetaculos_Public {
      */
     public function enqueue_scripts() {
         if ( is_singular( 'espetaculo' ) || is_post_type_archive( 'espetaculo' ) || is_tax( 'espetaculo_categoria' ) ) {
+            // Fancybox para galeria
+            wp_enqueue_style( 
+                'fancybox-css', 
+                'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css', 
+                array(), 
+                '5.0' 
+            );
+            
+            wp_enqueue_script( 
+                'fancybox-js', 
+                'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js', 
+                array(), 
+                '5.0', 
+                true 
+            );
+            
             wp_enqueue_script( 
                 $this->plugin_name, 
                 CANNAL_ESPETACULOS_PLUGIN_URL . 'public/js/cannal-espetaculos-public.js', 
-                array( 'jquery' ), 
+                array( 'jquery', 'fancybox-js' ), 
                 $this->version, 
-                false 
+                true 
             );
         }
     }
@@ -91,25 +107,24 @@ class Cannal_Espetaculos_Public {
         }
 
         if ( is_post_type_archive( 'espetaculo' ) || is_tax( 'espetaculo_categoria' ) ) {
-            // Verificar se é arquivo de categorias
-            if ( get_query_var( 'espetaculos_archive' ) === 'categories' ) {
-                $theme_template = locate_template( array( 'archive-espetaculos-categories.php' ) );
-                
-                if ( $theme_template ) {
-                    return $theme_template;
-                }
-                
-                return CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/archive-espetaculos-categories.php';
+            // Usar templates do tema para archives
+            $templates = array();
+            
+            if ( is_tax( 'espetaculo_categoria' ) ) {
+                $term = get_queried_object();
+                $templates[] = "taxonomy-espetaculo_categoria-{$term->slug}.php";
+                $templates[] = 'taxonomy-espetaculo_categoria.php';
             }
-
-            // Arquivo normal de espetáculos
-            $theme_template = locate_template( array( 'archive-espetaculo.php' ) );
+            
+            $templates[] = 'archive-espetaculo.php';
+            $templates[] = 'archive.php';
+            $templates[] = 'index.php';
+            
+            $theme_template = locate_template( $templates );
             
             if ( $theme_template ) {
                 return $theme_template;
             }
-            
-            return CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/archive-espetaculo.php';
         }
 
         return $template;
@@ -183,7 +198,7 @@ class Cannal_Espetaculos_Public {
                     if ( ! $image_url ) continue;
                 ?>
                 <div class="cannal-galeria-item">
-                    <a href="<?php echo esc_url( $image_full ); ?>" data-lightbox="galeria-espetaculo">
+                    <a href="<?php echo esc_url( $image_full ); ?>" data-fancybox="galeria-espetaculo" data-caption="<?php echo esc_attr( $image_alt ); ?>">
                         <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $image_alt ); ?>" loading="lazy">
                     </a>
                 </div>
@@ -203,7 +218,7 @@ class Cannal_Espetaculos_Public {
         
         .cannal-galeria-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(6, 1fr);
             gap: 15px;
         }
         
@@ -211,13 +226,21 @@ class Cannal_Espetaculos_Public {
             position: relative;
             overflow: hidden;
             border-radius: 8px;
-            aspect-ratio: 1;
+            aspect-ratio: 1 / 1;
+            background: #f0f0f0;
+        }
+        
+        .cannal-galeria-item a {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
         
         .cannal-galeria-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
             transition: transform 0.3s ease;
         }
         
@@ -225,10 +248,36 @@ class Cannal_Espetaculos_Public {
             transform: scale(1.05);
         }
         
+        /* Responsividade */
+        @media (max-width: 1400px) {
+            .cannal-galeria-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .cannal-galeria-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .cannal-galeria-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+        }
+        
         @media (max-width: 768px) {
             .cannal-galeria-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .cannal-galeria-grid {
+                grid-template-columns: repeat(1, 1fr);
             }
         }
         </style>
