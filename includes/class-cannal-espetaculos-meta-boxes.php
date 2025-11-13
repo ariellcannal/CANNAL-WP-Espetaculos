@@ -631,6 +631,65 @@ class Cannal_Espetaculos_Meta_Boxes {
                             <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
                         </tr>
                         <tr>
+                            <th><label>Tipo de Sessão</label></th>
+                            <td>
+                                <label>
+                                    <input type="radio" name="modal_tipo_sessao" value="avulsas" id="modal_tipo_sessao_avulsas" checked />
+                                    Sessões Avulsas
+                                </label>
+                                &nbsp;&nbsp;
+                                <label>
+                                    <input type="radio" name="modal_tipo_sessao" value="temporada" id="modal_tipo_sessao_temporada" />
+                                    Temporada (dias da semana)
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div id="modal_sessoes_avulsas_container" style="margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
+                        <p><strong>Sessões Avulsas:</strong></p>
+                        <div id="modal_sessoes_avulsas_list"></div>
+                        <button type="button" class="button modal-add-sessao-avulsa">Adicionar Sessão</button>
+                    </div>
+                    
+                    <div id="modal_sessoes_temporada_container" style="display: none; margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
+                        <p><strong>Dias da Semana e Horários:</strong></p>
+                        <table class="form-table">
+                            <tr>
+                                <th><label>Domingo</label></th>
+                                <td><input type="text" name="modal_sessoes_domingo" id="modal_sessoes_domingo" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Segunda-feira</label></th>
+                                <td><input type="text" name="modal_sessoes_segunda" id="modal_sessoes_segunda" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Terça-feira</label></th>
+                                <td><input type="text" name="modal_sessoes_terca" id="modal_sessoes_terca" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Quarta-feira</label></th>
+                                <td><input type="text" name="modal_sessoes_quarta" id="modal_sessoes_quarta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Quinta-feira</label></th>
+                                <td><input type="text" name="modal_sessoes_quinta" id="modal_sessoes_quinta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Sexta-feira</label></th>
+                                <td><input type="text" name="modal_sessoes_sexta" id="modal_sessoes_sexta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                            <tr>
+                                <th><label>Sábado</label></th>
+                                <td><input type="text" name="modal_sessoes_sabado" id="modal_sessoes_sabado" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <input type="hidden" id="modal_sessoes_data" name="sessoes_data" value="" />
+                    
+                    <table class="form-table">
+                        <tr>
                             <th><label for="modal_conteudo">Conteúdo</label></th>
                             <td>
                                 <button type="button" id="modal_copiar_conteudo" class="button" style="margin-bottom: 10px;">

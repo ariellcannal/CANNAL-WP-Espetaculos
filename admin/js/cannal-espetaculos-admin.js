@@ -205,6 +205,115 @@
             console.log('CANNAL: Lista de temporadas encontrada');
             console.log('CANNAL: Modal existe?', $('#temporada-modal').length > 0);
             
+            // Gerenciamento de sessões no modal
+            function toggleModalSessoes() {
+                var tipo = $('input[name="modal_tipo_sessao"]:checked').val();
+                if (tipo === 'avulsas') {
+                    $('#modal_sessoes_avulsas_container').show();
+                    $('#modal_sessoes_temporada_container').hide();
+                } else {
+                    $('#modal_sessoes_avulsas_container').hide();
+                    $('#modal_sessoes_temporada_container').show();
+                }
+            }
+            
+            $(document).on('change', 'input[name="modal_tipo_sessao"]', toggleModalSessoes);
+            
+            // Adicionar sessão avulsa no modal
+            var modalSessaoCounter = 0;
+            $(document).on('click', '.modal-add-sessao-avulsa', function(e) {
+                e.preventDefault();
+                modalSessaoCounter++;
+                
+                var row = '<div class="modal-sessao-avulsa" style="margin-bottom: 10px; padding: 10px; background: white; border: 1px solid #ddd;">' +
+                    '<label>Data: <input type="date" class="modal-sessao-data" style="margin-right: 10px;" /></label>' +
+                    '<label>Horário: <input type="time" class="modal-sessao-horario" style="margin-right: 10px;" /></label>' +
+                    '<button type="button" class="button button-small modal-remove-sessao">Remover</button>' +
+                    '</div>';
+                
+                $('#modal_sessoes_avulsas_list').append(row);
+            });
+            
+            // Remover sessão avulsa no modal
+            $(document).on('click', '.modal-remove-sessao', function(e) {
+                e.preventDefault();
+                $(this).closest('.modal-sessao-avulsa').remove();
+            });
+            
+            // Função para coletar dados de sessões do modal
+            function getModalSessoesData() {
+                var tipo = $('input[name="modal_tipo_sessao"]:checked').val();
+                var sessoes = {
+                    tipo: tipo,
+                    avulsas: [],
+                    temporada: {}
+                };
+                
+                if (tipo === 'avulsas') {
+                    $('.modal-sessao-avulsa').each(function() {
+                        var data = $(this).find('.modal-sessao-data').val();
+                        var horario = $(this).find('.modal-sessao-horario').val();
+                        if (data && horario) {
+                            sessoes.avulsas.push({
+                                data: data,
+                                horario: horario
+                            });
+                        }
+                    });
+                } else {
+                    var dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+                    dias.forEach(function(dia) {
+                        var horario = $('#modal_sessoes_' + dia).val();
+                        if (horario) {
+                            sessoes.temporada[dia] = horario;
+                        }
+                    });
+                }
+                
+                return JSON.stringify(sessoes);
+            }
+            
+            // Função para preencher sessões no modal ao editar
+            function setModalSessoesData(sessoesJson) {
+                if (!sessoesJson) return;
+                
+                try {
+                    var sessoes = JSON.parse(sessoesJson);
+                    
+                    // Definir tipo
+                    if (sessoes.tipo === 'avulsas') {
+                        $('#modal_tipo_sessao_avulsas').prop('checked', true);
+                    } else {
+                        $('#modal_tipo_sessao_temporada').prop('checked', true);
+                    }
+                    toggleModalSessoes();
+                    
+                    // Limpar sessões avulsas existentes
+                    $('#modal_sessoes_avulsas_list').empty();
+                    
+                    // Preencher sessões avulsas
+                    if (sessoes.avulsas && sessoes.avulsas.length > 0) {
+                        sessoes.avulsas.forEach(function(sessao) {
+                            var row = '<div class="modal-sessao-avulsa" style="margin-bottom: 10px; padding: 10px; background: white; border: 1px solid #ddd;">' +
+                                '<label>Data: <input type="date" class="modal-sessao-data" value="' + sessao.data + '" style="margin-right: 10px;" /></label>' +
+                                '<label>Horário: <input type="time" class="modal-sessao-horario" value="' + sessao.horario + '" style="margin-right: 10px;" /></label>' +
+                                '<button type="button" class="button button-small modal-remove-sessao">Remover</button>' +
+                                '</div>';
+                            $('#modal_sessoes_avulsas_list').append(row);
+                        });
+                    }
+                    
+                    // Preencher sessões de temporada
+                    if (sessoes.temporada) {
+                        for (var dia in sessoes.temporada) {
+                            $('#modal_sessoes_' + dia).val(sessoes.temporada[dia]);
+                        }
+                    }
+                } catch (e) {
+                    console.error('CANNAL: Erro ao parsear sessões', e);
+                }
+            }
+            
             // Botão copiar conteúdo no modal
             $(document).on('click', '#modal_copiar_conteudo', function(e) {
                 e.preventDefault();
@@ -261,6 +370,12 @@
                 $('#temporada-modal-title').text('Nova Temporada');
                 $form[0].reset();
                 $('#modal_temporada_id').val('');
+                
+                // Limpar sessões
+                $('#modal_sessoes_avulsas_list').empty();
+                $('#modal_tipo_sessao_avulsas').prop('checked', true);
+                toggleModalSessoes();
+                
                 $('#temporada-modal').fadeIn();
             });
 
@@ -296,6 +411,9 @@
                             } else {
                                 $('#modal_conteudo').val(response.data.conteudo || '');
                             }
+                            
+                            // Preencher sessões
+                            setModalSessoesData(response.data.sessoes_data);
                             
                             $('#temporada-modal').fadeIn();
                         } else {
@@ -373,6 +491,8 @@
                     link_vendas: $('#modal_link_vendas').val(),
                     link_texto: $('#modal_link_texto').val(),
                     data_inicio_banner: $('#modal_data_inicio_banner').val(),
+                    tipo_sessao: $('input[name="modal_tipo_sessao"]:checked').val(),
+                    sessoes_data: getModalSessoesData(),
                     conteudo: conteudo
                 };
                 
