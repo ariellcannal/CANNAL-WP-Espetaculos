@@ -135,14 +135,14 @@ class Cannal_Espetaculos_Admin {
 
         // Salvar meta dados
         update_post_meta( $temporada_id, '_temporada_espetaculo_id', $espetaculo_id );
-        update_post_meta( $temporada_id, '_temporada_teatro_nome', sanitize_text_field( $_POST['teatro_nome'] ) );
-        update_post_meta( $temporada_id, '_temporada_teatro_endereco', sanitize_text_field( $_POST['teatro_endereco'] ) );
-        update_post_meta( $temporada_id, '_temporada_data_inicio', sanitize_text_field( $_POST['data_inicio'] ) );
-        update_post_meta( $temporada_id, '_temporada_data_fim', sanitize_text_field( $_POST['data_fim'] ) );
-        update_post_meta( $temporada_id, '_temporada_valores', sanitize_textarea_field( $_POST['valores'] ) );
-        update_post_meta( $temporada_id, '_temporada_link_vendas', esc_url_raw( $_POST['link_vendas'] ) );
-        update_post_meta( $temporada_id, '_temporada_link_texto', sanitize_text_field( $_POST['link_texto'] ) );
-        update_post_meta( $temporada_id, '_temporada_data_inicio_banner', sanitize_text_field( $_POST['data_inicio_banner'] ) );
+        update_post_meta( $temporada_id, '_temporada_teatro_nome', isset( $_POST['teatro_nome'] ) ? sanitize_text_field( $_POST['teatro_nome'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_teatro_endereco', isset( $_POST['teatro_endereco'] ) ? sanitize_text_field( $_POST['teatro_endereco'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_data_inicio', isset( $_POST['data_inicio'] ) ? sanitize_text_field( $_POST['data_inicio'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_data_fim', isset( $_POST['data_fim'] ) ? sanitize_text_field( $_POST['data_fim'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_valores', isset( $_POST['valores'] ) ? sanitize_textarea_field( $_POST['valores'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_link_vendas', isset( $_POST['link_vendas'] ) ? esc_url_raw( $_POST['link_vendas'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_link_texto', isset( $_POST['link_texto'] ) ? sanitize_text_field( $_POST['link_texto'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_data_inicio_banner', isset( $_POST['data_inicio_banner'] ) ? sanitize_text_field( $_POST['data_inicio_banner'] ) : '' );
 
         wp_send_json_success( array( 
             'message' => 'Temporada salva com sucesso!',

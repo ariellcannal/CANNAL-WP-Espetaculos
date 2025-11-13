@@ -43,15 +43,6 @@ class Cannal_Espetaculos_Meta_Boxes {
 
         // Meta boxes para Temporadas
         add_meta_box(
-            'temporada_espetaculo',
-            'Espetáculo',
-            array( $this, 'render_temporada_espetaculo_meta_box' ),
-            'temporada',
-            'side',
-            'high'
-        );
-
-        add_meta_box(
             'temporada_detalhes',
             'Detalhes da Temporada',
             array( $this, 'render_temporada_detalhes_meta_box' ),
@@ -297,14 +288,6 @@ class Cannal_Espetaculos_Meta_Boxes {
             </div>
         </div>
         <?php
-    }
-
-    /**
-     * Renderiza o meta box de espetáculo da temporada (agora vazio, campo movido).
-     */
-    public function render_temporada_espetaculo_meta_box( $post ) {
-        // Campo movido para os detalhes da temporada
-        echo '<p style="color: #666; font-style: italic;">O campo "Espetáculo" foi movido para "Detalhes da Temporada"</p>';
     }
 
     /**
