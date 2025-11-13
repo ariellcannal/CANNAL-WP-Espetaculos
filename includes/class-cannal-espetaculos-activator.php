@@ -21,6 +21,9 @@ class Cannal_Espetaculos_Activator {
         // Flush rewrite rules
         flush_rewrite_rules();
         
+        // Definir transient para exibir aviso
+        set_transient( 'cannal_espetaculos_flush_rewrite_rules', true, 60 );
+        
         // Criar opção para controlar estrutura de URLs
         add_option( 'cannal_espetaculos_has_categories', false );
     }

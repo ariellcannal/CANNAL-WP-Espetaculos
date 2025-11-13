@@ -38,16 +38,22 @@ class Cannal_Espetaculos_Post_Types {
             'publicly_queryable'    => true,
             'show_ui'               => true,
             'show_in_menu'          => true,
-            'query_var'             => true,
-            'rewrite'               => false, // Será tratado manualmente
+            'query_var'             => 'espetaculo',
+            'rewrite'               => array(
+                'slug'       => 'espetaculos',
+                'with_front' => false,
+                'feeds'      => false,
+                'pages'      => false
+            ),
             'capability_type'       => 'post',
-            'has_archive'           => true,
+            'has_archive'           => 'espetaculos',
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-tickets-alt',
             'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ),
             'show_in_rest'          => true,
-            'taxonomies'            => array( 'post_tag' )
+            'taxonomies'            => array( 'post_tag' ),
+            'permalink_epmask'      => EP_PERMALINK
         );
 
         register_post_type( 'espetaculo', $args_espetaculo );

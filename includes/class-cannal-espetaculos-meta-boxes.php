@@ -100,6 +100,17 @@ class Cannal_Espetaculos_Meta_Boxes {
                     </select>
                 </td>
             </tr>
+            <tr>
+                <th><label for="espetaculo_exibir_galeria">Exibir Galeria</label></th>
+                <td>
+                    <?php $exibir_galeria = get_post_meta( $post->ID, '_espetaculo_exibir_galeria', true ); ?>
+                    <label>
+                        <input type="checkbox" id="espetaculo_exibir_galeria" name="espetaculo_exibir_galeria" value="1" <?php checked( $exibir_galeria === '' || $exibir_galeria === '1', true ); ?> />
+                        Exibir galeria de fotos ao final do conteúdo
+                    </label>
+                    <p class="description">Desmarque para ocultar a galeria de fotos na página do espetáculo.</p>
+                </td>
+            </tr>
         </table>
         <?php
     }
@@ -129,7 +140,7 @@ class Cannal_Espetaculos_Meta_Boxes {
                 }
                 ?>
             </div>
-            <input type="hidden" id="espetaculo_galeria" name="espetaculo_galeria" value="<?php echo esc_attr( $galeria ); ?>" />
+            <input type="text" id="espetaculo_galeria" name="espetaculo_galeria" value="<?php echo esc_attr( $galeria ); ?>" style="display:none;" readonly />
             <button type="button" class="button espetaculo-add-galeria">Adicionar Imagens</button>
         </div>
         <style>
@@ -480,6 +491,10 @@ class Cannal_Espetaculos_Meta_Boxes {
         if ( isset( $_POST['espetaculo_classificacao'] ) ) {
             update_post_meta( $post_id, '_espetaculo_classificacao', sanitize_text_field( $_POST['espetaculo_classificacao'] ) );
         }
+        
+        // Exibir galeria (checkbox)
+        $exibir_galeria = isset( $_POST['espetaculo_exibir_galeria'] ) ? '1' : '0';
+        update_post_meta( $post_id, '_espetaculo_exibir_galeria', $exibir_galeria );
         
         // DEBUG: Log detalhado da galeria
         error_log( '=== CANNAL DEBUG GALERIA ===' );

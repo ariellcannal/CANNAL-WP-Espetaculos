@@ -66,6 +66,11 @@ class Cannal_Espetaculos {
         require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin.php';
 
         /**
+         * A classe responsável pelos avisos administrativos.
+         */
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin-notices.php';
+
+        /**
          * A classe responsável pela funcionalidade pública.
          */
         require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'public/class-cannal-espetaculos-public.php';
@@ -79,6 +84,11 @@ class Cannal_Espetaculos {
          * A classe responsável pela integração com RevSlider.
          */
         require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-revslider.php';
+
+        /**
+         * A classe responsável pelo widget de temporadas.
+         */
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-widget.php';
 
         $this->loader = new Cannal_Espetaculos_Loader();
     }

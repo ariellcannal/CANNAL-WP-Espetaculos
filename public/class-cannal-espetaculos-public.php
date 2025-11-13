@@ -82,8 +82,11 @@ class Cannal_Espetaculos_Public {
                 return $theme_template;
             }
             
-            // Usar o template do plugin
-            return CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/single-espetaculo.php';
+            // Usar template padrão de página
+            $page_template_file = locate_template( array( 'page.php', 'singular.php', 'index.php' ) );
+            if ( $page_template_file ) {
+                return $page_template_file;
+            }
         }
 
         if ( is_post_type_archive( 'espetaculo' ) || is_tax( 'espetaculo_categoria' ) ) {
@@ -112,7 +115,7 @@ class Cannal_Espetaculos_Public {
     }
 
     /**
-     * Filtra o conteúdo do espetáculo para exibir informações adicionais.
+     * Filtra o conteúdo do espetáculo para exibir galeria ao final.
      */
     public function espetaculo_content_filter( $content ) {
         
@@ -138,10 +141,98 @@ class Cannal_Espetaculos_Public {
             $content = apply_filters( 'the_content', $temporada->post_content );
         }
 
-        // Adicionar sidebar com informações
-        $sidebar = $this->get_espetaculo_sidebar( $post->ID, $temporada );
+        // Verificar se a galeria está ativada
+        $exibir_galeria = get_post_meta( $post->ID, '_espetaculo_exibir_galeria', true );
+        
+        // Padrão é exibir (se campo não existe ou está vazio, exibe)
+        if ( $exibir_galeria === '' || $exibir_galeria === '1' || $exibir_galeria === 'sim' ) {
+            $galeria_ids = get_post_meta( $post->ID, '_espetaculo_galeria', true );
+            
+            if ( ! empty( $galeria_ids ) ) {
+                $content .= $this->render_galeria( $galeria_ids );
+            }
+        }
 
-        return '<div class="espetaculo-content-wrapper"><div class="espetaculo-main-content">' . $content . '</div>' . $sidebar . '</div>';
+        return $content;
+    }
+
+    /**
+     * Renderiza a galeria de fotos em grid.
+     */
+    private function render_galeria( $galeria_ids ) {
+        $ids = explode( ',', $galeria_ids );
+        
+        if ( empty( $ids ) ) {
+            return '';
+        }
+        
+        ob_start();
+        ?>
+        <div class="cannal-galeria-fotos">
+            <h3>Galeria de Fotos</h3>
+            <div class="cannal-galeria-grid">
+                <?php foreach ( $ids as $attachment_id ) : 
+                    $attachment_id = trim( $attachment_id );
+                    if ( empty( $attachment_id ) ) continue;
+                    
+                    $image_url = wp_get_attachment_image_url( $attachment_id, 'medium' );
+                    $image_full = wp_get_attachment_image_url( $attachment_id, 'full' );
+                    $image_alt = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
+                    
+                    if ( ! $image_url ) continue;
+                ?>
+                <div class="cannal-galeria-item">
+                    <a href="<?php echo esc_url( $image_full ); ?>" data-lightbox="galeria-espetaculo">
+                        <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $image_alt ); ?>" loading="lazy">
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        
+        <style>
+        .cannal-galeria-fotos {
+            margin: 40px 0;
+        }
+        
+        .cannal-galeria-fotos h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .cannal-galeria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .cannal-galeria-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            aspect-ratio: 1;
+        }
+        
+        .cannal-galeria-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .cannal-galeria-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .cannal-galeria-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+        }
+        </style>
+        <?php
+        return ob_get_clean();
     }
 
     /**
