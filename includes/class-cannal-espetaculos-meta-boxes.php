@@ -177,7 +177,13 @@ class Cannal_Espetaculos_Meta_Boxes {
             'posts_per_page' => -1,
             'meta_key' => '_temporada_espetaculo_id',
             'meta_value' => $post->ID,
-            'orderby' => 'date',
+            'meta_query' => array(
+                array(
+                    'key' => '_temporada_data_fim',
+                    'compare' => 'EXISTS'
+                )
+            ),
+            'orderby' => 'meta_value',
             'order' => 'DESC'
         ) );
 
@@ -189,6 +195,7 @@ class Cannal_Espetaculos_Meta_Boxes {
                         <tr>
                             <th>Nome do Teatro</th>
                             <th>Período</th>
+                            <th>Dias e Horários</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
@@ -198,6 +205,34 @@ class Cannal_Espetaculos_Meta_Boxes {
                             $teatro = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
                             $data_inicio = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
                             $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
+                            $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
+                            
+                            // Gerar Dias e Horários
+                            $dias_horarios_texto = '';
+                            if ( ! empty( $sessoes_data ) ) {
+                                $sessoes = json_decode( $sessoes_data, true );
+                                if ( $sessoes && $sessoes['tipo'] === 'avulsas' && ! empty( $sessoes['avulsas'] ) ) {
+                                    $datas = array();
+                                    foreach ( $sessoes['avulsas'] as $sessao ) {
+                                        $datas[] = date_i18n( 'd/m', strtotime( $sessao['data'] ) ) . ' às ' . $sessao['horario'];
+                                    }
+                                    $dias_horarios_texto = implode( ', ', array_slice( $datas, 0, 2 ) );
+                                    if ( count( $datas ) > 2 ) $dias_horarios_texto .= '...';
+                                } elseif ( $sessoes && $sessoes['tipo'] === 'temporada' && ! empty( $sessoes['temporada'] ) ) {
+                                    $dias_semana_labels = array(
+                                        'domingo' => 'Dom', 'segunda' => 'Seg', 'terca' => 'Ter',
+                                        'quarta' => 'Qua', 'quinta' => 'Qui', 'sexta' => 'Sex', 'sabado' => 'Sáb'
+                                    );
+                                    $dias = array();
+                                    foreach ( $sessoes['temporada'] as $dia => $horarios ) {
+                                        if ( ! empty( $horarios ) ) {
+                                            $label = isset( $dias_semana_labels[$dia] ) ? $dias_semana_labels[$dia] : ucfirst($dia);
+                                            $dias[] = $label . ' ' . $horarios;
+                                        }
+                                    }
+                                    $dias_horarios_texto = implode( ', ', $dias );
+                                }
+                            }
                             
                             $hoje = current_time( 'Y-m-d' );
                             if ( $data_inicio && $data_fim ) {
@@ -221,9 +256,11 @@ class Cannal_Espetaculos_Meta_Boxes {
                                 }
                                 ?>
                             </td>
+                            <td><?php echo esc_html( $dias_horarios_texto ); ?></td>
                             <td><?php echo esc_html( $status ); ?></td>
                             <td>
                                 <button type="button" class="button button-small edit-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Editar</button>
+                                <button type="button" class="button button-small duplicate-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Duplicar</button>
                                 <button type="button" class="button button-small button-link-delete delete-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Excluir</button>
                             </td>
                         </tr>
@@ -444,9 +481,17 @@ class Cannal_Espetaculos_Meta_Boxes {
             update_post_meta( $post_id, '_espetaculo_classificacao', sanitize_text_field( $_POST['espetaculo_classificacao'] ) );
         }
         
+        // DEBUG: Log detalhado da galeria
+        error_log( '=== CANNAL DEBUG GALERIA ===' );
+        error_log( 'Post ID: ' . $post_id );
+        error_log( 'Galeria isset: ' . ( isset( $_POST['espetaculo_galeria'] ) ? 'SIM' : 'NÃO' ) );
         if ( isset( $_POST['espetaculo_galeria'] ) ) {
-            update_post_meta( $post_id, '_espetaculo_galeria', sanitize_text_field( $_POST['espetaculo_galeria'] ) );
+            error_log( 'Galeria valor: ' . $_POST['espetaculo_galeria'] );
+            $result = update_post_meta( $post_id, '_espetaculo_galeria', sanitize_text_field( $_POST['espetaculo_galeria'] ) );
+            error_log( 'Update result: ' . ( $result ? 'SUCESSO' : 'FALHOU' ) );
+            error_log( 'Valor salvo: ' . get_post_meta( $post_id, '_espetaculo_galeria', true ) );
         }
+        error_log( '=== FIM DEBUG GALERIA ===' );
     }
 
     /**
@@ -662,34 +707,27 @@ class Cannal_Espetaculos_Meta_Boxes {
                     <div id="modal_sessoes_temporada_container" style="display: none; margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
                         <p><strong>Dias da Semana e Horários:</strong></p>
                         <table class="form-table">
+                            <?php
+                            $dias_semana = array(
+                                'domingo' => 'Domingo',
+                                'segunda' => 'Segunda-feira',
+                                'terca' => 'Terça-feira',
+                                'quarta' => 'Quarta-feira',
+                                'quinta' => 'Quinta-feira',
+                                'sexta' => 'Sexta-feira',
+                                'sabado' => 'Sábado'
+                            );
+                            foreach ( $dias_semana as $key => $label ) :
+                            ?>
                             <tr>
-                                <th><label>Domingo</label></th>
-                                <td><input type="text" name="modal_sessoes_domingo" id="modal_sessoes_domingo" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
+                                <th><label><?php echo esc_html( $label ); ?></label></th>
+                                <td style="display: flex; gap: 10px;">
+                                    <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" />
+                                    <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" />
+                                    <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" />
+                                </td>
                             </tr>
-                            <tr>
-                                <th><label>Segunda-feira</label></th>
-                                <td><input type="text" name="modal_sessoes_segunda" id="modal_sessoes_segunda" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
-                            <tr>
-                                <th><label>Terça-feira</label></th>
-                                <td><input type="text" name="modal_sessoes_terca" id="modal_sessoes_terca" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
-                            <tr>
-                                <th><label>Quarta-feira</label></th>
-                                <td><input type="text" name="modal_sessoes_quarta" id="modal_sessoes_quarta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
-                            <tr>
-                                <th><label>Quinta-feira</label></th>
-                                <td><input type="text" name="modal_sessoes_quinta" id="modal_sessoes_quinta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
-                            <tr>
-                                <th><label>Sexta-feira</label></th>
-                                <td><input type="text" name="modal_sessoes_sexta" id="modal_sessoes_sexta" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
-                            <tr>
-                                <th><label>Sábado</label></th>
-                                <td><input type="text" name="modal_sessoes_sabado" id="modal_sessoes_sabado" class="regular-text" placeholder="Ex: 20h, 22h" /></td>
-                            </tr>
+                            <?php endforeach; ?>
                         </table>
                     </div>
                     

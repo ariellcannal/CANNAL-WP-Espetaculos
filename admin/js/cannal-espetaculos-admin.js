@@ -263,9 +263,15 @@
                 } else {
                     var dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
                     dias.forEach(function(dia) {
-                        var horario = $('#modal_sessoes_' + dia).val();
-                        if (horario) {
-                            sessoes.temporada[dia] = horario;
+                        var horarios = [];
+                        for (var i = 1; i <= 3; i++) {
+                            var horario = $('#modal_sessoes_' + dia + '_' + i).val();
+                            if (horario) {
+                                horarios.push(horario);
+                            }
+                        }
+                        if (horarios.length > 0) {
+                            sessoes.temporada[dia] = horarios.join(', ');
                         }
                     });
                 }
@@ -306,7 +312,18 @@
                     // Preencher sessões de temporada
                     if (sessoes.temporada) {
                         for (var dia in sessoes.temporada) {
-                            $('#modal_sessoes_' + dia).val(sessoes.temporada[dia]);
+                            // Limpar campos
+                            for (var i = 1; i <= 3; i++) {
+                                $('#modal_sessoes_' + dia + '_' + i).val('');
+                            }
+                            
+                            // Dividir horários e preencher campos
+                            var horarios = sessoes.temporada[dia].split(',').map(function(h) { return h.trim(); });
+                            horarios.forEach(function(horario, index) {
+                                if (index < 3) {
+                                    $('#modal_sessoes_' + dia + '_' + (index + 1)).val(horario);
+                                }
+                            });
                         }
                     }
                 } catch (e) {
@@ -379,6 +396,57 @@
                 $('#temporada-modal').fadeIn();
             });
 
+            // Duplicar temporada
+            $(document).on('click', '.duplicate-temporada-btn', function(e) {
+                e.preventDefault();
+                var temporadaId = $(this).data('temporada-id');
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'get_temporada',
+                        nonce: cannalAjax.nonce,
+                        temporada_id: temporadaId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#temporada-modal-title').text('Duplicar Temporada');
+                            $('#modal_temporada_id').val(''); // Limpar ID para criar nova
+                            $('#modal_teatro_nome').val(response.data.teatro_nome);
+                            $('#modal_teatro_endereco').val(response.data.teatro_endereco);
+                            $('#modal_data_inicio').val(''); // Limpar datas
+                            $('#modal_data_fim').val('');
+                            $('#modal_valores').val(response.data.valores);
+                            $('#modal_link_vendas').val(response.data.link_vendas);
+                            $('#modal_link_texto').val(response.data.link_texto);
+                            $('#modal_data_inicio_banner').val('');
+                            
+                            // Carregar sessões
+                            if (response.data.tipo_sessao && response.data.sessoes_data) {
+                                setModalSessoesData(response.data.tipo_sessao, response.data.sessoes_data);
+                            }
+                            
+                            // Carregar conteúdo
+                            if (response.data.conteudo) {
+                                if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
+                                    tinymce.get('modal_conteudo').setContent(response.data.conteudo);
+                                } else {
+                                    $('#modal_conteudo').val(response.data.conteudo);
+                                }
+                            }
+                            
+                            $('#temporada-modal').fadeIn();
+                        } else {
+                            alert('Erro ao carregar dados da temporada.');
+                        }
+                    },
+                    error: function() {
+                        alert('Erro na requisição AJAX.');
+                    }
+                });
+            });
+            
             // Editar temporada
             $(document).on('click', '.edit-temporada-btn', function(e) {
                 e.preventDefault();
