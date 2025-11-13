@@ -2,9 +2,12 @@
     'use strict';
 
     $(document).ready(function() {
+        console.log('CANNAL Espetáculos: JavaScript carregado');
+        console.log('cannalAjax:', typeof cannalAjax !== 'undefined' ? cannalAjax : 'NÃO DEFINIDO');
 
         // Gerenciamento de galeria de fotos
         if ($('.espetaculo-galeria-container').length) {
+            console.log('CANNAL: Galeria encontrada, inicializando...');
             var galeriaFrame;
 
             $('.espetaculo-add-galeria').on('click', function(e) {
@@ -164,11 +167,12 @@
             }
             
             $.ajax({
-                url: ajaxurl,
+                url: cannalAjax.ajaxurl,
                 type: 'POST',
                 data: {
                     action: 'get_espetaculo_content',
-                    espetaculo_id: espetaculoId
+                    espetaculo_id: espetaculoId,
+                    nonce: cannalAjax.espetaculo_nonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -196,12 +200,23 @@
 
         // Gerenciamento de Modal de Temporadas
         if ($('.espetaculo-temporadas-list').length) {
+            console.log('CANNAL: Lista de temporadas encontrada');
+            console.log('CANNAL: Modal existe?', $('#temporada-modal').length > 0);
             
             // Abrir modal para nova temporada
             $('.open-temporada-modal').on('click', function(e) {
                 e.preventDefault();
+                console.log('CANNAL: Abrindo modal para nova temporada');
+                
+                var $form = $('#temporada-form');
+                if ($form.length === 0) {
+                    console.error('CANNAL: Formulário #temporada-form não encontrado!');
+                    alert('Erro: Modal não está disponível nesta página.');
+                    return;
+                }
+                
                 $('#temporada-modal-title').text('Nova Temporada');
-                $('#temporada-form')[0].reset();
+                $form[0].reset();
                 $('#modal_temporada_id').val('');
                 $('#temporada-modal').fadeIn();
             });

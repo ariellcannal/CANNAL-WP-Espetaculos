@@ -92,6 +92,12 @@ class Cannal_Espetaculos {
         
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+        
+        // Registrar hooks AJAX
+        $this->loader->add_action( 'wp_ajax_get_espetaculo_content', $plugin_admin, 'ajax_get_espetaculo_content' );
+        $this->loader->add_action( 'wp_ajax_save_temporada', $plugin_admin, 'ajax_save_temporada' );
+        $this->loader->add_action( 'wp_ajax_get_temporada', $plugin_admin, 'ajax_get_temporada' );
+        $this->loader->add_action( 'wp_ajax_delete_temporada', $plugin_admin, 'ajax_delete_temporada' );
 
         // Registrar post types e taxonomias
         $post_types = new Cannal_Espetaculos_Post_Types();

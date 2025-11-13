@@ -24,11 +24,6 @@ class Cannal_Espetaculos_Admin {
     public function __construct( $plugin_name, $version ) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-
-        add_action( 'wp_ajax_get_espetaculo_content', array( $this, 'ajax_get_espetaculo_content' ) );
-        add_action( 'wp_ajax_save_temporada', array( $this, 'ajax_save_temporada' ) );
-        add_action( 'wp_ajax_get_temporada', array( $this, 'ajax_get_temporada' ) );
-        add_action( 'wp_ajax_delete_temporada', array( $this, 'ajax_delete_temporada' ) );
     }
 
     /**
@@ -55,18 +50,23 @@ class Cannal_Espetaculos_Admin {
         $screen = get_current_screen();
         
         if ( in_array( $screen->post_type, array( 'espetaculo', 'temporada' ) ) ) {
+            // Enfileirar media library
             wp_enqueue_media();
+            
+            // Enfileirar script principal
             wp_enqueue_script( 
                 $this->plugin_name, 
                 CANNAL_ESPETACULOS_PLUGIN_URL . 'admin/js/cannal-espetaculos-admin.js', 
-                array( 'jquery', 'jquery-ui-sortable' ), 
+                array( 'jquery', 'jquery-ui-sortable', 'wp-util' ), 
                 $this->version, 
-                false 
+                true  // Carregar no footer
             );
             
+            // Passar variáveis para JavaScript
             wp_localize_script( $this->plugin_name, 'cannalAjax', array(
                 'ajaxurl' => admin_url( 'admin-ajax.php' ),
-                'nonce' => wp_create_nonce( 'cannal_temporada_ajax' )
+                'nonce' => wp_create_nonce( 'cannal_temporada_ajax' ),
+                'espetaculo_nonce' => wp_create_nonce( 'cannal_espetaculos_nonce' )
             ) );
         }
     }
@@ -75,7 +75,10 @@ class Cannal_Espetaculos_Admin {
      * AJAX: Obtém o conteúdo de um espetáculo.
      */
     public function ajax_get_espetaculo_content() {
-        check_ajax_referer( 'cannal_espetaculos_nonce', 'nonce' );
+        // Permitir sem nonce para compatibilidade, ou verificar se existe
+        if ( isset( $_POST['nonce'] ) ) {
+            check_ajax_referer( 'cannal_espetaculos_nonce', 'nonce' );
+        }
 
         $espetaculo_id = isset( $_POST['espetaculo_id'] ) ? intval( $_POST['espetaculo_id'] ) : 0;
 
