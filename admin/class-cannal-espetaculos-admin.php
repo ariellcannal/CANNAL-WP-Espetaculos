@@ -120,6 +120,7 @@ class Cannal_Espetaculos_Admin {
         $post_data = array(
             'post_type' => 'temporada',
             'post_title' => $titulo,
+            'post_content' => isset( $_POST['conteudo'] ) ? wp_kses_post( $_POST['conteudo'] ) : '',
             'post_status' => 'publish'
         );
 
@@ -179,7 +180,8 @@ class Cannal_Espetaculos_Admin {
             'valores' => get_post_meta( $temporada_id, '_temporada_valores', true ),
             'link_vendas' => get_post_meta( $temporada_id, '_temporada_link_vendas', true ),
             'link_texto' => get_post_meta( $temporada_id, '_temporada_link_texto', true ),
-            'data_inicio_banner' => get_post_meta( $temporada_id, '_temporada_data_inicio_banner', true )
+            'data_inicio_banner' => get_post_meta( $temporada_id, '_temporada_data_inicio_banner', true ),
+            'conteudo' => $temporada->post_content
         );
 
         wp_send_json_success( $data );

@@ -630,6 +630,23 @@ class Cannal_Espetaculos_Meta_Boxes {
                             <th><label for="modal_data_inicio_banner">Data de Início do Banner</label></th>
                             <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
                         </tr>
+                        <tr>
+                            <th><label for="modal_conteudo">Conteúdo</label></th>
+                            <td>
+                                <button type="button" id="modal_copiar_conteudo" class="button" style="margin-bottom: 10px;">
+                                    Copiar conteúdo do espetáculo
+                                </button>
+                                <?php 
+                                wp_editor( '', 'modal_conteudo', array(
+                                    'textarea_name' => 'conteudo',
+                                    'textarea_rows' => 8,
+                                    'media_buttons' => false,
+                                    'teeny' => true,
+                                    'quicktags' => true
+                                ) );
+                                ?>
+                            </td>
+                        </tr>
                     </table>
                     
                     <p class="submit">

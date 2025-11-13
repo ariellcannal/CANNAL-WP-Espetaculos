@@ -44,6 +44,7 @@
                     });
 
                     $('#espetaculo_galeria').val(ids.join(','));
+                    console.log('CANNAL: Galeria atualizada. IDs:', ids.join(','));
                 });
 
                 galeriaFrame.open();
@@ -61,6 +62,7 @@
                     return id != imageId;
                 });
                 $('#espetaculo_galeria').val(ids.join(','));
+                console.log('CANNAL: Imagem removida. IDs restantes:', ids.join(','));
             });
         }
 
@@ -203,6 +205,47 @@
             console.log('CANNAL: Lista de temporadas encontrada');
             console.log('CANNAL: Modal existe?', $('#temporada-modal').length > 0);
             
+            // Botão copiar conteúdo no modal
+            $(document).on('click', '#modal_copiar_conteudo', function(e) {
+                e.preventDefault();
+                
+                var espetaculoId = $('#modal_espetaculo_id').val();
+                if (!espetaculoId) {
+                    alert('Nenhum espetáculo selecionado.');
+                    return;
+                }
+                
+                if (!confirm('Isso irá substituir o conteúdo atual. Continuar?')) {
+                    return;
+                }
+                
+                $.ajax({
+                    url: cannalAjax.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'get_espetaculo_content',
+                        espetaculo_id: espetaculoId,
+                        nonce: cannalAjax.espetaculo_nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Copiar para o editor do modal
+                            if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
+                                tinymce.get('modal_conteudo').setContent(response.data.content);
+                            } else {
+                                $('#modal_conteudo').val(response.data.content);
+                            }
+                            alert('Conteúdo copiado com sucesso!');
+                        } else {
+                            alert('Erro ao copiar conteúdo.');
+                        }
+                    },
+                    error: function() {
+                        alert('Erro na requisição AJAX.');
+                    }
+                });
+            });
+            
             // Abrir modal para nova temporada
             $('.open-temporada-modal').on('click', function(e) {
                 e.preventDefault();
@@ -246,6 +289,14 @@
                             $('#modal_link_vendas').val(response.data.link_vendas);
                             $('#modal_link_texto').val(response.data.link_texto);
                             $('#modal_data_inicio_banner').val(response.data.data_inicio_banner);
+                            
+                            // Preencher conteúdo no editor
+                            if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
+                                tinymce.get('modal_conteudo').setContent(response.data.conteudo || '');
+                            } else {
+                                $('#modal_conteudo').val(response.data.conteudo || '');
+                            }
+                            
                             $('#temporada-modal').fadeIn();
                         } else {
                             alert('Erro ao carregar temporada: ' + response.data.message);
@@ -301,6 +352,14 @@
             $('#temporada-form').on('submit', function(e) {
                 e.preventDefault();
                 
+                // Obter conteúdo do editor
+                var conteudo = '';
+                if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
+                    conteudo = tinymce.get('modal_conteudo').getContent();
+                } else {
+                    conteudo = $('#modal_conteudo').val();
+                }
+                
                 var formData = {
                     action: 'save_temporada',
                     nonce: cannalAjax.nonce,
@@ -313,7 +372,8 @@
                     valores: $('#modal_valores').val(),
                     link_vendas: $('#modal_link_vendas').val(),
                     link_texto: $('#modal_link_texto').val(),
-                    data_inicio_banner: $('#modal_data_inicio_banner').val()
+                    data_inicio_banner: $('#modal_data_inicio_banner').val(),
+                    conteudo: conteudo
                 };
                 
                 $.ajax({
