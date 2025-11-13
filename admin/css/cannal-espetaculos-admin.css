@@ -1,0 +1,92 @@
+/**
+ * Estilos para a área administrativa do plugin CANNAL Espetáculos
+ */
+
+.espetaculo-galeria-container {
+    margin: 15px 0;
+}
+
+.espetaculo-galeria-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.espetaculo-galeria-image {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    cursor: move;
+}
+
+.espetaculo-galeria-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.espetaculo-galeria-image .remove-image {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3232;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: bold;
+}
+
+.espetaculo-galeria-image .remove-image:hover {
+    background: #a00;
+}
+
+.temporada-sessoes-container {
+    margin: 15px 0;
+}
+
+.sessao-avulsa-item {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 3px;
+}
+
+.sessao-avulsa-item label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.sessao-avulsa-item input {
+    margin-bottom: 10px;
+}
+
+.espetaculo-temporadas-list table {
+    margin-top: 15px;
+}
+
+.espetaculo-temporadas-list table th {
+    font-weight: 600;
+}
+
+#sessoes-avulsas-container,
+#sessoes-temporada-container {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+#sessoes-temporada-container table.form-table th {
+    width: 150px;
+}
