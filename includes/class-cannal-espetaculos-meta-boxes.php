@@ -108,6 +108,9 @@ class Cannal_Espetaculos_Meta_Boxes {
      * Renderiza o meta box de galeria do espetáculo.
      */
     public function render_espetaculo_galeria_meta_box( $post ) {
+        // Usar o mesmo nonce do meta box de detalhes
+        // Não criar outro nonce, pois já existe um
+        
         $galeria = get_post_meta( $post->ID, '_espetaculo_galeria', true );
         $galeria_ids = ! empty( $galeria ) ? explode( ',', $galeria ) : array();
         ?>
@@ -235,59 +238,12 @@ class Cannal_Espetaculos_Meta_Boxes {
                 <button type="button" class="button button-primary open-temporada-modal" data-espetaculo-id="<?php echo $post->ID; ?>">Adicionar Nova Temporada</button>
             </p>
         </div>
-        
-        <!-- Modal para adicionar/editar temporada -->
-        <div id="temporada-modal" class="temporada-modal" style="display: none;">
-            <div class="temporada-modal-content">
-                <span class="temporada-modal-close">&times;</span>
-                <h2 id="temporada-modal-title">Nova Temporada</h2>
-                <form id="temporada-form">
-                    <input type="hidden" id="modal_temporada_id" name="temporada_id" value="" />
-                    <input type="hidden" id="modal_espetaculo_id" name="espetaculo_id" value="<?php echo $post->ID; ?>" />
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th><label for="modal_teatro_nome">Nome do Teatro *</label></th>
-                            <td><input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_teatro_endereco">Endereço do Teatro</label></th>
-                            <td><input type="text" id="modal_teatro_endereco" name="teatro_endereco" class="regular-text" /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_data_inicio">Data de Início *</label></th>
-                            <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_data_fim">Data Final *</label></th>
-                            <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_valores">Valores</label></th>
-                            <td><textarea id="modal_valores" name="valores" rows="3" class="large-text"></textarea></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_link_vendas">Link de Vendas</label></th>
-                            <td><input type="url" id="modal_link_vendas" name="link_vendas" class="regular-text" /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_link_texto">Texto do Link</label></th>
-                            <td><input type="text" id="modal_link_texto" name="link_texto" class="regular-text" placeholder="Ingressos Aqui" /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_data_inicio_banner">Data de Início do Banner</label></th>
-                            <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
-                        </tr>
-                    </table>
-                    
-                    <p class="submit">
-                        <button type="submit" class="button button-primary">Salvar Temporada</button>
-                        <button type="button" class="button temporada-modal-close">Cancelar</button>
-                    </p>
-                </form>
-            </div>
-        </div>
         <?php
+        
+        // Armazenar o ID do espetáculo para usar no modal
+        add_action( 'admin_footer', function() use ( $post ) {
+            $this->render_temporada_modal( $post->ID );
+        } );
     }
 
     /**
@@ -620,5 +576,69 @@ class Cannal_Espetaculos_Meta_Boxes {
         // Implementação da formatação de sessões de temporada
         // Agrupar por dia da semana e horário
         return 'Formatação de sessões de temporada (a implementar)';
+    }
+    
+    /**
+     * Renderiza o modal de temporadas no admin footer.
+     */
+    public function render_temporada_modal( $espetaculo_id ) {
+        // Verificar se estamos na tela de edição de espetáculo
+        $screen = get_current_screen();
+        if ( ! $screen || $screen->post_type !== 'espetaculo' || $screen->base !== 'post' ) {
+            return;
+        }
+        ?>
+        <!-- Modal para adicionar/editar temporada -->
+        <div id="temporada-modal" class="temporada-modal" style="display: none;">
+            <div class="temporada-modal-content">
+                <span class="temporada-modal-close">&times;</span>
+                <h2 id="temporada-modal-title">Nova Temporada</h2>
+                <form id="temporada-form">
+                    <input type="hidden" id="modal_temporada_id" name="temporada_id" value="" />
+                    <input type="hidden" id="modal_espetaculo_id" name="espetaculo_id" value="<?php echo esc_attr( $espetaculo_id ); ?>" />
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="modal_teatro_nome">Nome do Teatro *</label></th>
+                            <td><input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_teatro_endereco">Endereço do Teatro</label></th>
+                            <td><input type="text" id="modal_teatro_endereco" name="teatro_endereco" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_inicio">Data de Início *</label></th>
+                            <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_fim">Data Final *</label></th>
+                            <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_valores">Valores</label></th>
+                            <td><textarea id="modal_valores" name="valores" rows="3" class="large-text"></textarea></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_link_vendas">Link de Vendas</label></th>
+                            <td><input type="url" id="modal_link_vendas" name="link_vendas" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_link_texto">Texto do Link</label></th>
+                            <td><input type="text" id="modal_link_texto" name="link_texto" class="regular-text" placeholder="Ingressos Aqui" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_inicio_banner">Data de Início do Banner</label></th>
+                            <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
+                        </tr>
+                    </table>
+                    
+                    <p class="submit">
+                        <button type="submit" class="button button-primary">Salvar Temporada</button>
+                        <button type="button" class="button temporada-modal-close">Cancelar</button>
+                    </p>
+                </form>
+            </div>
+        </div>
+        <?php
     }
 }
