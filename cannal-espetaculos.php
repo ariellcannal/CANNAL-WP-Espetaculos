@@ -3,7 +3,7 @@
  * Plugin Name: CANNAL Espetáculos
  * Plugin URI: https://github.com/ariellcannal/WP-CANNAL-Espetaculos
  * Description: Plugin completo para gerenciamento de espetáculos teatrais com temporadas, sessões, integração com Elementor e RevSlider.
- * Version: 1.0.0
+ * Version: 2.3.0
  * Author: CANNAL
  * Author URI: https://cannal.com.br
  * License: GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Versão atual do plugin.
  */
-define( 'CANNAL_ESPETACULOS_VERSION', '1.0.0' );
+define( 'CANNAL_ESPETACULOS_VERSION', '2.3.0' );
 define( 'CANNAL_ESPETACULOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CANNAL_ESPETACULOS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -47,6 +47,16 @@ register_deactivation_hook( __FILE__, 'deactivate_cannal_espetaculos' );
  * A classe principal do plugin.
  */
 require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos.php';
+
+/**
+ * Widget de lista de espetáculos.
+ */
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-widget-lista.php';
+
+/**
+ * Classe para geração inteligente de dias e horários.
+ */
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-dias-horarios.php';
 
 /**
  * Inicia a execução do plugin.

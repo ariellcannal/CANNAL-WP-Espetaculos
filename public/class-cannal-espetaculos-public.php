@@ -205,82 +205,6 @@ class Cannal_Espetaculos_Public {
                 <?php endforeach; ?>
             </div>
         </div>
-        
-        <style>
-        .cannal-galeria-fotos {
-            margin: 40px 0;
-        }
-        
-        .cannal-galeria-fotos h3 {
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-        
-        .cannal-galeria-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 15px;
-        }
-        
-        .cannal-galeria-item {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-            aspect-ratio: 1 / 1;
-            background: #f0f0f0;
-        }
-        
-        .cannal-galeria-item a {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .cannal-galeria-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            transition: transform 0.3s ease;
-        }
-        
-        .cannal-galeria-item:hover img {
-            transform: scale(1.05);
-        }
-        
-        /* Responsividade */
-        @media (max-width: 1400px) {
-            .cannal-galeria-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
-        }
-        
-        @media (max-width: 1200px) {
-            .cannal-galeria-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        
-        @media (max-width: 992px) {
-            .cannal-galeria-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 12px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .cannal-galeria-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .cannal-galeria-grid {
-                grid-template-columns: repeat(1, 1fr);
-            }
-        }
-        </style>
         <?php
         return ob_get_clean();
     }
@@ -348,8 +272,9 @@ class Cannal_Espetaculos_Public {
             <?php if ( $temporada ) : 
                 $teatro_nome = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
                 $teatro_endereco = get_post_meta( $temporada->ID, '_temporada_teatro_endereco', true );
-                $dias_horarios = get_post_meta( $temporada->ID, '_temporada_dias_horarios', true );
                 $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
+                $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
+                $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
             ?>
 
             <?php if ( $teatro_nome ) : ?>
@@ -516,8 +441,9 @@ class Cannal_Espetaculos_Public {
     private function render_temporada_ativa( $espetaculo_id, $temporada ) {
         $teatro_nome = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
         $teatro_endereco = get_post_meta( $temporada->ID, '_temporada_teatro_endereco', true );
-        $dias_horarios = get_post_meta( $temporada->ID, '_temporada_dias_horarios', true );
         $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
+        $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
+        $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
         $duracao = get_post_meta( $espetaculo_id, '_espetaculo_duracao', true );
         $classificacao = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
         $link_vendas = get_post_meta( $temporada->ID, '_temporada_link_vendas', true );

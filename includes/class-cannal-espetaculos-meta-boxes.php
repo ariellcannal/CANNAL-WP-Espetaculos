@@ -218,37 +218,13 @@ class Cannal_Espetaculos_Meta_Boxes {
                             $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
                             $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
                             
-                            // Gerar Dias e Horários
-                            $dias_horarios_texto = '';
-                            if ( ! empty( $sessoes_data ) ) {
-                                $sessoes = json_decode( $sessoes_data, true );
-                                if ( $sessoes && $sessoes['tipo'] === 'avulsas' && ! empty( $sessoes['avulsas'] ) ) {
-                                    $datas = array();
-                                    foreach ( $sessoes['avulsas'] as $sessao ) {
-                                        $datas[] = date_i18n( 'd/m', strtotime( $sessao['data'] ) ) . ' às ' . $sessao['horario'];
-                                    }
-                                    $dias_horarios_texto = implode( ', ', array_slice( $datas, 0, 2 ) );
-                                    if ( count( $datas ) > 2 ) $dias_horarios_texto .= '...';
-                                } elseif ( $sessoes && $sessoes['tipo'] === 'temporada' && ! empty( $sessoes['temporada'] ) ) {
-                                    $dias_semana_labels = array(
-                                        'domingo' => 'Dom', 'segunda' => 'Seg', 'terca' => 'Ter',
-                                        'quarta' => 'Qua', 'quinta' => 'Qui', 'sexta' => 'Sex', 'sabado' => 'Sáb'
-                                    );
-                                    $dias = array();
-                                    foreach ( $sessoes['temporada'] as $dia => $horarios ) {
-                                        if ( ! empty( $horarios ) ) {
-                                            $label = isset( $dias_semana_labels[$dia] ) ? $dias_semana_labels[$dia] : ucfirst($dia);
-                                            $dias[] = $label . ' ' . $horarios;
-                                        }
-                                    }
-                                    $dias_horarios_texto = implode( ', ', $dias );
-                                }
-                            }
+                            // Gerar Dias e Horários usando classe inteligente
+                            $dias_horarios_texto = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
                             
                             $hoje = current_time( 'Y-m-d' );
                             if ( $data_inicio && $data_fim ) {
                                 if ( $hoje < $data_inicio ) {
-                                    $status = 'Futura';
+                                    $status = 'Em Breve';
                                 } elseif ( $hoje >= $data_inicio && $hoje <= $data_fim ) {
                                     $status = 'Em Cartaz';
                                 } else {

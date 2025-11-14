@@ -216,7 +216,7 @@
                 url: cannalAjax.ajaxurl,
                 type: 'POST',
                 data: {
-                    action: 'get_espetaculo_content',
+                    action: 'cannal_get_espetaculo_content',
                     espetaculo_id: espetaculoId,
                     nonce: cannalAjax.espetaculo_nonce
                 },
@@ -451,7 +451,7 @@
                     url: cannalAjax.ajaxurl,
                     type: 'POST',
                     data: {
-                        action: 'ajax_get_temporada',
+                        action: 'cannal_get_temporada',
                         nonce: cannalAjax.nonce,
                         temporada_id: temporadaId
                     },
@@ -502,7 +502,7 @@
                     url: cannalAjax.ajaxurl,
                     type: 'POST',
                     data: {
-                        action: 'ajax_get_temporada',
+                        action: 'cannal_get_temporada',
                         nonce: cannalAjax.nonce,
                         temporada_id: temporadaId
                     },
@@ -551,7 +551,7 @@
                     url: cannalAjax.ajaxurl,
                     type: 'POST',
                     data: {
-                        action: 'ajax_delete_temporada',
+                        action: 'cannal_delete_temporada',
                         nonce: cannalAjax.nonce,
                         temporada_id: temporadaId
                     },
@@ -593,7 +593,7 @@
                 }
                 
                 var formData = {
-                    action: 'ajax_save_temporada',
+                    action: 'cannal_save_temporada',
                     nonce: cannalAjax.nonce,
                     temporada_id: $('#modal_temporada_id').val(),
                     espetaculo_id: $('#modal_espetaculo_id').val(),

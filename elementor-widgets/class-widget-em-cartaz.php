@@ -90,7 +90,11 @@ class Cannal_Espetaculos_Widget_Em_Cartaz extends \Elementor\Widget_Base {
         echo '<div class="cannal-em-cartaz-container">';
         foreach ( $temporadas as $temporada ) {
             $teatro = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
-            $dias_horarios = get_post_meta( $temporada->ID, '_temporada_dias_horarios', true );
+            
+            // Gerar dias e horários dinamicamente
+            $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
+            $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
+            $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
             
             echo '<div class="cannal-em-cartaz-box">';
             echo '<div class="em-cartaz-teatro"><strong>' . esc_html( $teatro ) . '</strong></div>';
