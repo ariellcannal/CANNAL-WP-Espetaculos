@@ -12,49 +12,15 @@ class Cannal_Espetaculos_Rewrites {
      * Adiciona as rewrite rules personalizadas.
      */
     public function add_rewrite_rules() {
-        $has_categories = $this->has_categories();
-
-        if ( $has_categories ) {
-            // COM CATEGORIAS
-            
-            // Arquivo de categorias
-            add_rewrite_rule(
-                '^espetaculos/?$',
-                'index.php?post_type=espetaculo&espetaculos_archive=categories',
-                'top'
-            );
-
-            // Arquivo de espetáculos de uma categoria
-            add_rewrite_rule(
-                '^espetaculos/([^/]+)/?$',
-                'index.php?post_type=espetaculo&espetaculo_categoria=$matches[1]',
-                'top'
-            );
-
-            // Single de espetáculo com categoria
-            add_rewrite_rule(
-                '^espetaculos/([^/]+)/([^/]+)/?$',
-                'index.php?post_type=espetaculo&espetaculo_categoria=$matches[1]&name=$matches[2]',
-                'top'
-            );
-
-        } else {
-            // SEM CATEGORIAS
-            
-            // Arquivo de espetáculos
-            add_rewrite_rule(
-                '^espetaculos/?$',
-                'index.php?post_type=espetaculo',
-                'top'
-            );
-
-            // Single de espetáculo
-            add_rewrite_rule(
-                '^espetaculos/([^/]+)/?$',
-                'index.php?post_type=espetaculo&name=$matches[1]',
-                'top'
-            );
-        }
+        // O WordPress já gerencia automaticamente as URLs de taxonomia
+        // Estrutura: /espetaculos/{categoria}/{espetaculo}/
+        
+        // Garantir que o arquivo de espetáculos funcione
+        add_rewrite_rule(
+            '^espetaculos/?$',
+            'index.php?post_type=espetaculo',
+            'top'
+        );
     }
 
     /**
@@ -67,55 +33,17 @@ class Cannal_Espetaculos_Rewrites {
 
     /**
      * Gerencia redirecionamentos.
+     * (Removido - WordPress gerencia automaticamente)
      */
     public function handle_redirects() {
-        global $wp_query;
-
-        $has_categories = $this->has_categories();
-
-        // Se tem categorias e acessar /espetaculos/{slug} sem categoria, redirecionar
-        if ( $has_categories && is_singular( 'espetaculo' ) ) {
-            $post_id = get_queried_object_id();
-            $terms = get_the_terms( $post_id, 'espetaculo_categoria' );
-            
-            if ( $terms && ! is_wp_error( $terms ) ) {
-                $term = array_shift( $terms );
-                $current_url = $_SERVER['REQUEST_URI'];
-                $expected_url = '/espetaculos/' . $term->slug . '/' . get_post_field( 'post_name', $post_id ) . '/';
-                
-                // Se a URL atual não contém a categoria, redirecionar
-                if ( strpos( $current_url, '/espetaculos/' . $term->slug . '/' ) === false ) {
-                    wp_redirect( home_url( $expected_url ), 301 );
-                    exit;
-                }
-            }
-        }
-    }
-
-    /**
-     * Verifica se existem categorias cadastradas.
-     */
-    private function has_categories() {
-        $terms = get_terms( array(
-            'taxonomy' => 'espetaculo_categoria',
-            'hide_empty' => false,
-            'number' => 1
-        ) );
-
-        $has_categories = ! empty( $terms ) && ! is_wp_error( $terms );
-        update_option( 'cannal_espetaculos_has_categories', $has_categories );
-
-        return $has_categories;
+        // Não é mais necessário
     }
 
     /**
      * Callback quando uma categoria é criada, editada ou deletada.
      */
     public function on_category_change() {
-        // Atualizar a opção
-        $this->has_categories();
-        
-        // Flush rewrite rules
+        // Flush rewrite rules para atualizar permalinks
         flush_rewrite_rules();
     }
 
@@ -123,31 +51,30 @@ class Cannal_Espetaculos_Rewrites {
      * Obtém a URL de um espetáculo.
      */
     public static function get_espetaculo_url( $post_id ) {
-        $has_categories = get_option( 'cannal_espetaculos_has_categories', false );
-        $slug = get_post_field( 'post_name', $post_id );
-
-        if ( $has_categories ) {
-            $terms = get_the_terms( $post_id, 'espetaculo_categoria' );
-            if ( $terms && ! is_wp_error( $terms ) ) {
-                $term = array_shift( $terms );
-                return home_url( '/espetaculos/' . $term->slug . '/' . $slug . '/' );
-            }
-        }
-
-        return home_url( '/espetaculos/' . $slug . '/' );
+        // Usar permalink padrão do WordPress
+        return get_permalink( $post_id );
     }
 
     /**
      * Obtém a URL do arquivo de espetáculos.
      */
     public static function get_espetaculos_archive_url() {
-        return home_url( '/espetaculos/' );
+        return get_post_type_archive_link( 'espetaculo' );
     }
 
     /**
      * Obtém a URL de uma categoria de espetáculos.
      */
-    public static function get_categoria_url( $term_slug ) {
-        return home_url( '/espetaculos/' . $term_slug . '/' );
+    public static function get_categoria_url( $term_slug_or_id ) {
+        if ( is_numeric( $term_slug_or_id ) ) {
+            return get_term_link( (int) $term_slug_or_id, 'espetaculo_categoria' );
+        }
+        
+        $term = get_term_by( 'slug', $term_slug_or_id, 'espetaculo_categoria' );
+        if ( $term && ! is_wp_error( $term ) ) {
+            return get_term_link( $term, 'espetaculo_categoria' );
+        }
+        
+        return home_url( '/espetaculos/' );
     }
 }

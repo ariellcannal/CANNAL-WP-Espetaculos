@@ -3,7 +3,7 @@
  * Plugin Name: CANNAL Espetáculos
  * Plugin URI: https://github.com/ariellcannal/WP-CANNAL-Espetaculos
  * Description: Plugin completo para gerenciamento de espetáculos teatrais com temporadas, sessões, integração com Elementor e RevSlider.
- * Version: 2.3.0
+ * Version: 2.4.0
  * Author: CANNAL
  * Author URI: https://cannal.com.br
  * License: GPL-2.0+
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Versão atual do plugin.
  */
-define( 'CANNAL_ESPETACULOS_VERSION', '2.3.0' );
+define( 'CANNAL_ESPETACULOS_VERSION', '2.4.0' );
 define( 'CANNAL_ESPETACULOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CANNAL_ESPETACULOS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

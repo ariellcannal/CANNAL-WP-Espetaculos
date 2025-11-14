@@ -126,7 +126,11 @@ class Cannal_Espetaculos_Post_Types {
             'show_ui'               => true,
             'show_admin_column'     => true,
             'query_var'             => true,
-            'rewrite'               => false, // Será tratado manualmente
+            'rewrite'               => array(
+                'slug'         => 'espetaculos',
+                'with_front'   => false,
+                'hierarchical' => true
+            ),
             'show_in_rest'          => true,
             'show_in_menu'          => true
         );
@@ -168,5 +172,57 @@ class Cannal_Espetaculos_Post_Types {
         }
         
         return $content;
+    }
+    
+    /**
+     * Garante que todo espetáculo tenha pelo menos uma categoria.
+     * Se não tiver nenhuma, atribui a categoria padrão "Espetáculo".
+     */
+    public function ensure_default_category( $post_id, $post, $update ) {
+        // Evitar execução em autoguarda, revisões, etc.
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        
+        if ( wp_is_post_revision( $post_id ) ) {
+            return;
+        }
+        
+        // Verificar se o espetáculo tem categorias
+        $terms = wp_get_object_terms( $post_id, 'espetaculo_categoria' );
+        
+        // Se não tiver nenhuma categoria, atribuir a padrão
+        if ( empty( $terms ) || is_wp_error( $terms ) ) {
+            $default_category_id = get_option( 'cannal_espetaculos_default_category' );
+            
+            // Se a categoria padrão não existir, criar
+            if ( ! $default_category_id ) {
+                $term = get_term_by( 'slug', 'espetaculo', 'espetaculo_categoria' );
+                
+                if ( ! $term ) {
+                    $result = wp_insert_term(
+                        'Espetáculo',
+                        'espetaculo_categoria',
+                        array(
+                            'slug' => 'espetaculo',
+                            'description' => 'Categoria padrão para espetáculos'
+                        )
+                    );
+                    
+                    if ( ! is_wp_error( $result ) ) {
+                        $default_category_id = $result['term_id'];
+                        update_option( 'cannal_espetaculos_default_category', $default_category_id );
+                    }
+                } else {
+                    $default_category_id = $term->term_id;
+                    update_option( 'cannal_espetaculos_default_category', $default_category_id );
+                }
+            }
+            
+            // Atribuir categoria padrão
+            if ( $default_category_id ) {
+                wp_set_object_terms( $post_id, array( (int) $default_category_id ), 'espetaculo_categoria' );
+            }
+        }
     }
 }
