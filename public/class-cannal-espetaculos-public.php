@@ -504,7 +504,7 @@ class Cannal_Espetaculos_Public {
     private function render_proximas_temporadas( $temporadas ) {
         ?>
         <div class="widget cannal-widget-temporada">
-            <h3 class="widget-title">Próximas Temporadas</h3>
+            <h2 class="widget-title wp-block-heading">Próximas Temporadas</h2>
             <div class="cannal-temporada-info">
                 <?php foreach ( $temporadas as $temporada ) : 
                     $teatro_nome = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );

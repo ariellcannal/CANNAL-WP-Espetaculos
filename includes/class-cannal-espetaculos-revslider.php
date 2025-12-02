@@ -40,10 +40,10 @@ class Cannal_Espetaculos_RevSlider {
 
             $data_inicio = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
             $data_fim = get_post_meta( $temporada_id, '_temporada_data_fim', true );
-            $data_inicio_banner = get_post_meta( $temporada_id, '_temporada_data_inicio_banner', true );
+            $data_inicio_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
 
             // Verificar se o banner deve ser exibido
-            if ( $data_inicio_banner && $hoje < $data_inicio_banner ) {
+            if ( $data_inicio_cartaz && $hoje < $data_inicio_cartaz ) {
                 continue;
             }
 

@@ -466,7 +466,7 @@
                             $('#modal_valores').val(response.data.valores);
                             $('#modal_link_vendas').val(response.data.link_vendas);
                             $('#modal_link_texto').val(response.data.link_texto);
-                            $('#modal_data_inicio_banner').val('');
+                            $('#modal_data_inicio_cartaz').val('');
                             
                             // Carregar sessões
                             if (response.data.tipo_sessao && response.data.sessoes_data) {
@@ -517,7 +517,7 @@
                             $('#modal_valores').val(response.data.valores);
                             $('#modal_link_vendas').val(response.data.link_vendas);
                             $('#modal_link_texto').val(response.data.link_texto);
-                            $('#modal_data_inicio_banner').val(response.data.data_inicio_banner);
+                            $('#modal_data_inicio_cartaz').val(response.data.data_inicio_cartaz);
                             
                             // Preencher conteúdo no editor
                             if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
@@ -604,7 +604,7 @@
                     valores: $('#modal_valores').val(),
                     link_vendas: $('#modal_link_vendas').val(),
                     link_texto: $('#modal_link_texto').val(),
-                    data_inicio_banner: $('#modal_data_inicio_banner').val(),
+                    data_inicio_cartaz: $('#modal_data_inicio_cartaz').val(),
                     tipo_sessao: $('input[name="modal_tipo_sessao"]:checked').val(),
                     sessoes_data: getModalSessoesData(),
                     conteudo: conteudo

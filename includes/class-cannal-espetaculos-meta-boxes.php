@@ -296,7 +296,7 @@ class Cannal_Espetaculos_Meta_Boxes {
         $valores = get_post_meta( $post->ID, '_temporada_valores', true );
         $link_vendas = get_post_meta( $post->ID, '_temporada_link_vendas', true );
         $link_texto = get_post_meta( $post->ID, '_temporada_link_texto', true );
-        $data_inicio_banner = get_post_meta( $post->ID, '_temporada_data_inicio_banner', true );
+        $data_inicio_cartaz = get_post_meta( $post->ID, '_temporada_data_inicio_cartaz', true );
 
         ?>
         <table class="form-table">
@@ -351,8 +351,8 @@ class Cannal_Espetaculos_Meta_Boxes {
                 <td><input type="text" id="temporada_link_texto" name="temporada_link_texto" value="<?php echo esc_attr( $link_texto ); ?>" class="regular-text" placeholder="Ex: Ingressos Aqui" /></td>
             </tr>
             <tr>
-                <th><label for="temporada_data_inicio_banner">Data de Início do Banner</label></th>
-                <td><input type="date" id="temporada_data_inicio_banner" name="temporada_data_inicio_banner" value="<?php echo esc_attr( $data_inicio_banner ); ?>" /></td>
+                <th><label for="temporada_data_inicio_cartaz">Data de Início do Cartaz</label></th>
+                <td><input type="date" id="temporada_data_inicio_cartaz" name="temporada_data_inicio_cartaz" value="<?php echo esc_attr( $data_inicio_cartaz ); ?>" /></td>
             </tr>
         </table>
         <?php
@@ -555,8 +555,8 @@ class Cannal_Espetaculos_Meta_Boxes {
             update_post_meta( $post_id, '_temporada_link_texto', sanitize_text_field( $_POST['temporada_link_texto'] ) );
         }
         
-        if ( isset( $_POST['temporada_data_inicio_banner'] ) ) {
-            update_post_meta( $post_id, '_temporada_data_inicio_banner', sanitize_text_field( $_POST['temporada_data_inicio_banner'] ) );
+        if ( isset( $_POST['temporada_data_inicio_cartaz'] ) ) {
+            update_post_meta( $post_id, '_temporada_data_inicio_cartaz', sanitize_text_field( $_POST['temporada_data_inicio_cartaz'] ) );
         }
         
         if ( isset( $_POST['temporada_tipo_sessao'] ) ) {
@@ -661,8 +661,8 @@ class Cannal_Espetaculos_Meta_Boxes {
                             <td><input type="text" id="modal_link_texto" name="link_texto" class="regular-text" placeholder="Ingressos Aqui" /></td>
                         </tr>
                         <tr>
-                            <th><label for="modal_data_inicio_banner">Data de Início do Banner</label></th>
-                            <td><input type="date" id="modal_data_inicio_banner" name="data_inicio_banner" /></td>
+                            <th><label for="modal_data_inicio_cartaz">Data de Início do Cartaz</label></th>
+                            <td><input type="date" id="modal_data_inicio_cartaz" name="data_inicio_cartaz" /></td>
                         </tr>
                         <tr>
                             <th><label>Tipo de Sessão</label></th>

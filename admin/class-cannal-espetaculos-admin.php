@@ -146,7 +146,7 @@ class Cannal_Espetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_valores', isset( $_POST['valores'] ) ? sanitize_textarea_field( $_POST['valores'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_vendas', isset( $_POST['link_vendas'] ) ? esc_url_raw( $_POST['link_vendas'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_texto', isset( $_POST['link_texto'] ) ? sanitize_text_field( $_POST['link_texto'] ) : '' );
-        update_post_meta( $temporada_id, '_temporada_data_inicio_banner', isset( $_POST['data_inicio_banner'] ) ? sanitize_text_field( $_POST['data_inicio_banner'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', isset( $_POST['data_inicio_cartaz'] ) ? sanitize_text_field( $_POST['data_inicio_cartaz'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_tipo_sessao', isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas' );
         update_post_meta( $temporada_id, '_temporada_sessoes_data', isset( $_POST['sessoes_data'] ) ? sanitize_textarea_field( $_POST['sessoes_data'] ) : '' );
 
@@ -182,7 +182,7 @@ class Cannal_Espetaculos_Admin {
             'valores' => get_post_meta( $temporada_id, '_temporada_valores', true ),
             'link_vendas' => get_post_meta( $temporada_id, '_temporada_link_vendas', true ),
             'link_texto' => get_post_meta( $temporada_id, '_temporada_link_texto', true ),
-            'data_inicio_banner' => get_post_meta( $temporada_id, '_temporada_data_inicio_banner', true ),
+            'data_inicio_cartaz' => get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true ),
             'conteudo' => $temporada->post_content,
             'tipo_sessao' => get_post_meta( $temporada_id, '_temporada_tipo_sessao', true ),
             'sessoes_data' => get_post_meta( $temporada_id, '_temporada_sessoes_data', true )
