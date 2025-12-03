@@ -251,8 +251,8 @@ class Cannal_Espetaculos_RevSlider {
      * Retorna os IDs de espetáculos elegíveis para o cartaz.
      *
      * Critérios:
-     * - Temporada ativa (data de início <= hoje e data de fim >= hoje ou indefinida)
-     * - Ou data de início do cartaz menor ou igual a hoje
+     * - Temporada ativa (data de início <= hoje e data de fim <= hoje ou indefinida)
+     * - Ou data de início do cartaz vazio ou menor/igual a hoje
      * - Apenas espetáculos com imagem destacada
      *
      * @return int[] Lista de IDs em ordem ascendente pela data de início da temporada.
@@ -284,8 +284,8 @@ class Cannal_Espetaculos_RevSlider {
             $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
             $data_inicio_cartaz = get_post_meta( $temporada->ID, '_temporada_data_inicio_cartaz', true );
 
-            $temporada_ativa = $data_inicio && $data_inicio <= $hoje && ( empty( $data_fim ) || $data_fim >= $hoje );
-            $cartaz_liberado = $data_inicio_cartaz && $data_inicio_cartaz <= $hoje;
+            $temporada_ativa = $data_inicio && $data_inicio <= $hoje && ( empty( $data_fim ) || $data_fim <= $hoje );
+            $cartaz_liberado = ( '' === $data_inicio_cartaz || empty( $data_inicio_cartaz ) || $data_inicio_cartaz <= $hoje );
 
             if ( ! $temporada_ativa && ! $cartaz_liberado ) {
                 continue;
