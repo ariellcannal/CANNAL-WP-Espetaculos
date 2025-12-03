@@ -207,8 +207,102 @@ class Cannal_Espetaculos_RevSlider {
             self::update_banner_temporada( $espetaculo_id );
         }
     }
+
+    /**
+     * Ajusta o comportamento do slider "cannal_cartaz" para usar posts específicos.
+     *
+     * @param array      $query_args Argumentos de consulta originais.
+     * @param object|int $slider     Instância ou ID do slider.
+     * @return array Argumentos de consulta ajustados.
+     */
+    public static function filter_cartaz_slider_posts( $query_args, $slider = null ) {
+        $slider_alias = '';
+
+        if ( is_object( $slider ) && method_exists( $slider, 'getAlias' ) ) {
+            $slider_alias = $slider->getAlias();
+        } elseif ( is_object( $slider ) && property_exists( $slider, 'alias' ) ) {
+            $slider_alias = $slider->alias;
+        } elseif ( is_array( $query_args ) && isset( $query_args['slider_alias'] ) ) {
+            $slider_alias = $query_args['slider_alias'];
+        }
+
+        if ( 'cannal_cartaz' !== $slider_alias ) {
+            return $query_args;
+        }
+
+        $espetaculo_ids = self::get_cartaz_espetaculo_ids();
+
+        if ( empty( $espetaculo_ids ) ) {
+            $query_args['post__in'] = array( 0 );
+            $query_args['posts_per_page'] = 0;
+            return $query_args;
+        }
+
+        $query_args['post_type'] = 'espetaculo';
+        $query_args['post__in'] = $espetaculo_ids;
+        $query_args['orderby'] = 'post__in';
+        $query_args['posts_per_page'] = count( $espetaculo_ids );
+        $query_args['ignore_sticky_posts'] = true;
+
+        return $query_args;
+    }
+
+    /**
+     * Retorna os IDs de espetáculos elegíveis para o cartaz.
+     *
+     * Critérios:
+     * - Temporada ativa (data de início <= hoje e data de fim >= hoje ou indefinida)
+     * - Ou data de início do cartaz menor ou igual a hoje
+     * - Apenas espetáculos com imagem destacada
+     *
+     * @return int[] Lista de IDs em ordem ascendente pela data de início da temporada.
+     */
+    private static function get_cartaz_espetaculo_ids() {
+        $hoje = current_time( 'Y-m-d' );
+
+        $temporadas = get_posts(
+            array(
+                'post_type'      => 'temporada',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'meta_key'       => '_temporada_data_inicio',
+                'orderby'        => 'meta_value',
+                'order'          => 'ASC',
+            )
+        );
+
+        $espetaculo_ids = array();
+
+        foreach ( $temporadas as $temporada ) {
+            $espetaculo_id = intval( get_post_meta( $temporada->ID, '_temporada_espetaculo_id', true ) );
+
+            if ( ! $espetaculo_id || in_array( $espetaculo_id, $espetaculo_ids, true ) ) {
+                continue;
+            }
+
+            $data_inicio = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
+            $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
+            $data_inicio_cartaz = get_post_meta( $temporada->ID, '_temporada_data_inicio_cartaz', true );
+
+            $temporada_ativa = $data_inicio && $data_inicio <= $hoje && ( empty( $data_fim ) || $data_fim >= $hoje );
+            $cartaz_liberado = $data_inicio_cartaz && $data_inicio_cartaz <= $hoje;
+
+            if ( ! $temporada_ativa && ! $cartaz_liberado ) {
+                continue;
+            }
+
+            if ( ! has_post_thumbnail( $espetaculo_id ) ) {
+                continue;
+            }
+
+            $espetaculo_ids[] = $espetaculo_id;
+        }
+
+        return $espetaculo_ids;
+    }
 }
 
 // Registrar hooks e shortcodes
 add_action( 'init', array( 'Cannal_Espetaculos_RevSlider', 'register_shortcode' ) );
 add_action( 'save_post', array( 'Cannal_Espetaculos_RevSlider', 'on_temporada_save' ) );
+add_filter( 'revslider_get_posts', array( 'Cannal_Espetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
