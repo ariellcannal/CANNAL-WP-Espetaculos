@@ -25,6 +25,11 @@ define( 'CANNAL_ESPETACULOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CANNAL_ESPETACULOS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
+ * Funções auxiliares do plugin.
+ */
+require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/cannal-helpers.php';
+
+/**
  * O código que roda durante a ativação do plugin.
  */
 function activate_cannal_espetaculos() {

@@ -41,9 +41,12 @@ class Cannal_Espetaculos_Widget_Informacao extends \Elementor\Widget_Base {
                 'type' => \Elementor\Controls_Manager::SELECT,
                 'options' => array(
                     'autor' => 'Autor',
+                    'diretor' => 'Diretor',
+                    'elenco' => 'Elenco',
                     'ano_estreia' => 'Ano de Estreia',
                     'duracao' => 'Duração',
                     'classificacao' => 'Classificação Indicativa',
+                    'logotipo' => 'Logotipo',
                     'teatro' => 'Teatro',
                     'endereco' => 'Endereço do Teatro',
                     'temporada' => 'Temporada/Apresentações',
@@ -176,19 +179,33 @@ class Cannal_Espetaculos_Widget_Informacao extends \Elementor\Widget_Base {
 
         switch ( $info_type ) {
             case 'autor':
-                return esc_html( get_post_meta( $espetaculo_id, '_espetaculo_autor', true ) );
+                return esc_html( cannal_get_field( $espetaculo_id, 'autor' ) );
+
+            case 'diretor':
+                return esc_html( cannal_get_field( $espetaculo_id, 'diretor' ) );
+
+            case 'elenco':
+                return nl2br( esc_html( cannal_get_field( $espetaculo_id, 'elenco' ) ) );
 
             case 'ano_estreia':
-                return esc_html( get_post_meta( $espetaculo_id, '_espetaculo_ano_estreia', true ) );
+                return esc_html( cannal_get_field( $espetaculo_id, 'ano_estreia' ) );
 
             case 'duracao':
-                return esc_html( get_post_meta( $espetaculo_id, '_espetaculo_duracao', true ) );
+                return esc_html( cannal_get_field( $espetaculo_id, 'duracao' ) );
 
             case 'classificacao':
-                $class = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
+                $class = cannal_get_field( $espetaculo_id, 'classificacao' );
                 if ( $class ) {
                     $texto = $class === 'livre' ? 'Livre' : $class . ' anos';
                     return '<div class="classificacao-selo classificacao-' . esc_attr( $class ) . '">' . esc_html( $texto ) . '</div>';
+                }
+                return '';
+
+            case 'logotipo':
+                $logo_id = cannal_get_field( $espetaculo_id, 'logotipo' );
+                $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+                if ( $logo_url ) {
+                    return '<img src="' . esc_url( $logo_url ) . '" alt="Logotipo do espetáculo" />';
                 }
                 return '';
 

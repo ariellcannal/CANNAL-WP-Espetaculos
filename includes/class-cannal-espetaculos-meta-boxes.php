@@ -68,15 +68,27 @@ class Cannal_Espetaculos_Meta_Boxes {
         wp_nonce_field( 'cannal_espetaculo_meta_box', 'cannal_espetaculo_meta_box_nonce' );
 
         $autor = get_post_meta( $post->ID, '_espetaculo_autor', true );
+        $diretor = get_post_meta( $post->ID, '_espetaculo_diretor', true );
+        $elenco = get_post_meta( $post->ID, '_espetaculo_elenco', true );
         $ano_estreia = get_post_meta( $post->ID, '_espetaculo_ano_estreia', true );
         $duracao = get_post_meta( $post->ID, '_espetaculo_duracao', true );
         $classificacao = get_post_meta( $post->ID, '_espetaculo_classificacao', true );
+        $logotipo_id = get_post_meta( $post->ID, '_espetaculo_logotipo', true );
+        $logotipo_url = $logotipo_id ? wp_get_attachment_image_url( $logotipo_id, 'medium' ) : '';
 
         ?>
         <table class="form-table">
             <tr>
                 <th><label for="espetaculo_autor">Autor</label></th>
                 <td><input type="text" id="espetaculo_autor" name="espetaculo_autor" value="<?php echo esc_attr( $autor ); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="espetaculo_diretor">Diretor</label></th>
+                <td><input type="text" id="espetaculo_diretor" name="espetaculo_diretor" value="<?php echo esc_attr( $diretor ); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="espetaculo_elenco">Elenco</label></th>
+                <td><textarea id="espetaculo_elenco" name="espetaculo_elenco" rows="3" class="large-text"><?php echo esc_textarea( $elenco ); ?></textarea></td>
             </tr>
             <tr>
                 <th><label for="espetaculo_ano_estreia">Ano de Estreia</label></th>
@@ -98,6 +110,20 @@ class Cannal_Espetaculos_Meta_Boxes {
                         <option value="16" <?php selected( $classificacao, '16' ); ?>>16 anos</option>
                         <option value="18" <?php selected( $classificacao, '18' ); ?>>18 anos</option>
                     </select>
+                </td>
+            </tr>
+            <tr>
+                <th><label for="espetaculo_logotipo">Logotipo</label></th>
+                <td>
+                    <div id="espetaculo-logotipo-preview" style="margin-bottom: 10px;">
+                        <?php if ( $logotipo_url ) : ?>
+                            <img src="<?php echo esc_url( $logotipo_url ); ?>" alt="Logotipo do espetáculo" style="max-width: 200px; height: auto;" />
+                        <?php endif; ?>
+                    </div>
+                    <input type="hidden" id="espetaculo_logotipo" name="espetaculo_logotipo" value="<?php echo esc_attr( $logotipo_id ); ?>" />
+                    <button type="button" class="button espetaculo-logotipo-upload">Selecionar Logotipo</button>
+                    <button type="button" class="button espetaculo-logotipo-remove" <?php echo $logotipo_id ? '' : 'style="display:none;"'; ?>>Remover</button>
+                    <p class="description">Selecione uma imagem para representar o espetáculo.</p>
                 </td>
             </tr>
             <tr>
@@ -291,6 +317,8 @@ class Cannal_Espetaculos_Meta_Boxes {
         
         $teatro_nome = get_post_meta( $post->ID, '_temporada_teatro_nome', true );
         $teatro_endereco = get_post_meta( $post->ID, '_temporada_teatro_endereco', true );
+        $temporada_diretor = get_post_meta( $post->ID, '_temporada_diretor', true );
+        $temporada_elenco = get_post_meta( $post->ID, '_temporada_elenco', true );
         $data_inicio = get_post_meta( $post->ID, '_temporada_data_inicio', true );
         $data_fim = get_post_meta( $post->ID, '_temporada_data_fim', true );
         $valores = get_post_meta( $post->ID, '_temporada_valores', true );
@@ -329,6 +357,14 @@ class Cannal_Espetaculos_Meta_Boxes {
             <tr>
                 <th><label for="temporada_teatro_endereco">Endereço do Teatro</label></th>
                 <td><input type="text" id="temporada_teatro_endereco" name="temporada_teatro_endereco" value="<?php echo esc_attr( $teatro_endereco ); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="temporada_diretor">Diretor</label></th>
+                <td><input type="text" id="temporada_diretor" name="temporada_diretor" value="<?php echo esc_attr( $temporada_diretor ); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="temporada_elenco">Elenco</label></th>
+                <td><textarea id="temporada_elenco" name="temporada_elenco" rows="3" class="large-text"><?php echo esc_textarea( $temporada_elenco ); ?></textarea></td>
             </tr>
             <tr>
                 <th><label for="temporada_data_inicio">Data de Início *</label></th>
@@ -455,17 +491,29 @@ class Cannal_Espetaculos_Meta_Boxes {
         if ( isset( $_POST['espetaculo_autor'] ) ) {
             update_post_meta( $post_id, '_espetaculo_autor', sanitize_text_field( $_POST['espetaculo_autor'] ) );
         }
-        
+
+        if ( isset( $_POST['espetaculo_diretor'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_diretor', sanitize_text_field( $_POST['espetaculo_diretor'] ) );
+        }
+
+        if ( isset( $_POST['espetaculo_elenco'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_elenco', sanitize_textarea_field( $_POST['espetaculo_elenco'] ) );
+        }
+
         if ( isset( $_POST['espetaculo_ano_estreia'] ) ) {
             update_post_meta( $post_id, '_espetaculo_ano_estreia', sanitize_text_field( $_POST['espetaculo_ano_estreia'] ) );
         }
-        
+
         if ( isset( $_POST['espetaculo_duracao'] ) ) {
             update_post_meta( $post_id, '_espetaculo_duracao', sanitize_text_field( $_POST['espetaculo_duracao'] ) );
         }
-        
+
         if ( isset( $_POST['espetaculo_classificacao'] ) ) {
             update_post_meta( $post_id, '_espetaculo_classificacao', sanitize_text_field( $_POST['espetaculo_classificacao'] ) );
+        }
+
+        if ( isset( $_POST['espetaculo_logotipo'] ) ) {
+            update_post_meta( $post_id, '_espetaculo_logotipo', sanitize_text_field( $_POST['espetaculo_logotipo'] ) );
         }
         
         // Exibir galeria (checkbox)
@@ -534,7 +582,15 @@ class Cannal_Espetaculos_Meta_Boxes {
         if ( isset( $_POST['temporada_teatro_endereco'] ) ) {
             update_post_meta( $post_id, '_temporada_teatro_endereco', sanitize_text_field( $_POST['temporada_teatro_endereco'] ) );
         }
-        
+
+        if ( isset( $_POST['temporada_diretor'] ) ) {
+            update_post_meta( $post_id, '_temporada_diretor', sanitize_text_field( $_POST['temporada_diretor'] ) );
+        }
+
+        if ( isset( $_POST['temporada_elenco'] ) ) {
+            update_post_meta( $post_id, '_temporada_elenco', sanitize_textarea_field( $_POST['temporada_elenco'] ) );
+        }
+
         if ( isset( $_POST['temporada_data_inicio'] ) ) {
             update_post_meta( $post_id, '_temporada_data_inicio', sanitize_text_field( $_POST['temporada_data_inicio'] ) );
         }
@@ -639,6 +695,14 @@ class Cannal_Espetaculos_Meta_Boxes {
                         <tr>
                             <th><label for="modal_teatro_endereco">Endereço do Teatro</label></th>
                             <td><input type="text" id="modal_teatro_endereco" name="teatro_endereco" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_diretor">Diretor</label></th>
+                            <td><input type="text" id="modal_diretor" name="diretor" class="regular-text" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_elenco">Elenco</label></th>
+                            <td><textarea id="modal_elenco" name="elenco" rows="3" class="large-text"></textarea></td>
                         </tr>
                         <tr>
                             <th><label for="modal_data_inicio">Data de Início *</label></th>
