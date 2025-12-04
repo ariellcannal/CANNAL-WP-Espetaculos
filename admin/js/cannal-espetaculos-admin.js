@@ -110,6 +110,46 @@
             }
         }
 
+        // Logotipo do espetáculo
+        if ($('.espetaculo-logotipo-upload').length) {
+            var logotipoFrame;
+
+            $('.espetaculo-logotipo-upload').on('click', function(e) {
+                e.preventDefault();
+
+                if (logotipoFrame) {
+                    logotipoFrame.open();
+                    return;
+                }
+
+                logotipoFrame = wp.media({
+                    title: 'Selecionar Logotipo',
+                    button: {
+                        text: 'Usar esta imagem'
+                    },
+                    multiple: false
+                });
+
+                logotipoFrame.on('select', function() {
+                    var attachment = logotipoFrame.state().get('selection').first().toJSON();
+                    var previewUrl = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
+
+                    $('#espetaculo_logotipo').val(attachment.id);
+                    $('#espetaculo-logotipo-preview').html('<img src="' + previewUrl + '" style="max-width: 200px; height: auto;" />');
+                    $('.espetaculo-logotipo-remove').show();
+                });
+
+                logotipoFrame.open();
+            });
+
+            $('.espetaculo-logotipo-remove').on('click', function(e) {
+                e.preventDefault();
+                $('#espetaculo_logotipo').val('');
+                $('#espetaculo-logotipo-preview').empty();
+                $(this).hide();
+            });
+        }
+
         // Gerenciamento de sessões
         if ($('#temporada_tipo_sessao').length) {
             
@@ -461,16 +501,18 @@
                             $('#modal_temporada_id').val(''); // Limpar ID para criar nova
                             $('#modal_teatro_nome').val(response.data.teatro_nome);
                             $('#modal_teatro_endereco').val(response.data.teatro_endereco);
+                            $('#modal_diretor').val(response.data.diretor);
+                            $('#modal_elenco').val(response.data.elenco);
                             $('#modal_data_inicio').val(''); // Limpar datas
                             $('#modal_data_fim').val('');
                             $('#modal_valores').val(response.data.valores);
                             $('#modal_link_vendas').val(response.data.link_vendas);
                             $('#modal_link_texto').val(response.data.link_texto);
                             $('#modal_data_inicio_cartaz').val('');
-                            
+
                             // Carregar sessões
-                            if (response.data.tipo_sessao && response.data.sessoes_data) {
-                                setModalSessoesData(response.data.tipo_sessao, response.data.sessoes_data);
+                            if (response.data.sessoes_data) {
+                                setModalSessoesData(response.data.sessoes_data);
                             }
                             
                             // Carregar conteúdo
@@ -512,6 +554,8 @@
                             $('#modal_temporada_id').val(temporadaId);
                             $('#modal_teatro_nome').val(response.data.teatro_nome);
                             $('#modal_teatro_endereco').val(response.data.teatro_endereco);
+                            $('#modal_diretor').val(response.data.diretor);
+                            $('#modal_elenco').val(response.data.elenco);
                             $('#modal_data_inicio').val(response.data.data_inicio);
                             $('#modal_data_fim').val(response.data.data_fim);
                             $('#modal_valores').val(response.data.valores);
@@ -599,6 +643,8 @@
                     espetaculo_id: $('#modal_espetaculo_id').val(),
                     teatro_nome: $('#modal_teatro_nome').val(),
                     teatro_endereco: $('#modal_teatro_endereco').val(),
+                    diretor: $('#modal_diretor').val(),
+                    elenco: $('#modal_elenco').val(),
                     data_inicio: $('#modal_data_inicio').val(),
                     data_fim: $('#modal_data_fim').val(),
                     valores: $('#modal_valores').val(),

@@ -141,6 +141,8 @@ class Cannal_Espetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_espetaculo_id', $espetaculo_id );
         update_post_meta( $temporada_id, '_temporada_teatro_nome', isset( $_POST['teatro_nome'] ) ? sanitize_text_field( $_POST['teatro_nome'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_teatro_endereco', isset( $_POST['teatro_endereco'] ) ? sanitize_text_field( $_POST['teatro_endereco'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_diretor', isset( $_POST['diretor'] ) ? sanitize_text_field( $_POST['diretor'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_elenco', isset( $_POST['elenco'] ) ? sanitize_textarea_field( $_POST['elenco'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_data_inicio', isset( $_POST['data_inicio'] ) ? sanitize_text_field( $_POST['data_inicio'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_data_fim', isset( $_POST['data_fim'] ) ? sanitize_text_field( $_POST['data_fim'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_valores', isset( $_POST['valores'] ) ? sanitize_textarea_field( $_POST['valores'] ) : '' );
@@ -177,6 +179,8 @@ class Cannal_Espetaculos_Admin {
         $data = array(
             'teatro_nome' => get_post_meta( $temporada_id, '_temporada_teatro_nome', true ),
             'teatro_endereco' => get_post_meta( $temporada_id, '_temporada_teatro_endereco', true ),
+            'diretor' => get_post_meta( $temporada_id, '_temporada_diretor', true ),
+            'elenco' => get_post_meta( $temporada_id, '_temporada_elenco', true ),
             'data_inicio' => get_post_meta( $temporada_id, '_temporada_data_inicio', true ),
             'data_fim' => get_post_meta( $temporada_id, '_temporada_data_fim', true ),
             'valores' => get_post_meta( $temporada_id, '_temporada_valores', true ),

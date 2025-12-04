@@ -147,20 +147,34 @@ function format_dias_horarios_legivel( $sessoes ) {
         while ( have_posts() ) :
             the_post();
             
-            $autor = get_post_meta( get_the_ID(), '_espetaculo_autor', true );
-            $ano_estreia = get_post_meta( get_the_ID(), '_espetaculo_ano_estreia', true );
-            $duracao = get_post_meta( get_the_ID(), '_espetaculo_duracao', true );
-            $classificacao = get_post_meta( get_the_ID(), '_espetaculo_classificacao', true );
+            $autor = cannal_get_field( get_the_ID(), 'autor' );
+            $diretor = cannal_get_field( get_the_ID(), 'diretor' );
+            $elenco = cannal_get_field( get_the_ID(), 'elenco' );
+            $ano_estreia = cannal_get_field( get_the_ID(), 'ano_estreia' );
+            $duracao = cannal_get_field( get_the_ID(), 'duracao' );
+            $classificacao = cannal_get_field( get_the_ID(), 'classificacao' );
+            $classificacao_text = '';
+
+            if ( $classificacao ) {
+                $classificacao_text = strtolower( $classificacao ) === 'livre' ? 'Livre' : $classificacao . ' anos';
+            }
+            $logotipo_id = cannal_get_field( get_the_ID(), 'logotipo' );
+            $logotipo_url = $logotipo_id ? wp_get_attachment_image_url( $logotipo_id, 'medium' ) : '';
             ?>
             <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
-                
+
                 <div class="espetaculo-layout">
                     <!-- Conteúdo Principal -->
                     <div class="espetaculo-content">
-                        
+
                         <header class="entry-header">
+                            <?php if ( $logotipo_url ) : ?>
+                                <div class="espetaculo-logotipo">
+                                    <img src="<?php echo esc_url( $logotipo_url ); ?>" alt="Logotipo do espetáculo" />
+                                </div>
+                            <?php endif; ?>
                             <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
-                            
+
                             <?php if ( $autor || $ano_estreia ) : ?>
                             <div class="espetaculo-meta">
                                 <?php if ( $autor ) : ?>
@@ -274,12 +288,26 @@ function format_dias_horarios_legivel( $sessoes ) {
                                 <span><?php echo esc_html( $duracao ); ?></span>
                             </div>
                             <?php endif; ?>
-                            
+
+                            <?php if ( $diretor ) : ?>
+                            <div class="info-item">
+                                <strong>Direção:</strong>
+                                <span><?php echo esc_html( $diretor ); ?></span>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if ( $elenco ) : ?>
+                            <div class="info-item">
+                                <strong>Elenco:</strong>
+                                <div><?php echo nl2br( esc_html( $elenco ) ); ?></div>
+                            </div>
+                            <?php endif; ?>
+
                             <?php if ( $classificacao ) : ?>
                             <div class="info-item classificacao-item">
                                 <strong>Classificação Indicativa:</strong>
                                 <div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
-                                    <?php echo esc_html( $classificacao ); ?>
+                                    <?php echo esc_html( $classificacao_text ); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
@@ -312,12 +340,26 @@ function format_dias_horarios_legivel( $sessoes ) {
                                 <span><?php echo esc_html( $duracao ); ?></span>
                             </div>
                             <?php endif; ?>
-                            
+
+                            <?php if ( $diretor ) : ?>
+                            <div class="info-item">
+                                <strong>Direção:</strong>
+                                <span><?php echo esc_html( $diretor ); ?></span>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if ( $elenco ) : ?>
+                            <div class="info-item">
+                                <strong>Elenco:</strong>
+                                <div><?php echo nl2br( esc_html( $elenco ) ); ?></div>
+                            </div>
+                            <?php endif; ?>
+
                             <?php if ( $classificacao ) : ?>
                             <div class="info-item classificacao-item">
                                 <strong>Classificação Indicativa:</strong>
                                 <div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
-                                    <?php echo esc_html( $classificacao ); ?>
+                                    <?php echo esc_html( $classificacao_text ); ?>
                                 </div>
                             </div>
                             <?php endif; ?>
