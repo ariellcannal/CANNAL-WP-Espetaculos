@@ -108,7 +108,6 @@ class Cannal_Espetaculos_Meta_Boxes {
                         <input type="checkbox" id="espetaculo_exibir_galeria" name="espetaculo_exibir_galeria" value="1" <?php checked( $exibir_galeria === '' || $exibir_galeria === '1', true ); ?> />
                         Exibir galeria de fotos ao final do conteúdo
                     </label>
-                    <p class="description">Desmarque para ocultar a galeria de fotos na página do espetáculo.</p>
                 </td>
             </tr>
         </table>
