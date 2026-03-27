@@ -107,7 +107,7 @@ class Cannal_Espetaculos_Meta_Boxes {
                     <label>
                         <input type="checkbox" id="espetaculo_exibir_galeria" name="espetaculo_exibir_galeria" value="1" <?php checked( $exibir_galeria === '' || $exibir_galeria === '1', true ); ?> />
                         Exibir galeria de fotos ao final do conteúdo
-                    </label>
+                    </label>#
                 </td>
             </tr>
         </table>
