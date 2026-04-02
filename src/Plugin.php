@@ -126,6 +126,9 @@ class CANNALEspetaculos_Plugin {
         // Garantir categoria padrão em espetáculos
         $this->loader->add_action( 'save_post_espetaculo', $post_types, 'ensure_default_category', 10, 3 );
 
+        // Bloquear acesso direto a temporadas no admin (só via modal do espetáculo)
+        $this->loader->add_action( 'admin_init', $post_types, 'block_direct_temporada_access' );
+
         // Registrar rewrite rules
         $rewrites = new CANNALEspetaculos_Rewrites();
         $this->loader->add_action( 'init', $rewrites, 'add_rewrite_rules' );

@@ -81,8 +81,8 @@ class CANNALEspetaculos_PostTypes {
             'description'           => 'Temporadas de espetáculos',
             'public'                => false,
             'publicly_queryable'    => false,
-            'show_ui'               => true,
-            'show_in_menu'          => 'edit.php?post_type=espetaculo',
+            'show_ui'               => false,
+            'show_in_menu'          => false,
             'query_var'             => false,
             'rewrite'               => false,
             'capability_type'       => 'post',
@@ -223,6 +223,44 @@ class CANNALEspetaculos_PostTypes {
             if ( $default_category_id ) {
                 wp_set_object_terms( $post_id, array( (int) $default_category_id ), 'espetaculo_categoria' );
             }
+        }
+    }
+
+    /**
+     * Bloqueia o acesso direto às telas de listagem e edição de temporadas no admin.
+     * Temporadas só podem ser gerenciadas pelo modal dentro do formulário do espetáculo.
+     */
+    public function block_direct_temporada_access() {
+        if ( ! is_admin() ) {
+            return;
+        }
+
+        $pagenow = $GLOBALS['pagenow'] ?? '';
+
+        // Bloquear listagem: edit.php?post_type=temporada
+        if ( $pagenow === 'edit.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] === 'temporada' ) {
+            wp_redirect( admin_url( 'edit.php?post_type=espetaculo' ) );
+            exit;
+        }
+
+        // Bloquear edição direta: post.php?post=X&action=edit (quando post é temporada)
+        if ( $pagenow === 'post.php' && isset( $_GET['action'] ) && $_GET['action'] === 'edit' && isset( $_GET['post'] ) ) {
+            $post_id = intval( $_GET['post'] );
+            if ( get_post_type( $post_id ) === 'temporada' ) {
+                $espetaculo_id = get_post_meta( $post_id, '_temporada_espetaculo_id', true );
+                if ( $espetaculo_id ) {
+                    wp_redirect( admin_url( 'post.php?post=' . $espetaculo_id . '&action=edit' ) );
+                } else {
+                    wp_redirect( admin_url( 'edit.php?post_type=espetaculo' ) );
+                }
+                exit;
+            }
+        }
+
+        // Bloquear criação direta: post-new.php?post_type=temporada
+        if ( $pagenow === 'post-new.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] === 'temporada' ) {
+            wp_redirect( admin_url( 'edit.php?post_type=espetaculo' ) );
+            exit;
         }
     }
 }
