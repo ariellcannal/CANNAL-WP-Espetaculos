@@ -112,7 +112,7 @@ class CANNALEspetaculos_RevSlider {
      *   {{dias_horarios}}       → Dias e horários gerados dinamicamente
      *   {{data_inicio}}         → Data de início da temporada (d/m/Y)
      *   {{data_fim}}            → Data de fim da temporada (d/m/Y)
-     *   {{data_inicio_cartaz}}  → Data de liberação do banner (d/m/Y)
+
      *   {{valores}}             → Valores dos ingressos
      *   {{link_vendas}}         → URL de venda de ingressos
      *   {{link_texto}}          → Texto do botão de ingressos
@@ -122,7 +122,7 @@ class CANNALEspetaculos_RevSlider {
      *   - Campo vazio após substituição → layer com visibility => off
      *
      * Layer de imagem (logotipo):
-     *   A camada cujo src/url contenha o placeholder "{{logotipo}}" terá
+     *   A camada cujo Wrapper ID seja "{{logotipo}}" terá
      *   sua imagem substituída pela URL do _espetaculo_logotipo do espetáculo.
      *
      * Background do slide:
@@ -167,7 +167,7 @@ class CANNALEspetaculos_RevSlider {
         // Formatar datas para exibição.
         $data_inicio_fmt = ! empty( $item['data_inicio'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio'] ) ) : '';
         $data_fim_fmt    = ! empty( $item['data_fim'] )    ? date_i18n( 'd/m/Y', strtotime( $item['data_fim'] ) )    : '';
-        $data_cartaz_fmt = ! empty( $item['data_inicio_cartaz'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio_cartaz'] ) ) : '';
+
 
         // Texto do botão de ingressos: fallback para 'Ingressos Aqui'.
         $link_texto = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
@@ -190,7 +190,7 @@ class CANNALEspetaculos_RevSlider {
             '{{dias_horarios}}'    => $item['dias_horarios'],
             '{{data_inicio}}'      => $data_inicio_fmt,
             '{{data_fim}}'         => $data_fim_fmt,
-            '{{data_inicio_cartaz}}' => $data_cartaz_fmt,
+
             '{{valores}}'          => $item['valores'],
             '{{link_vendas}}'      => $item['link_vendas'],
             '{{link_texto}}'       => $link_texto,
@@ -239,21 +239,24 @@ class CANNALEspetaculos_RevSlider {
             }
 
             // Tratar layer de imagem do logotipo.
-            // Identifica a layer pelo placeholder {{logotipo}} no src ou url.
+            // Identifica a layer pelo Wrapper ID igual a {{logotipo}}.
             $is_logotipo_layer = false;
+            $wrapper_id = isset( $layer['wrapper_id'] ) ? $layer['wrapper_id'] : '';
+            
+            if ( '{{logotipo}}' === $wrapper_id ) {
+                $is_logotipo_layer = true;
 
-            foreach ( array( 'src', 'url', 'image_url' ) as $img_field ) {
-                if ( isset( $layer[ $img_field ] ) && false !== strpos( $layer[ $img_field ], '{{logotipo}}' ) ) {
-                    $is_logotipo_layer = true;
-
-                    if ( ! empty( $logotipo_url ) ) {
-                        // Substituir o placeholder pela URL real do logotipo.
-                        $layer[ $img_field ] = $logotipo_url;
-                    } else {
-                        // Logotipo inválido ou ausente: ocultar a layer.
-                        $layer['visibility'] = 'off';
+                if ( ! empty( $logotipo_url ) ) {
+                    // Substituir a imagem da layer pela URL real do logotipo.
+                    // O RevSlider pode armazenar a URL da imagem em 'image_url', 'src' ou 'url'.
+                    foreach ( array( 'image_url', 'src', 'url' ) as $img_field ) {
+                        if ( isset( $layer[ $img_field ] ) ) {
+                            $layer[ $img_field ] = $logotipo_url;
+                        }
                     }
-                    break;
+                } else {
+                    // Logotipo inválido ou ausente: ocultar a layer.
+                    $layer['visibility'] = 'off';
                 }
             }
 
@@ -435,7 +438,7 @@ class CANNALEspetaculos_RevSlider {
         $t_valores         = get_post_meta( $temporada_id, '_temporada_valores', true );
         $t_link_vendas     = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
         $t_link_texto      = get_post_meta( $temporada_id, '_temporada_link_texto', true );
-        $t_data_inicio_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
+
         $t_sessoes_raw     = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
 
         // Gerar dias e horários dinamicamente a partir das sessões.
@@ -470,7 +473,7 @@ class CANNALEspetaculos_RevSlider {
             'valores'              => (string) $t_valores,
             'link_vendas'          => (string) $t_link_vendas,
             'link_texto'           => (string) $t_link_texto,
-            'data_inicio_cartaz'   => (string) $t_data_inicio_cartaz,
+
             // Espetáculo
             'autor'                => (string) $e_autor,
             'ano_estreia'          => (string) $e_ano_estreia,
