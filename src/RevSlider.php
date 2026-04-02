@@ -98,17 +98,28 @@ class CANNALEspetaculos_RevSlider {
     /**
      * Clona o slide template e injeta os dados do espetáculo nas camadas.
      *
-     * Placeholders suportados nas camadas de texto:
-     *   {{titulo}}         → Título do espetáculo
-     *   {{teatro}}         → Nome do teatro da temporada
-     *   {{dias_horarios}}  → Dias e horários gerados dinamicamente
-     *   {{data_inicio}}    → Data de início da temporada (d/m/Y)
-     *   {{data_fim}}       → Data de fim da temporada (d/m/Y)
-     *   {{link_vendas}}    → URL de venda de ingressos
-     *   {{link_texto}}     → Texto do botão de ingressos
-     *   {{espetaculo_url}} → URL da página do espetáculo
-     *   {{classificacao}}  → Classificação indicativa
-     *   {{duracao}}        → Duração em minutos
+     * Placeholders suportados nas camadas de texto (sem prefixo _espetaculo_ ou _temporada_):
+     *   {{titulo}}              → Título do espetáculo
+     *   {{espetaculo_url}}      → URL da página do espetáculo
+     *   {{autor}}               → Autor do espetáculo
+     *   {{ano_estreia}}         → Ano de estreia
+     *   {{duracao}}             → Duração em minutos
+     *   {{classificacao}}       → Classificação indicativa
+     *   {{diretor}}             → Diretor (temporada ativa > próxima > espetáculo)
+     *   {{elenco}}              → Elenco (temporada ativa > próxima > espetáculo)
+     *   {{teatro_nome}}         → Nome do teatro da temporada
+     *   {{teatro_endereco}}     → Endereço do teatro da temporada
+     *   {{dias_horarios}}       → Dias e horários gerados dinamicamente
+     *   {{data_inicio}}         → Data de início da temporada (d/m/Y)
+     *   {{data_fim}}            → Data de fim da temporada (d/m/Y)
+     *   {{data_inicio_cartaz}}  → Data de liberação do banner (d/m/Y)
+     *   {{valores}}             → Valores dos ingressos
+     *   {{link_vendas}}         → URL de venda de ingressos
+     *   {{link_texto}}          → Texto do botão de ingressos
+     *
+     * Regras especiais:
+     *   - &nbsp; no valor do postmeta → layer com visibility => off
+     *   - Campo vazio após substituição → layer com visibility => off
      *
      * Layer de imagem (logotipo):
      *   A camada cujo src/url contenha o placeholder "{{logotipo}}" terá
@@ -147,36 +158,46 @@ class CANNALEspetaculos_RevSlider {
         }
 
         // --- Preparar mapa de substituição de placeholders ---
-        $titulo        = get_the_title( $espetaculo_id );
-        $teatro        = $item['teatro'];
-        $dias_horarios = $item['dias_horarios'];
-        $link_vendas   = $item['link_vendas'];
-        $link_texto    = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
+        // Tags sem prefixo _espetaculo_ ou _temporada_.
+        // Prioridade: temporada ativa → próxima → meta do espetáculo (já resolvida em montar_item_espetaculo).
+
+        $titulo         = get_the_title( $espetaculo_id );
         $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
-        $classificacao = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
-        $duracao       = get_post_meta( $espetaculo_id, '_espetaculo_duracao', true );
 
         // Formatar datas para exibição.
-        $data_inicio_raw = $item['data_inicio'];
-        $data_fim_raw    = $item['data_fim'];
-        $data_inicio_fmt = $data_inicio_raw ? date_i18n( 'd/m/Y', strtotime( $data_inicio_raw ) ) : '';
-        $data_fim_fmt    = $data_fim_raw    ? date_i18n( 'd/m/Y', strtotime( $data_fim_raw ) )    : '';
+        $data_inicio_fmt = ! empty( $item['data_inicio'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio'] ) ) : '';
+        $data_fim_fmt    = ! empty( $item['data_fim'] )    ? date_i18n( 'd/m/Y', strtotime( $item['data_fim'] ) )    : '';
+        $data_cartaz_fmt = ! empty( $item['data_inicio_cartaz'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio_cartaz'] ) ) : '';
 
+        // Texto do botão de ingressos: fallback para 'Ingressos Aqui'.
+        $link_texto = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
+
+        // Mapa completo de placeholders → valores.
+        // &nbsp; no valor é tratado como instrução para ocultar a layer (visibility => off).
         $placeholders = array(
-            '{{titulo}}'         => $titulo,
-            '{{teatro}}'         => $teatro,
-            '{{dias_horarios}}'  => $dias_horarios,
-            '{{data_inicio}}'    => $data_inicio_fmt,
-            '{{data_fim}}'       => $data_fim_fmt,
-            '{{link_vendas}}'    => $link_vendas,
-            '{{link_texto}}'     => $link_texto,
-            '{{espetaculo_url}}' => $espetaculo_url,
-            '{{classificacao}}'  => $classificacao,
-            '{{duracao}}'        => $duracao,
+            '{{titulo}}'           => $titulo,
+            '{{espetaculo_url}}'   => $espetaculo_url,
+            // Espetáculo
+            '{{autor}}'            => $item['autor'],
+            '{{ano_estreia}}'      => $item['ano_estreia'],
+            '{{duracao}}'          => $item['duracao'],
+            '{{classificacao}}'    => $item['classificacao'],
+            // Temporada (com fallback já resolvido)
+            '{{diretor}}'          => $item['diretor'],
+            '{{elenco}}'           => $item['elenco'],
+            '{{teatro_nome}}'      => $item['teatro_nome'],
+            '{{teatro_endereco}}'  => $item['teatro_endereco'],
+            '{{dias_horarios}}'    => $item['dias_horarios'],
+            '{{data_inicio}}'      => $data_inicio_fmt,
+            '{{data_fim}}'         => $data_fim_fmt,
+            '{{data_inicio_cartaz}}' => $data_cartaz_fmt,
+            '{{valores}}'          => $item['valores'],
+            '{{link_vendas}}'      => $item['link_vendas'],
+            '{{link_texto}}'       => $link_texto,
         );
 
         // --- URL do logotipo (postmeta _espetaculo_logotipo = attachment ID) ---
-        $logotipo_id  = get_post_meta( $espetaculo_id, '_espetaculo_logotipo', true );
+        $logotipo_id  = $item['logotipo_id'];
         $logotipo_url = '';
 
         if ( $logotipo_id && is_numeric( $logotipo_id ) ) {
@@ -237,13 +258,13 @@ class CANNALEspetaculos_RevSlider {
             }
 
             // Ocultar layers de texto cujo conteúdo resultante esteja vazio
-            // (postmeta vazio após substituição de placeholder).
+            // ou contenha &nbsp; (instrução explícita para ocultar a layer).
             if ( ! $is_logotipo_layer ) {
                 foreach ( $text_fields as $field ) {
                     if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
-                        // Se após substituição o campo ficou vazio, ocultar a layer.
                         $value = trim( $layer[ $field ] );
-                        if ( '' === $value ) {
+                        // Vazio ou &nbsp; → ocultar a layer.
+                        if ( '' === $value || '&nbsp;' === $value || html_entity_decode( $value ) === '\u00a0' ) {
                             $layer['visibility'] = 'off';
                         }
                     }
@@ -278,11 +299,15 @@ class CANNALEspetaculos_RevSlider {
      *               link_vendas, link_texto, data_inicio, data_fim, grupo.
      */
     public static function get_espetaculos_para_banner() {
-        // Verificar cache.
-        $cached = get_transient( self::TRANSIENT_KEY );
+        // Transients desativados quando WP_DEBUG está ativo (facilita desenvolvimento).
+        $use_cache = ! ( defined( 'WP_DEBUG' ) && WP_DEBUG );
 
-        if ( false !== $cached ) {
-            return $cached;
+        if ( $use_cache ) {
+            $cached = get_transient( self::TRANSIENT_KEY );
+
+            if ( false !== $cached ) {
+                return $cached;
+            }
         }
 
         $hoje = current_time( 'Y-m-d' );
@@ -377,8 +402,10 @@ class CANNALEspetaculos_RevSlider {
             $resultado[] = self::montar_item_espetaculo( $espetaculo_id, $temporada->ID, 'proximo' );
         }
 
-        // Salvar no transient por 12 horas.
-        set_transient( self::TRANSIENT_KEY, $resultado, self::TRANSIENT_EXPIRY );
+        // Salvar no transient por 12 horas (somente se WP_DEBUG estiver desativado).
+        if ( $use_cache ) {
+            set_transient( self::TRANSIENT_KEY, $resultado, self::TRANSIENT_EXPIRY );
+        }
 
         return $resultado;
     }
@@ -386,35 +413,73 @@ class CANNALEspetaculos_RevSlider {
     /**
      * Monta o array de dados de um espetáculo para uso na clonagem de slides.
      *
+     * Prioridade de dados para campos compartilhados entre temporada e espetáculo:
+     *   1. Temporada ativa (grupo 'ativo')
+     *   2. Próxima temporada (grupo 'proximo')
+     *   3. Post meta do espetáculo (fallback)
+     *
      * @param int    $espetaculo_id ID do post espetáculo.
-     * @param int    $temporada_id  ID do post temporada.
+     * @param int    $temporada_id  ID do post temporada (ativa ou próxima).
      * @param string $grupo         'ativo' ou 'proximo'.
      * @return array
      */
     private static function montar_item_espetaculo( $espetaculo_id, $temporada_id, $grupo ) {
-        $teatro        = get_post_meta( $temporada_id, '_temporada_teatro_nome', true );
-        $link_vendas   = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
-        $link_texto    = get_post_meta( $temporada_id, '_temporada_link_texto', true );
-        $data_inicio   = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
-        $data_fim      = get_post_meta( $temporada_id, '_temporada_data_fim', true );
-        $sessoes_raw   = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
 
-        // Gerar dias e horários dinamicamente.
-        $dias_horarios = '';
-        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $sessoes_raw ) ) {
-            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $sessoes_raw );
+        // --- Metas da temporada ---
+        $t_teatro_nome     = get_post_meta( $temporada_id, '_temporada_teatro_nome', true );
+        $t_teatro_endereco = get_post_meta( $temporada_id, '_temporada_teatro_endereco', true );
+        $t_diretor         = get_post_meta( $temporada_id, '_temporada_diretor', true );
+        $t_elenco          = get_post_meta( $temporada_id, '_temporada_elenco', true );
+        $t_data_inicio     = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
+        $t_data_fim        = get_post_meta( $temporada_id, '_temporada_data_fim', true );
+        $t_valores         = get_post_meta( $temporada_id, '_temporada_valores', true );
+        $t_link_vendas     = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
+        $t_link_texto      = get_post_meta( $temporada_id, '_temporada_link_texto', true );
+        $t_data_inicio_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
+        $t_sessoes_raw     = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
+
+        // Gerar dias e horários dinamicamente a partir das sessões.
+        $t_dias_horarios = '';
+        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $t_sessoes_raw ) ) {
+            $t_dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $t_sessoes_raw );
         }
 
+        // --- Metas do espetáculo (fallback) ---
+        $e_autor          = get_post_meta( $espetaculo_id, '_espetaculo_autor', true );
+        $e_diretor        = get_post_meta( $espetaculo_id, '_espetaculo_diretor', true );
+        $e_elenco         = get_post_meta( $espetaculo_id, '_espetaculo_elenco', true );
+        $e_ano_estreia    = get_post_meta( $espetaculo_id, '_espetaculo_ano_estreia', true );
+        $e_duracao        = get_post_meta( $espetaculo_id, '_espetaculo_duracao', true );
+        $e_classificacao  = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
+        $e_logotipo       = get_post_meta( $espetaculo_id, '_espetaculo_logotipo', true );
+
+        // --- Aplicar prioridade: temporada > espetáculo para campos compartilhados ---
+        $diretor = ! empty( $t_diretor ) ? $t_diretor : $e_diretor;
+        $elenco  = ! empty( $t_elenco )  ? $t_elenco  : $e_elenco;
+
         return array(
-            'espetaculo_id' => $espetaculo_id,
-            'temporada_id'  => $temporada_id,
-            'teatro'        => (string) $teatro,
-            'dias_horarios' => (string) $dias_horarios,
-            'link_vendas'   => (string) $link_vendas,
-            'link_texto'    => (string) $link_texto,
-            'data_inicio'   => (string) $data_inicio,
-            'data_fim'      => (string) $data_fim,
-            'grupo'         => $grupo,
+            'espetaculo_id'        => $espetaculo_id,
+            'temporada_id'         => $temporada_id,
+            'grupo'                => $grupo,
+            // Temporada
+            'teatro_nome'          => (string) $t_teatro_nome,
+            'teatro_endereco'      => (string) $t_teatro_endereco,
+            'dias_horarios'        => (string) $t_dias_horarios,
+            'data_inicio'          => (string) $t_data_inicio,
+            'data_fim'             => (string) $t_data_fim,
+            'valores'              => (string) $t_valores,
+            'link_vendas'          => (string) $t_link_vendas,
+            'link_texto'           => (string) $t_link_texto,
+            'data_inicio_cartaz'   => (string) $t_data_inicio_cartaz,
+            // Espetáculo
+            'autor'                => (string) $e_autor,
+            'ano_estreia'          => (string) $e_ano_estreia,
+            'duracao'              => (string) $e_duracao,
+            'classificacao'        => (string) $e_classificacao,
+            'logotipo_id'          => (string) $e_logotipo,
+            // Campos com prioridade temporada > espetáculo
+            'diretor'              => (string) $diretor,
+            'elenco'               => (string) $elenco,
         );
     }
 
