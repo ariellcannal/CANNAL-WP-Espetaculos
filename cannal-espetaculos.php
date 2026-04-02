@@ -20,20 +20,20 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Versão atual do plugin.
  */
-define( 'CANNAL_ESPETACULOS_VERSION', '2.4.0' );
+define( 'CANNAL_ESPETACULOS_VERSION', '1.0.0' );
 define( 'CANNAL_ESPETACULOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CANNAL_ESPETACULOS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * Funções auxiliares do plugin.
  */
-require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/cannal-helpers.php';
+require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/cannal-helpers.php';
 
 /**
  * O código que roda durante a ativação do plugin.
  */
 function activate_cannal_espetaculos() {
-    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-activator.php';
+    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-activator.php';
     Cannal_Espetaculos_Activator::activate();
 }
 
@@ -41,7 +41,7 @@ function activate_cannal_espetaculos() {
  * O código que roda durante a desativação do plugin.
  */
 function deactivate_cannal_espetaculos() {
-    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-deactivator.php';
+    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-deactivator.php';
     Cannal_Espetaculos_Deactivator::deactivate();
 }
 
@@ -51,17 +51,13 @@ register_deactivation_hook( __FILE__, 'deactivate_cannal_espetaculos' );
 /**
  * A classe principal do plugin.
  */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos.php';
 
 /**
- * Widget de lista de espetáculos.
+ * Widgets
  */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-widget-lista.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-cannal-espetaculos-widget-lista.php';
 
-/**
- * Classe para geração inteligente de dias e horários.
- */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-dias-horarios.php';
 
 /**
  * Inicia a execução do plugin.

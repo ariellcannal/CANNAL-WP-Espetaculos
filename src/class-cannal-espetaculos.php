@@ -43,48 +43,53 @@ class Cannal_Espetaculos {
         /**
          * A classe responsável por orquestrar as ações e filtros do plugin.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-loader.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-loader.php';
 
         /**
          * A classe responsável por registrar os post types personalizados.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-post-types.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-post-types.php';
 
         /**
          * A classe responsável pelos campos personalizados.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-meta-boxes.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-meta-boxes.php';
 
         /**
          * A classe responsável pelas rewrite rules.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-rewrites.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-rewrites.php';
 
         /**
          * A classe responsável pela funcionalidade administrativa.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Admin/class-cannal-espetaculos-admin.php';
 
         /**
          * A classe responsável pelos avisos administrativos.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin-notices.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Admin/class-cannal-espetaculos-admin-notices.php';
+
+        /**
+         * Classe para geração inteligente de dias e horários.
+         */
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-dias-horarios.php';
 
         /**
          * A classe responsável pela funcionalidade pública.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'public/class-cannal-espetaculos-public.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-public.php';
 
         /**
          * A classe responsável pelos widgets do Elementor.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-elementor.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-elementor.php';
 
         /**
          * A classe responsável pela integração com RevSlider.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-revslider.php';
-
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-revslider.php';
+        
         $this->loader = new Cannal_Espetaculos_Loader();
     }
 

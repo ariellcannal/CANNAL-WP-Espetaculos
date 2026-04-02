@@ -35,7 +35,7 @@ class Cannal_Espetaculos_Admin {
         if ( in_array( $screen->post_type, array( 'espetaculo', 'temporada' ) ) ) {
             wp_enqueue_style( 
                 $this->plugin_name, 
-                CANNAL_ESPETACULOS_PLUGIN_URL . 'admin/css/cannal-espetaculos-admin.css', 
+                CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/css/cannal-espetaculos-admin.css', 
                 array(), 
                 $this->version, 
                 'all' 
@@ -56,7 +56,7 @@ class Cannal_Espetaculos_Admin {
             // Enfileirar script principal
             wp_enqueue_script( 
                 $this->plugin_name, 
-                CANNAL_ESPETACULOS_PLUGIN_URL . 'admin/js/cannal-espetaculos-admin.js', 
+                CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/js/cannal-espetaculos-admin.js', 
                 array( 'jquery', 'jquery-ui-sortable', 'wp-util' ), 
                 $this->version, 
                 true  // Carregar no footer

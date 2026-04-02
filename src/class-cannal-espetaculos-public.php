@@ -1,0 +1,732 @@
+<?php
+
+/**
+ * A funcionalidade pública do plugin.
+ *
+ * @package    Cannal_Espetaculos
+ * @subpackage Cannal_Espetaculos/public
+ */
+class Cannal_Espetaculos_Public
+{
+
+    /**
+     * O ID deste plugin.
+     */
+    private $plugin_name;
+
+    /**
+     * A versão deste plugin.
+     */
+    private $version;
+
+    /**
+     * Inicializa a classe e define suas propriedades.
+     */
+    public function __construct($plugin_name, $version)
+    {
+        $this->plugin_name = $plugin_name;
+        $this->version = $version;
+
+        add_filter('template_include', array(
+            $this,
+            'template_loader'
+        ), 99);
+        add_filter('the_content', array(
+            $this,
+            'espetaculo_content_filter'
+        ));
+        add_action('dynamic_sidebar_before', array(
+            $this,
+            'inject_temporada_info'
+        ));
+
+        add_filter('sidebars_widgets', array(
+            $this,
+            'forcar_sidebar_ativa'
+        ));
+    }
+
+    public function forcar_sidebar_ativa($sidebars_widgets)
+    {
+        $sidebar = 'general-sidebar';
+        if (! is_admin() && (is_singular('espetaculo') || is_post_type_archive('espetaculo') || is_tax('espetaculo_categoria'))) {
+            // Se a sidebar estiver vazia, adicionamos um ID fictício
+            if (empty($sidebars_widgets[$sidebar])) {
+                $sidebars_widgets[$sidebar] = [
+                    'fake-widget-id'
+                ];
+            }
+        }
+        return $sidebars_widgets;
+    }
+
+    /**
+     * Registra os arquivos de estilo para a área pública.
+     */
+    public function enqueue_styles()
+    {
+        if (is_singular('espetaculo') || is_post_type_archive('espetaculo') || is_tax('espetaculo_categoria')) {
+            wp_enqueue_style($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/css/cannal-espetaculos-public.css', array(), $this->version, 'all');
+        }
+    }
+
+    /**
+     * Registra os arquivos JavaScript para a área pública.
+     */
+    public function enqueue_scripts()
+    {
+        if (is_singular('espetaculo') || is_post_type_archive('espetaculo') || is_tax('espetaculo_categoria')) {
+            // Fancybox para galeria
+            wp_enqueue_style('fancybox-css', 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css', array(), '5.0');
+
+            wp_enqueue_script('fancybox-js', 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js', array(), '5.0', true);
+
+            wp_enqueue_script($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/js/cannal-espetaculos-public.js', array(
+                'jquery',
+                'fancybox-js'
+            ), $this->version, true);
+        }
+    }
+
+    /**
+     * Carrega os templates personalizados.
+     */
+    public function template_loader($template)
+    {
+        if (is_singular('espetaculo')) {
+            // Verificar se há um template de página personalizado definido
+            $page_template = get_post_meta(get_the_ID(), '_wp_page_template', true);
+
+            if ($page_template && $page_template !== 'default') {
+                $custom_template = locate_template(array(
+                    $page_template
+                ));
+                if ($custom_template) {
+                    return $custom_template;
+                }
+            }
+
+            // Verificar se o tema tem um template single-espetaculo.php
+            $theme_template = locate_template(array(
+                'single-espetaculo.php'
+            ));
+
+            if ($theme_template) {
+                return $theme_template;
+            }
+
+            // Usar template padrão de página
+            $page_template_file = locate_template(array(
+                'page.php',
+                'singular.php',
+                'index.php'
+            ));
+            if ($page_template_file) {
+                return $page_template_file;
+            }
+        }
+
+        if (is_post_type_archive('espetaculo') || is_tax('espetaculo_categoria')) {
+            // Usar templates do tema para archives
+            $templates = array();
+
+            if (is_tax('espetaculo_categoria')) {
+                $term = get_queried_object();
+                $templates[] = "taxonomy-espetaculo_categoria-{$term->slug}.php";
+                $templates[] = 'taxonomy-espetaculo_categoria.php';
+            }
+
+            $templates[] = 'archive-espetaculo.php';
+            $templates[] = 'archive.php';
+            $templates[] = 'index.php';
+
+            $theme_template = locate_template($templates);
+
+            if ($theme_template) {
+                return $theme_template;
+            }
+        }
+
+        return $template;
+    }
+
+    /**
+     * Filtra o conteúdo do espetáculo para exibir galeria ao final.
+     */
+    public function espetaculo_content_filter($content)
+    {
+        if (! is_singular('espetaculo') || ! in_the_loop() || ! is_main_query()) {
+            return $content;
+        }
+
+        global $post;
+
+        // Verificar se está usando Elementor
+        if (class_exists('\Elementor\Plugin')) {
+            $document = \Elementor\Plugin::$instance->documents->get($post->ID);
+            if ($document && $document->is_built_with_elementor()) {
+                return $content; // Deixar o Elementor gerenciar o conteúdo
+            }
+        }
+
+        // Obter a temporada ativa ou mais recente
+        $temporada = $this->get_active_temporada($post->ID);
+
+        // Se houver temporada com conteúdo, usar o conteúdo da temporada
+        if ($temporada && ! empty($temporada->post_content)) {
+            $content = apply_filters('the_content', $temporada->post_content);
+        }
+
+        // Verificar se a galeria está ativada
+        $exibir_galeria = get_post_meta($post->ID, '_espetaculo_exibir_galeria', true);
+
+        // Padrão é exibir (se campo não existe ou está vazio, exibe)
+        if ($exibir_galeria === '' || $exibir_galeria === '1' || $exibir_galeria === 'sim') {
+            $galeria_ids = get_post_meta($post->ID, '_espetaculo_galeria', true);
+
+            if (! empty($galeria_ids)) {
+                $content .= $this->render_galeria($galeria_ids);
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * Renderiza a galeria de fotos em grid.
+     */
+    private function render_galeria($galeria_ids)
+    {
+        $ids = explode(',', $galeria_ids);
+
+        if (empty($ids)) {
+            return '';
+        }
+
+        ob_start();
+        ?>
+<div class="cannal-galeria-fotos">
+	<h3>Galeria de Fotos</h3>
+	<div class="cannal-galeria-grid">
+                <?php
+
+        foreach ($ids as $attachment_id) :
+            $attachment_id = trim($attachment_id);
+            if (empty($attachment_id))
+                continue;
+
+            $image_url = wp_get_attachment_image_url($attachment_id, 'medium');
+            $image_full = wp_get_attachment_image_url($attachment_id, 'full');
+            $image_alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+
+            if (! $image_url)
+                continue;
+            ?>
+                <div class="cannal-galeria-item">
+			<a href="<?php echo esc_url( $image_full ); ?>" data-fancybox="galeria-espetaculo" data-caption="<?php echo esc_attr( $image_alt ); ?>"> <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $image_alt ); ?>" loading="lazy">
+			</a>
+		</div>
+                <?php endforeach; ?>
+            </div>
+</div>
+<?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Obtém a temporada ativa ou mais recente de um espetáculo.
+     */
+    private function get_active_temporada($espetaculo_id)
+    {
+        $hoje = current_time('Y-m-d');
+
+        // Buscar temporada em cartaz
+        $temporadas = get_posts(array(
+            'post_type' => 'temporada',
+            'posts_per_page' => 1,
+            'meta_query' => array(
+                'relation' => 'AND',
+                array(
+                    'key' => '_temporada_espetaculo_id',
+                    'value' => $espetaculo_id,
+                    'compare' => '='
+                ),
+                array(
+                    'key' => '_temporada_data_inicio',
+                    'value' => $hoje,
+                    'compare' => '<=',
+                    'type' => 'DATE'
+                ),
+                array(
+                    'key' => '_temporada_data_fim',
+                    'value' => $hoje,
+                    'compare' => '>=',
+                    'type' => 'DATE'
+                )
+            ),
+            'orderby' => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order' => 'DESC'
+        ));
+
+        if (! empty($temporadas)) {
+            return $temporadas[0];
+        }
+
+        // Se não houver em cartaz, buscar a mais recente
+        $temporadas = get_posts(array(
+            'post_type' => 'temporada',
+            'posts_per_page' => 1,
+            'meta_key' => '_temporada_espetaculo_id',
+            'meta_value' => $espetaculo_id,
+            'orderby' => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order' => 'DESC'
+        ));
+
+        return ! empty($temporadas) ? $temporadas[0] : null;
+    }
+
+    /**
+     * Obtém temporadas de um espetáculo por status.
+     */
+    public static function get_temporadas_by_status($espetaculo_id, $status = 'em_cartaz')
+    {
+        $hoje = current_time('Y-m-d');
+        $meta_query = array(
+            array(
+                'key' => '_temporada_espetaculo_id',
+                'value' => $espetaculo_id,
+                'compare' => '='
+            )
+        );
+
+        switch ($status) {
+            case 'em_cartaz':
+                $meta_query[] = array(
+                    'key' => '_temporada_data_inicio',
+                    'value' => $hoje,
+                    'compare' => '<=',
+                    'type' => 'DATE'
+                );
+                $meta_query[] = array(
+                    'key' => '_temporada_data_fim',
+                    'value' => $hoje,
+                    'compare' => '>=',
+                    'type' => 'DATE'
+                );
+                break;
+
+            case 'futuras':
+                $meta_query[] = array(
+                    'key' => '_temporada_data_inicio',
+                    'value' => $hoje,
+                    'compare' => '>',
+                    'type' => 'DATE'
+                );
+                break;
+
+            case 'encerradas':
+                $meta_query[] = array(
+                    'key' => '_temporada_data_fim',
+                    'value' => $hoje,
+                    'compare' => '<',
+                    'type' => 'DATE'
+                );
+                break;
+        }
+
+        return get_posts(array(
+            'post_type' => 'temporada',
+            'posts_per_page' => - 1,
+            'meta_query' => $meta_query,
+            'orderby' => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order' => $status === 'encerradas' ? 'DESC' : 'ASC'
+        ));
+    }
+
+    /**
+     * Injeta informações da temporada no início da sidebar.
+     */
+    public function inject_temporada_info()
+    {
+        // Verificar se é single de espetáculo
+        if (! is_singular('espetaculo')) {
+            return;
+        }
+
+        global $post;
+        $espetaculo_id = $post->ID;
+
+        // Obter temporada ativa
+        $temporada = $this->get_active_temporada($espetaculo_id);
+
+        if ($temporada) {
+            // Exibir informações da temporada ativa
+            $this->render_temporada_ativa($espetaculo_id, $temporada);
+        } else {
+            // Buscar próximas temporadas
+            $proximas = $this->get_proximas_temporadas($espetaculo_id, 3);
+
+            if (! empty($proximas)) {
+                $this->render_proximas_temporadas($proximas);
+            } else {
+                // Buscar últimas temporadas
+                $ultimas = $this->get_ultimas_temporadas($espetaculo_id, 3);
+
+                if (! empty($ultimas)) {
+                    $this->render_ultimas_temporadas($ultimas);
+                }
+            }
+        }
+    }
+
+    /**
+     * Gera a sidebar com informações do espetáculo.
+     */
+    private function render_espetaculo_sidebar($espetaculo_id, $temporada)
+    {
+        ob_start();
+        ?>
+<aside class="widget_block">
+            <?php
+
+        if ($temporada) :
+            $teatro_nome = get_post_meta($temporada->ID, '_temporada_teatro_nome', true);
+            $teatro_endereco = get_post_meta($temporada->ID, '_temporada_teatro_endereco', true);
+            $tipo_sessao = get_post_meta($temporada->ID, '_temporada_tipo_sessao', true);
+            $sessoes_data = get_post_meta($temporada->ID, '_temporada_sessoes_data', true);
+            $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar($tipo_sessao, $sessoes_data);
+            ?>
+
+            <?php if ( $teatro_nome ) : ?>
+            <div class="espetaculo-sidebar">
+		<h3>Teatro</h3>
+		<p>
+			<strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
+                    <?php if ( $teatro_endereco ) : ?>
+                        <?php echo esc_html( $teatro_endereco ); ?>
+                    <?php endif; ?>
+                </p>
+	</div>
+            <?php endif; ?>
+
+            <?php if ( $dias_horarios ) : ?>
+            <div class="espetaculo-sidebar">
+		<h3><?php echo $tipo_sessao === 'avulsas' ? 'Apresentações' : 'Temporada'; ?></h3>
+		<p><?php echo esc_html( $dias_horarios ); ?></p>
+	</div>
+            <?php endif; ?>
+
+            <?php endif; ?>
+
+            <?php
+        $duracao = get_post_meta($espetaculo_id, '_espetaculo_duracao', true);
+        if ($duracao) :
+            ?>
+            <div class="espetaculo-sidebar">
+		<h3>Duração</h3>
+		<p><?php echo esc_html( $duracao ); ?></p>
+	</div>
+            <?php endif; ?>
+
+            <?php
+        $classificacao = get_post_meta($espetaculo_id, '_espetaculo_classificacao', true);
+        if ($classificacao) :
+            ?>
+            <div class="espetaculo-sidebar">
+		<h3>Classificação Indicativa</h3>
+		<div class="classificacao-selo classificacao-<?php echo esc_attr( $classificacao ); ?>">
+                    <?php echo esc_html( $classificacao === 'livre' ? 'Livre' : $classificacao . ' anos' ); ?>
+                </div>
+	</div>
+            <?php endif; ?>
+
+            <?php
+        if ($temporada) {
+            $link_vendas = get_post_meta($temporada->ID, '_temporada_link_vendas', true);
+            $link_texto = get_post_meta($temporada->ID, '_temporada_link_texto', true);
+
+            if ($link_vendas) :
+                $texto_botao = ! empty($link_texto) ? $link_texto : 'Ingressos Aqui';
+                ?>
+            <div class="espetaculo-sidebar">
+		<a href="<?php echo esc_url( $link_vendas ); ?>" class="button-ingressos" target="_blank" rel="noopener">
+                    <?php echo esc_html( $texto_botao ); ?>
+                </a>
+	</div>
+            <?php 
+                endif;
+
+        }
+        ?>
+        </aside>
+<?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza informações da temporada ativa.
+     */
+    private function render_temporada_ativa($espetaculo_id, $temporada)
+    {
+        $duracao = cannal_get_field($espetaculo_id, 'duracao', true);
+        $autor = cannal_get_field($espetaculo_id, 'autor', true);
+        $diretor = cannal_get_field($espetaculo_id, 'diretor', true);
+        $elenco = cannal_get_field($espetaculo_id, 'elenco', true);
+        $ano_estreia = cannal_get_field($espetaculo_id, 'ano_estreia', true);
+        $duracao = cannal_get_field($espetaculo_id, 'duracao', true);
+        $classificacao = cannal_get_field($espetaculo_id, 'classificacao', true);
+        if ($classificacao) {
+            $classificacao_text = strtolower($classificacao) === 'livre' ? 'Livre' : $classificacao . ' anos';
+        }
+        ?>
+<aside class="gt-widget widget_block espetaculo-sidebar"><?php
+        if ($temporada) {
+            $teatro_nome = get_post_meta($temporada->ID, '_temporada_teatro_nome', true);
+            $teatro_endereco = get_post_meta($temporada->ID, '_temporada_teatro_endereco', true);
+            $valores = get_post_meta($temporada->ID, '_temporada_valores', true);
+            $link_vendas = get_post_meta($temporada->ID, '_temporada_link_vendas', true);
+            $link_texto = get_post_meta($temporada->ID, '_temporada_link_texto', true);
+            $sessoes_data = get_post_meta($temporada->ID, '_temporada_sessoes_data', true);
+            $elenco = get_post_meta($espetaculo_id, '_temporada_elenco', true) ?? $elenco;
+
+            // Decodificar sessões
+            $sessoes = ! empty($sessoes_data) ? json_decode($sessoes_data, true) : null;
+            $dias_horarios = Cannal_Espetaculos_Dias_Horarios::format_dias_horarios_legivel($sessoes);
+            ?>
+            
+            <!-- Informações da Temporada -->
+
+	<h3>Informações</h3>
+                    <?php if ( $teatro_nome || $teatro_endereco ) { ?>
+                    <div class="info-item">
+		<strong>Teatro:</strong>
+		<div>
+                            <?php if ( $teatro_nome ) : ?>
+                                <?php echo esc_html( $teatro_nome ); ?><br />
+                            <?php endif; ?>
+                            <?php if ( $teatro_endereco ) : ?>
+                                <?php echo esc_html( $teatro_endereco ); ?>
+                            <?php endif; ?>
+                        </div>
+	</div>
+                    <?php } ?>
+                    
+                    <?php if ( $dias_horarios ) { ?>
+                    <div class="info-item">
+		<strong>Dias e Horários:</strong> <span><?php echo esc_html( $dias_horarios ); ?></span>
+	</div>
+                    <?php }?>
+                    
+                    <?php if ( $duracao ) { ?>
+                    <div class="info-item">
+		<strong>Duração:</strong> <span><?php echo esc_html( $duracao ); ?></span>
+	</div>
+                    <?php }?>
+        
+                    <?php if ( $diretor ) { ?>
+                    <div class="info-item">
+		<strong>Direção:</strong> <span><?php echo esc_html( $diretor ); ?></span>
+	</div>
+                    <?php }?>
+        
+                    <?php if ( $elenco ) { ?>
+                    <div class="info-item">
+		<strong>Elenco:</strong>
+		<div><?php echo nl2br( esc_html( $elenco ) ); ?></div>
+	</div>
+                    <?php } ?>
+        
+                    <?php if ( $classificacao ) { ?>
+                    <div class="info-item classificacao-item">
+		<strong>Classificação Indicativa:</strong>
+		<div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
+                            <?php echo esc_html( $classificacao_text ); ?>
+                        </div>
+	</div>
+                    <?php }?>
+                    
+                    <?php if ( $valores ) { ?>
+                    <div class="info-item">
+		<strong>Valores:</strong>
+		<div><?php echo nl2br( esc_html( $valores ) ); ?></div>
+	</div>
+                    <?php }?>
+                    
+                    <?php if ( $link_vendas ) { ?>
+                    <div class="info-item-cta">
+		<a href="<?php echo esc_url( $link_vendas ); ?>" class="btn-comprar-ingressos" target="_blank" rel="noopener">
+                            <?php echo esc_html( $link_texto ? $link_texto : 'Comprar Ingressos' ); ?>
+                        </a>
+	</div>
+                <?php }?>
+            
+	<?php } else { ?>        
+    <!-- Informações do Espetáculo (quando não há temporada ativa) -->
+
+	<h3>Informações</h3>
+                <?php if ( $autor ) { ?>
+                <div class="info-item">
+		<strong>Autor:</strong> <span><?php echo esc_html( $autor); ?></span>
+	</div>
+                <?php } ?>
+    
+                <?php if ( $diretor ) { ?>
+                <div class="info-item">
+		<strong>Direção:</strong> <span><?php echo esc_html( $diretor ); ?></span>
+	</div>
+                <?php } ?>
+    
+                <?php if ( $elenco ) { ?>
+                <div class="info-item">
+		<strong>Elenco:</strong>
+		<div><?php echo nl2br( esc_html( $elenco ) ); ?></div>
+	</div>
+                <?php }?>
+    
+                <?php if ( $duracao ) { ?>
+                <div class="info-item">
+		<strong>Duração:</strong> <span><?php echo esc_html( $duracao ); ?></span>
+	</div>
+                <?php } ?>
+                
+                <?php if ( $ano_estreia) { ?>
+                <div class="info-item">
+		<strong>Estreou em:</strong> <span><?php echo esc_html( $ano_estreia); ?></span>
+	</div>
+                <?php } ?>
+    
+                <?php if ( $classificacao ) { ?>
+                <div class="info-item classificacao-item">
+		<strong>Classificação Indicativa:</strong>
+		<div class="classificacao-selo classificacao-<?php echo esc_attr( strtolower( str_replace( ' ', '-', $classificacao ) ) ); ?>">
+                        <?php echo esc_html( $classificacao_text ); ?>
+                    </div>
+	</div>
+                <?php }?>         
+	<?php } ?>
+	</aside>
+<?php
+    }
+
+    /**
+     * Renderiza próximas temporadas.
+     */
+    private function render_proximas_temporadas($temporadas)
+    {
+        ?>
+<div class="widget cannal-widget-temporada">
+	<h2 class="widget-title wp-block-heading">Próximas Temporadas</h2>
+	<div class="cannal-temporada-info">
+    			<?php
+        foreach ($temporadas as $temporada) :
+            $teatro_nome = get_post_meta($temporada->ID, '_temporada_teatro_nome', true);
+            $data_inicio = get_post_meta($temporada->ID, '_temporada_data_inicio', true);
+            $data_inicio_formatada = date_i18n('d/m/Y', strtotime($data_inicio));
+            $link_vendas = get_post_meta($temporada->ID, '_temporada_link_vendas', true);
+            $link_texto = get_post_meta($temporada->ID, '_temporada_link_texto', true);
+            ?>
+                    <div class="cannal-info-box">
+			<p>
+				<strong><?php echo esc_html( $teatro_nome ); ?></strong><br>Início: <?php echo esc_html( $data_inicio_formatada ); ?></p>
+    				<?php if ( $link_vendas ) : ?>
+        				<p>
+				<a href="<?php echo esc_url( $link_vendas ); ?>" class="button-ingressos" target="_blank" rel="noopener">
+            					<?php echo esc_html( ! empty( $link_texto ) ? $link_texto : 'Ingressos Aqui' ); ?>
+            				</a>
+			</p>
+                    <?php endif; ?>
+                    </div>
+    			<?php endforeach; ?>
+			</div>
+</div>
+<?php
+    }
+
+    /**
+     * Renderiza últimas temporadas.
+     */
+    private function render_ultimas_temporadas($temporadas)
+    {
+        ?>
+<div class="widget cannal-widget-temporada">
+	<h3 class="widget-title">Últimas Temporadas</h3>
+	<div class="cannal-temporada-info">
+                <?php
+        foreach ($temporadas as $temporada) :
+            $teatro_nome = get_post_meta($temporada->ID, '_temporada_teatro_nome', true);
+            $data_fim = get_post_meta($temporada->ID, '_temporada_data_fim', true);
+            $data_fim_formatada = date_i18n('d/m/Y', strtotime($data_fim));
+            ?>
+                	<div class="cannal-info-box">
+			<p>
+				<strong><?php echo esc_html( $teatro_nome ); ?></strong><br>
+                            Término: <?php echo esc_html( $data_fim_formatada ); ?>
+                        </p>
+		</div>
+                <?php endforeach; ?>
+            	</div>
+</div>
+<?php
+    }
+
+    /**
+     * Obtém as próximas temporadas.
+     */
+    private function get_proximas_temporadas($espetaculo_id, $limit = 3)
+    {
+        $hoje = current_time('Y-m-d');
+
+        return get_posts(array(
+            'post_type' => 'temporada',
+            'posts_per_page' => $limit,
+            'meta_query' => array(
+                array(
+                    'key' => '_temporada_espetaculo_id',
+                    'value' => $espetaculo_id,
+                    'compare' => '='
+                ),
+                array(
+                    'key' => '_temporada_data_inicio',
+                    'value' => $hoje,
+                    'compare' => '>',
+                    'type' => 'DATE'
+                )
+            ),
+            'orderby' => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order' => 'ASC'
+        ));
+    }
+
+    /**
+     * Obtém as últimas temporadas.
+     */
+    private function get_ultimas_temporadas($espetaculo_id, $limit = 3)
+    {
+        $hoje = current_time('Y-m-d');
+
+        return get_posts(array(
+            'post_type' => 'temporada',
+            'posts_per_page' => $limit,
+            'meta_query' => array(
+                array(
+                    'key' => '_temporada_espetaculo_id',
+                    'value' => $espetaculo_id,
+                    'compare' => '='
+                ),
+                array(
+                    'key' => '_temporada_data_fim',
+                    'value' => $hoje,
+                    'compare' => '<',
+                    'type' => 'DATE'
+                )
+            ),
+            'orderby' => 'meta_value',
+            'meta_key' => '_temporada_data_fim',
+            'order' => 'DESC'
+        ));
+    }
+}

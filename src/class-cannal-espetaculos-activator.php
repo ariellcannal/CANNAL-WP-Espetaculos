@@ -13,7 +13,7 @@ class Cannal_Espetaculos_Activator {
      */
     public static function activate() {
         // Registrar os post types e taxonomias
-        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-cannal-espetaculos-post-types.php';
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'src/class-cannal-espetaculos-post-types.php';
         $post_types = new Cannal_Espetaculos_Post_Types();
         $post_types->register_post_types();
         $post_types->register_taxonomies();

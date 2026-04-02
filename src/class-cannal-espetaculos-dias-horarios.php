@@ -353,4 +353,124 @@ class Cannal_Espetaculos_Dias_Horarios {
 
         return isset( $meses[ $mes ] ) ? $meses[ $mes ] : '';
     }
+    
+    /*
+     * Função para formatar dias e horários de forma legível
+     */
+    public static function format_dias_horarios_legivel($sessoes)
+    {
+        if (empty($sessoes))
+            return '';
+            
+            $output = '';
+            
+            if ($sessoes['tipo'] === 'avulsas' && ! empty($sessoes['avulsas'])) {
+                // Agrupar por mês
+                $por_mes = array();
+                foreach ($sessoes['avulsas'] as $sessao) {
+                    $mes = date_i18n('F', strtotime($sessao['data'])); // Nome do mês
+                    $dia = date_i18n('j', strtotime($sessao['data'])); // Dia sem zero à esquerda
+                    $horario = $sessao['horario'];
+                    
+                    if (! isset($por_mes[$mes])) {
+                        $por_mes[$mes] = array();
+                    }
+                    
+                    $por_mes[$mes][] = array(
+                        'dia' => $dia,
+                        'horario' => $horario
+                    );
+                }
+                
+                $partes = array();
+                foreach ($por_mes as $mes => $datas) {
+                    $dias = array_unique(array_column($datas, 'dia'));
+                    sort($dias);
+                    
+                    if (count($dias) === 1) {
+                        $dias_texto = $dias[0];
+                    } elseif (count($dias) === 2) {
+                        $dias_texto = $dias[0] . ' e ' . $dias[1];
+                    } else {
+                        $ultimo = array_pop($dias);
+                        $dias_texto = implode(', ', $dias) . ' e ' . $ultimo;
+                    }
+                    
+                    $partes[] = $dias_texto . ' de ' . $mes;
+                }
+                
+                $output = implode(', ', $partes);
+            } elseif ($sessoes['tipo'] === 'temporada' && ! empty($sessoes['temporada'])) {
+                // Agrupar por horário
+                $por_horario = array();
+                $dias_semana_map = array(
+                    'domingo' => 'dom',
+                    'segunda' => 'seg',
+                    'terca' => 'ter',
+                    'quarta' => 'qua',
+                    'quinta' => 'qui',
+                    'sexta' => 'sex',
+                    'sabado' => 'sáb'
+                );
+                
+                foreach ($sessoes['temporada'] as $dia => $horarios_str) {
+                    if (empty($horarios_str))
+                        continue;
+                        
+                        $dia_abrev = isset($dias_semana_map[$dia]) ? $dias_semana_map[$dia] : $dia;
+                        
+                        if (! isset($por_horario[$horarios_str])) {
+                            $por_horario[$horarios_str] = array();
+                        }
+                        
+                        $por_horario[$horarios_str][] = $dia_abrev;
+                }
+                
+                $partes = array();
+                foreach ($por_horario as $horarios => $dias) {
+                    if (count($dias) === 1) {
+                        $dias_texto = $dias[0];
+                    } elseif (count($dias) === 2) {
+                        $dias_texto = $dias[0] . ' e ' . $dias[1];
+                    } else {
+                        // Verificar se são dias consecutivos
+                        $dias_ordem = array(
+                            'dom',
+                            'seg',
+                            'ter',
+                            'qua',
+                            'qui',
+                            'sex',
+                            'sáb'
+                        );
+                        $indices = array();
+                        foreach ($dias as $dia) {
+                            $indices[] = array_search($dia, $dias_ordem);
+                        }
+                        sort($indices);
+                        
+                        $consecutivos = true;
+                        for ($i = 1; $i < count($indices); $i ++) {
+                            if ($indices[$i] !== $indices[$i - 1] + 1) {
+                                $consecutivos = false;
+                                break;
+                            }
+                        }
+                        
+                        if ($consecutivos) {
+                            $dias_texto = $dias_ordem[$indices[0]] . ' a ' . $dias_ordem[$indices[count($indices) - 1]];
+                        } else {
+                            $ultimo = array_pop($dias);
+                            $dias_texto = implode(', ', $dias) . ' e ' . $ultimo;
+                        }
+                    }
+                    
+                    $partes[] = $dias_texto . ' às ' . $horarios;
+                }
+                
+                $output = implode(', ', $partes);
+            }
+            
+            return $output;
+    }
 }
