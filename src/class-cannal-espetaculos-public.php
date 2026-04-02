@@ -44,6 +44,39 @@ class Cannal_Espetaculos_Public
             $this,
             'forcar_sidebar_ativa'
         ));
+
+        // Favicon personalizado por espetáculo
+        add_action('wp_head', array($this, 'inject_espetaculo_favicon'), 1);
+    }
+
+    /**
+     * Injeta o favicon personalizado do espetáculo no <head>.
+     * Fallback para o favicon padrão do site quando não houver ícone definido.
+     */
+    public function inject_espetaculo_favicon()
+    {
+        if ( ! is_singular('espetaculo') ) {
+            return;
+        }
+
+        $post_id  = get_the_ID();
+        $icone_id = (int) get_post_meta( $post_id, '_espetaculo_icone', true );
+
+        if ( ! $icone_id ) {
+            return; // Sem ícone: mantém o favicon padrão do tema
+        }
+
+        $icone_url = wp_get_attachment_image_url( $icone_id, 'full' );
+
+        if ( ! $icone_url ) {
+            return;
+        }
+
+        // Sobrescrever o favicon padrão com o ícone do espetáculo
+        // Usa priority=1 para rodar antes dos links de favicon do tema
+        echo '<link rel="icon" type="image/png" href="' . esc_url( $icone_url ) . '" />' . "\n";
+        echo '<link rel="shortcut icon" href="' . esc_url( $icone_url ) . '" />' . "\n";
+        echo '<link rel="apple-touch-icon" href="' . esc_url( $icone_url ) . '" />' . "\n";
     }
 
     public function forcar_sidebar_ativa($sidebars_widgets)
@@ -236,6 +269,45 @@ class Cannal_Espetaculos_Public
     /**
      * Obtém a temporada ativa ou mais recente de um espetáculo.
      */
+    /**
+     * Alias estático para uso pelos widgets.
+     */
+    public static function get_active_temporada_static($espetaculo_id)
+    {
+        $hoje = current_time('Y-m-d');
+
+        $temporadas = get_posts(array(
+            'post_type'      => 'temporada',
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array( 'key' => '_temporada_espetaculo_id', 'value' => $espetaculo_id, 'compare' => '=' ),
+                array( 'key' => '_temporada_data_inicio',   'value' => $hoje, 'compare' => '<=', 'type' => 'DATE' ),
+                array( 'key' => '_temporada_data_fim',      'value' => $hoje, 'compare' => '>=', 'type' => 'DATE' ),
+            ),
+            'orderby'  => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order'    => 'DESC',
+        ));
+
+        if ( ! empty( $temporadas ) ) {
+            return $temporadas[0];
+        }
+
+        $temporadas = get_posts(array(
+            'post_type'      => 'temporada',
+            'posts_per_page' => 1,
+            'meta_query'     => array(
+                array( 'key' => '_temporada_espetaculo_id', 'value' => $espetaculo_id, 'compare' => '=' ),
+            ),
+            'orderby'  => 'meta_value',
+            'meta_key' => '_temporada_data_inicio',
+            'order'    => 'DESC',
+        ));
+
+        return ! empty( $temporadas ) ? $temporadas[0] : null;
+    }
+
     private function get_active_temporada($espetaculo_id)
     {
         $hoje = current_time('Y-m-d');
@@ -673,9 +745,17 @@ class Cannal_Espetaculos_Public
     }
 
     /**
-     * Obtém as próximas temporadas.
+     * Obtém as próximas temporadas (instância).
      */
     private function get_proximas_temporadas($espetaculo_id, $limit = 3)
+    {
+        return self::get_proximas_temporadas_static($espetaculo_id, $limit);
+    }
+
+    /**
+     * Obtém as próximas temporadas (estático — uso pelos widgets).
+     */
+    public static function get_proximas_temporadas_static($espetaculo_id, $limit = 3)
     {
         $hoje = current_time('Y-m-d');
 
@@ -702,9 +782,17 @@ class Cannal_Espetaculos_Public
     }
 
     /**
-     * Obtém as últimas temporadas.
+     * Obtém as últimas temporadas (instância).
      */
     private function get_ultimas_temporadas($espetaculo_id, $limit = 3)
+    {
+        return self::get_ultimas_temporadas_static($espetaculo_id, $limit);
+    }
+
+    /**
+     * Obtém as últimas temporadas (estático — uso pelos widgets).
+     */
+    public static function get_ultimas_temporadas_static($espetaculo_id, $limit = 3)
     {
         $hoje = current_time('Y-m-d');
 
