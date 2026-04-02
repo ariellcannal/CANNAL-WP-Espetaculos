@@ -287,11 +287,11 @@ class CANNALEspetaculos_RevSlider {
         $t_link_texto      = get_post_meta( $temporada_id, '_temporada_link_texto', true );
 
         $t_sessoes_raw     = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
-
+        $t_tipo_sessao     = get_post_meta( $temporada_id, '_temporada_tipo_sessao', true );
         // Gerar dias e horários dinamicamente a partir das sessões.
         $t_dias_horarios = '';
         if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $t_sessoes_raw ) ) {
-            $t_dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $t_sessoes_raw );
+            $t_dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( (string) $t_tipo_sessao, (string) $t_sessoes_raw );
         }
 
         // --- Metas do espetáculo (fallback) ---
