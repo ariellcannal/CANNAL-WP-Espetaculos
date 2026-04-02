@@ -656,6 +656,15 @@
                             $('#modal_conteudo').val(response.data.conteudo || '');
                         }
 
+                        // Restaurar tipo_sessao ANTES de setModalSessoesData
+                        // (setModalSessoesData também faz isso, mas só se sessoes_data existir)
+                        if (response.data.tipo_sessao === 'temporada') {
+                            $('#modal_tipo_sessao_temporada').prop('checked', true);
+                        } else {
+                            $('#modal_tipo_sessao_avulsas').prop('checked', true);
+                        }
+                        toggleModalSessoes();
+
                         setModalSessoesData(response.data.sessoes_data);
                         $('#temporada-modal').fadeIn();
                     } else {
@@ -671,6 +680,7 @@
         /* --- Excluir temporada --- */
         $(document).on('click', '.delete-temporada-btn', function (e) {
             e.preventDefault();
+            // Capturar referências ANTES da Promise para não perder o contexto
             var temporadaId = $(this).data('temporada-id');
             var $row        = $(this).closest('tr');
 
@@ -687,10 +697,16 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            $row.fadeOut(300, function () { $(this).remove(); });
+                            $row.fadeOut(300, function () {
+                                $(this).remove();
+                                // Se não sobrar linhas, exibir mensagem de vazio
+                                if ($('#temporadas-tbody tr').length === 0) {
+                                    $('#no-temporadas-msg').show();
+                                }
+                            });
                             cannalShowNotice('Temporada excluída com sucesso!', 'success');
                         } else {
-                            cannalShowNotice('Erro ao excluir temporada: ' + response.data.message, 'error');
+                            cannalShowNotice('Erro ao excluir temporada: ' + (response.data ? response.data.message : 'Erro desconhecido.'), 'error');
                         }
                     },
                     error: function () {

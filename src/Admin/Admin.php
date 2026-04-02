@@ -143,14 +143,35 @@ class CANNALEspetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_teatro_endereco', isset( $_POST['teatro_endereco'] ) ? sanitize_text_field( $_POST['teatro_endereco'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_diretor', isset( $_POST['diretor'] ) ? sanitize_text_field( $_POST['diretor'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_elenco', isset( $_POST['elenco'] ) ? sanitize_textarea_field( $_POST['elenco'] ) : '' );
-        update_post_meta( $temporada_id, '_temporada_data_inicio', isset( $_POST['data_inicio'] ) ? sanitize_text_field( $_POST['data_inicio'] ) : '' );
-        update_post_meta( $temporada_id, '_temporada_data_fim', isset( $_POST['data_fim'] ) ? sanitize_text_field( $_POST['data_fim'] ) : '' );
+        // _temporada_data_inicio e _temporada_data_fim são salvos abaixo com lógica de avulsas
         update_post_meta( $temporada_id, '_temporada_valores', isset( $_POST['valores'] ) ? sanitize_textarea_field( $_POST['valores'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_vendas', isset( $_POST['link_vendas'] ) ? esc_url_raw( $_POST['link_vendas'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_texto', isset( $_POST['link_texto'] ) ? sanitize_text_field( $_POST['link_texto'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', isset( $_POST['data_inicio_cartaz'] ) ? sanitize_text_field( $_POST['data_inicio_cartaz'] ) : '' );
-        update_post_meta( $temporada_id, '_temporada_tipo_sessao', isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas' );
-        update_post_meta( $temporada_id, '_temporada_sessoes_data', isset( $_POST['sessoes_data'] ) ? sanitize_textarea_field( $_POST['sessoes_data'] ) : '' );
+        $tipo_sessao_input = isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas';
+        $sessoes_data_raw  = isset( $_POST['sessoes_data'] ) ? sanitize_textarea_field( $_POST['sessoes_data'] ) : '';
+
+        update_post_meta( $temporada_id, '_temporada_tipo_sessao', $tipo_sessao_input );
+        update_post_meta( $temporada_id, '_temporada_sessoes_data', $sessoes_data_raw );
+
+        // Se tipo avulsas: preencher data_inicio/fim automaticamente com primeira e última sessão
+        $data_inicio_post = isset( $_POST['data_inicio'] ) ? sanitize_text_field( $_POST['data_inicio'] ) : '';
+        $data_fim_post    = isset( $_POST['data_fim'] )    ? sanitize_text_field( $_POST['data_fim'] )    : '';
+
+        if ( $tipo_sessao_input === 'avulsas' && ! empty( $sessoes_data_raw ) ) {
+            $sessoes_obj = json_decode( $sessoes_data_raw, true );
+            if ( ! empty( $sessoes_obj['avulsas'] ) && is_array( $sessoes_obj['avulsas'] ) ) {
+                $datas = array_filter( array_column( $sessoes_obj['avulsas'], 'data' ) );
+                if ( ! empty( $datas ) ) {
+                    sort( $datas );
+                    $data_inicio_post = reset( $datas );
+                    $data_fim_post    = end( $datas );
+                }
+            }
+        }
+
+        update_post_meta( $temporada_id, '_temporada_data_inicio', $data_inicio_post );
+        update_post_meta( $temporada_id, '_temporada_data_fim',    $data_fim_post );
 
         // Calcular status da temporada para retornar ao JS
         $hoje        = current_time( 'Y-m-d' );
