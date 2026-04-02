@@ -149,7 +149,8 @@ class CANNALEspetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_link_texto', isset( $_POST['link_texto'] ) ? sanitize_text_field( $_POST['link_texto'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', isset( $_POST['data_inicio_cartaz'] ) ? sanitize_text_field( $_POST['data_inicio_cartaz'] ) : '' );
         $tipo_sessao_input = isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas';
-        $sessoes_data_raw  = isset( $_POST['sessoes_data'] ) ? sanitize_textarea_field( $_POST['sessoes_data'] ) : '';
+        // Usar wp_unslash para preservar o JSON intacto (sanitize_textarea_field corrompe aspas e chaves)
+        $sessoes_data_raw  = isset( $_POST['sessoes_data'] ) ? wp_unslash( $_POST['sessoes_data'] ) : '';
 
         update_post_meta( $temporada_id, '_temporada_tipo_sessao', $tipo_sessao_input );
         update_post_meta( $temporada_id, '_temporada_sessoes_data', $sessoes_data_raw );
@@ -201,11 +202,10 @@ class CANNALEspetaculos_Admin {
             }
         }
 
-        // Gerar dias e horários
-        $sessoes       = ! empty( $sessoes_raw ) ? json_decode( $sessoes_raw, true ) : null;
+        // Gerar dias e horários (passar string JSON raw — DiasHorarios::gerar() faz o json_decode internamente)
         $dias_horarios = '';
-        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) ) {
-            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes );
+        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $sessoes_raw ) ) {
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_raw );
         }
 
         wp_send_json_success( array(
