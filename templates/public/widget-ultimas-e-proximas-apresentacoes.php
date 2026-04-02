@@ -3,8 +3,9 @@
  * Template: Widget CANNAL - Próximas Apresentações
  *
  * Variáveis disponíveis:
- * @var string  $titulo     Título do widget (h3)
- * @var array   $temporadas Array de WP_Post de temporadas futuras
+ * @var string  $titulo         Título do widget (h3)
+ * @var bool    $exibe_link     Se deve exibir link do botão
+ * @var array   $temporadas     Array de WP_Post de temporadas futuras
  */
 if (! defined('ABSPATH'))
     exit();
@@ -27,19 +28,10 @@ if (empty($temporadas))
         ?>
         <div class="info-item">
         	<strong><?php echo esc_html( $teatro_nome ); ?></strong>
-        	<div>
-        		<?php if($sessoes['tipo']=="temporada"):?>
-                    <?php if ( $data_inicio_fmt ) : ?>
-        			<?php esc_html_e( 'Estreia:', 'cannal-espetaculos' ); ?> <?php echo esc_html( $data_inicio_fmt ); ?>
-                    <?php endif; ?>
-                <?php elseif($sessoes['tipo']=="avulsas" && !empty($sessoes['avulsas'])):?>
-                	<?php esc_html_e( 'Dia'.(count($sessoes['avulsas'])>1?'s':'').':', 'cannal-espetaculos' ); ?>
-                	<?php echo esc_html( $dias_horarios ); ?>
-        		<?php endif;?>
-        	</div>
+        	<span><?php echo esc_html( $dias_horarios ); ?></span>
         	<?php if ( $link_vendas && $exibe_link) : ?>
-    	    <div class="info-item-cta">
-                <a href="<?php echo esc_url( $link_vendas ); ?>" class="btn-comprar-ingressos" target="_blank" rel="noopener">
+    	    <div class="info-item-cta wp-block-button">
+                <a href="<?php echo esc_url( $link_vendas ); ?>" class="button button-small wp-block-button__link wp-element-button has-small-font-size" target="_blank" rel="noopener">
                     <?php echo esc_html( $link_texto ? $link_texto : __( 'Comprar Ingressos', 'cannal-espetaculos' ) ); ?>
                 </a>
             </div>

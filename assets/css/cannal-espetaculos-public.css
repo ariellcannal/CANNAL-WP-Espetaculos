@@ -138,17 +138,11 @@
     margin-top: 5px;
 }
 
-.btn-comprar-ingressos {
-    display: block;
-    background: #e74c3c;
-    color: white !important;
-    text-align: center;
-    padding: 8px 20px;
-    border-radius: 5px;
+.info-item-cta a {
+    border-radius: var(--wp--preset--spacing--20, 4px);
+    display: inline-block;
     text-decoration: none;
-    font-weight: bold;
-    font-size: 1.1em;
-    transition: background 0.3s;
+    width: 100%;
 }
 
 .btn-comprar-ingressos:hover {

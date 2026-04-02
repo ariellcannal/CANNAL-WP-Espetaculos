@@ -105,8 +105,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
     <?php endif; ?>
 
     <?php if ( $temporada && $link_vendas ) : ?>
-    <div class="info-item-cta">
-        <a href="<?php echo esc_url( $link_vendas ); ?>" class="btn-comprar-ingressos" target="_blank" rel="noopener">
+    <div class="info-item-cta wp-block-button">
+        <a href="<?php echo esc_url( $link_vendas ); ?>" class="button button-small wp-block-button__link wp-element-button has-small-font-size" target="_blank" rel="noopener">
             <?php echo esc_html( $link_texto ? $link_texto : __( 'Comprar Ingressos', 'cannal-espetaculos' ) ); ?>
         </a>
     </div>
