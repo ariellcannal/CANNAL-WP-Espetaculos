@@ -118,7 +118,35 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
         $link_vendas = '';
         $link_texto = '';
 
-        /* @TODO Mesmo que não haja temporada ativa, tenta substituir os post_meta pelos da get_ultimas_temporadas(). Se não existir get_ultimas_temporadas(), exibe os post_meta do espetáculo */
+        // Se não há temporada ativa, tenta usar dados da última ou próxima temporada como fallback
+        if (! $temporada) {
+            // Tenta próximas primeiro, depois últimas
+            $proximas_temp = CANNALEspetaculos_Public::get_proximas_temporadas_static($espetaculo_id, 1);
+            if (! empty($proximas_temp)) {
+                $temporada_fallback = $proximas_temp[0];
+            } else {
+                $ultimas_temp = CANNALEspetaculos_Public::get_ultimas_temporadas_static($espetaculo_id, 1);
+                $temporada_fallback = ! empty($ultimas_temp) ? $ultimas_temp[0] : null;
+            }
+
+            if ($temporada_fallback) {
+                $teatro_nome     = get_post_meta($temporada_fallback->ID, '_temporada_teatro_nome', true);
+                $teatro_endereco = get_post_meta($temporada_fallback->ID, '_temporada_teatro_endereco', true);
+                $valores         = get_post_meta($temporada_fallback->ID, '_temporada_valores', true);
+                $link_vendas     = get_post_meta($temporada_fallback->ID, '_temporada_link_vendas', true);
+                $link_texto      = get_post_meta($temporada_fallback->ID, '_temporada_link_texto', true);
+                $tipo_sessao     = get_post_meta($temporada_fallback->ID, '_temporada_tipo_sessao', true);
+                $sessoes_data    = get_post_meta($temporada_fallback->ID, '_temporada_sessoes_data', true);
+                $sessoes         = ! empty($sessoes_data) ? json_decode($sessoes_data, true) : null;
+                $dias_horarios   = CANNALEspetaculos_DiasHorarios::format_dias_horarios_legivel($sessoes);
+
+                $diretor_temp = get_post_meta($temporada_fallback->ID, '_temporada_diretor', true);
+                $elenco_temp  = get_post_meta($temporada_fallback->ID, '_temporada_elenco', true);
+                if ($diretor_temp) $diretor = $diretor_temp;
+                if ($elenco_temp)  $elenco  = $elenco_temp;
+            }
+        }
+
         if ($temporada) {
             $teatro_nome = get_post_meta($temporada->ID, '_temporada_teatro_nome', true);
             $teatro_endereco = get_post_meta($temporada->ID, '_temporada_teatro_endereco', true);
@@ -159,7 +187,7 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
                 break;
         }
 
-        // --- Renderizar via template ---
+        // --- Renderizar Widget de Dados ---
         echo $args['before_widget'];
 
         $template_vars = compact('titulo', 'espetaculo_id', 'temporada', 'autor', 'diretor', 'elenco', 'duracao', 'ano_estreia', 'classificacao', 'classificacao_text', 'teatro_nome', 'teatro_endereco', 'dias_horarios', 'tipo_sessao', 'valores', 'link_vendas', 'link_texto');
@@ -167,41 +195,22 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
 
         include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-dados-espetaculo.php';
 
-        // --- Widgets complementares ---
-        if ($temporada) {
-            // Temporada ativa: nada mais a exibir aqui
-        } else {
-            // Verificar próximas temporadas
+        echo $args['after_widget'];
+
+        // --- Widgets complementares: renderizados como widgets independentes, FORA do before/after_widget ---
+        if (! $temporada) {
             $proximas = CANNALEspetaculos_Public::get_proximas_temporadas_static($espetaculo_id, 5);
 
             if (! empty($proximas)) {
-                // Renderizar widget de próximas apresentações inline
                 $widget_proximas = new CANNALEspetaculos_WidgetProximas();
-                $widget_proximas->widget(array(
-                    'before_widget' => '',
-                    'after_widget' => '',
-                    'before_title' => '',
-                    'after_title' => ''
-                ), array(
-                    'titulo' => ''
-                ));
+                $widget_proximas->widget($args, array('titulo' => ''));
             } else {
-                // Renderizar widget de últimas apresentações inline
                 $ultimas = CANNALEspetaculos_Public::get_ultimas_temporadas_static($espetaculo_id, 5);
                 if (! empty($ultimas)) {
                     $widget_ultimas = new CANNALEspetaculos_WidgetUltimas();
-                    $widget_ultimas->widget(array(
-                        'before_widget' => '',
-                        'after_widget' => '',
-                        'before_title' => '',
-                        'after_title' => ''
-                    ), array(
-                        'titulo' => ''
-                    ));
+                    $widget_ultimas->widget($args, array('titulo' => ''));
                 }
             }
         }
-
-        echo $args['after_widget'];
     }
 }

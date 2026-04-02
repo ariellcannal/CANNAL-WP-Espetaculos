@@ -152,9 +152,49 @@ class CANNALEspetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_tipo_sessao', isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas' );
         update_post_meta( $temporada_id, '_temporada_sessoes_data', isset( $_POST['sessoes_data'] ) ? sanitize_textarea_field( $_POST['sessoes_data'] ) : '' );
 
-        wp_send_json_success( array( 
-            'message' => 'Temporada salva com sucesso!',
-            'temporada_id' => $temporada_id
+        // Calcular status da temporada para retornar ao JS
+        $hoje        = current_time( 'Y-m-d' );
+        $data_inicio = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
+        $data_fim    = get_post_meta( $temporada_id, '_temporada_data_fim',    true );
+        $data_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
+        $tipo_sessao = get_post_meta( $temporada_id, '_temporada_tipo_sessao', true );
+        $sessoes_raw = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
+
+        if ( $data_fim && $data_fim < $hoje ) {
+            $status       = 'encerrada';
+            $status_label = 'Encerrada';
+        } elseif ( $data_inicio && $data_inicio <= $hoje && ( ! $data_fim || $data_fim >= $hoje ) ) {
+            $status       = 'em_cartaz';
+            $status_label = 'Em Cartaz';
+        } else {
+            $status       = 'futura';
+            $status_label = 'Em Breve';
+        }
+
+        // Formatar período
+        $periodo = '';
+        if ( $data_inicio ) {
+            $periodo = date_i18n( 'd/m/Y', strtotime( $data_inicio ) );
+            if ( $data_fim ) {
+                $periodo .= ' – ' . date_i18n( 'd/m/Y', strtotime( $data_fim ) );
+            }
+        }
+
+        // Gerar dias e horários
+        $sessoes       = ! empty( $sessoes_raw ) ? json_decode( $sessoes_raw, true ) : null;
+        $dias_horarios = '';
+        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) ) {
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::format_dias_horarios_legivel( $sessoes );
+        }
+
+        wp_send_json_success( array(
+            'message'      => 'Temporada salva com sucesso!',
+            'temporada_id' => $temporada_id,
+            'is_new'       => isset( $_POST['temporada_id'] ) && intval( $_POST['temporada_id'] ) === 0,
+            'teatro'       => get_post_meta( $temporada_id, '_temporada_teatro_nome', true ),
+            'periodo'      => $periodo,
+            'dias_horarios' => $dias_horarios,
+            'status_label' => $status_label,
         ) );
     }
 

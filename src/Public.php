@@ -216,33 +216,33 @@ class CANNALEspetaculos_Public
             return '';
         }
 
-        ob_start();
-        ?>
-<div class="cannal-galeria-fotos">
-	<h3>Galeria de Fotos</h3>
-	<div class="cannal-galeria-grid">
-                <?php
-
-        foreach ($ids as $attachment_id) :
-            $attachment_id = trim($attachment_id);
+        // Montar array de imagens para o template
+        $imagens = array();
+        foreach ($ids as $attachment_id) {
+            $attachment_id = (int) trim($attachment_id);
             if (empty($attachment_id))
                 continue;
 
-            $image_url = wp_get_attachment_image_url($attachment_id, 'medium');
-            $image_full = wp_get_attachment_image_url($attachment_id, 'full');
-            $image_alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+            $url_thumb = wp_get_attachment_image_url($attachment_id, 'medium');
+            $url_full  = wp_get_attachment_image_url($attachment_id, 'full');
+            $alt       = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
 
-            if (! $image_url)
+            if (! $url_thumb)
                 continue;
-            ?>
-                <div class="cannal-galeria-item">
-			<a href="<?php echo esc_url( $image_full ); ?>" data-fancybox="galeria-espetaculo" data-caption="<?php echo esc_attr( $image_alt ); ?>"> <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $image_alt ); ?>" loading="lazy">
-			</a>
-		</div>
-                <?php endforeach; ?>
-            </div>
-</div>
-<?php
+
+            $imagens[] = array(
+                'url_thumb' => $url_thumb,
+                'url_full'  => $url_full,
+                'alt'       => $alt,
+            );
+        }
+
+        if (empty($imagens)) {
+            return '';
+        }
+
+        ob_start();
+        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/galeria-fotos.php';
         return ob_get_clean();
     }
 
