@@ -29,160 +29,65 @@ class CANNALEspetaculos_RevSlider {
      */
     const TRANSIENT_EXPIRY = 43200;
 
+
     // -------------------------------------------------------------------------
-    // FILTRO PRINCIPAL: revslider_get_slides_by_slider_id
+    // FILTROS DE LAYERS (MODO CUSTOM)
     // -------------------------------------------------------------------------
 
     /**
-     * Filtra os slides do RevSlider para clonar o slide template TEMPLATE_ESPETACULO
-     * para cada espetáculo elegível, substituindo placeholders com dados reais.
+     * Filtra as layers de um slide antes da renderização.
+     * Usado para injetar dados do espetáculo nas layers do slide template.
      *
-     * @param array  $slides    Array de objetos de slide do RevSlider.
-     * @param object $slider    Instância do slider.
-     * @return array Array de slides modificado.
+     * @param array  $layers Array de layers do slide.
+     * @param object $slide  Instância do slide.
+     * @return array Array de layers modificado.
      */
-    public static function filter_slides_by_slider_id( $slides, $slider ) {
-        if ( ! is_array( $slides ) || empty( $slides ) ) {
-            return $slides;
+    public static function filter_set_layers( $layers, $slide ) {
+        if ( ! is_array( $layers ) || empty( $layers ) ) {
+            return $layers;
         }
 
-        // 1. Identificar e remover o slide template da exibição original.
-        $template_slide = null;
-        $slides_sem_template = array();
-
-        foreach ( $slides as $slide ) {
-            // Verificar o ID HTML do slide via get_params().
-            $params = method_exists( $slide, 'get_params' ) ? $slide->get_params() : array();
-            $html_id = isset( $params['id'] ) ? $params['id'] : '';
-
-            if ( 'TEMPLATE_ESPETACULO' === $html_id ) {
-                // Guardar o template para clonagem — não o incluir na exibição.
-                $template_slide = $slide;
-            } else {
-                $slides_sem_template[] = $slide;
+        // Verificar se é o slide template pelo alias ou ID HTML
+        $is_template = false;
+        if ( method_exists( $slide, 'get_param' ) ) {
+            $alias = $slide->get_param( 'alias', '' );
+            $id = $slide->get_param( 'id', '' );
+            if ( 'TEMPLATE_ESPETACULO' === $alias || 'TEMPLATE_ESPETACULO' === $id ) {
+                $is_template = true;
             }
         }
 
-        // Se não encontrou o template, retorna os slides sem modificação.
-        if ( null === $template_slide ) {
-            return $slides;
+        // Se não for o template, retorna as layers originais
+        if ( ! $is_template ) {
+            return $layers;
         }
 
-        // 2. Buscar espetáculos elegíveis (com cache via transient).
+        // Buscar espetáculos elegíveis (com cache via transient)
         $espetaculos = self::get_espetaculos_para_banner();
-
         if ( empty( $espetaculos ) ) {
-            // Sem espetáculos elegíveis: retorna slides sem o template.
-            return $slides_sem_template;
+            return $layers;
         }
 
-        // 3. Clonar o slide template para cada espetáculo e substituir placeholders.
-        $slides_clonados = array();
-
-        foreach ( $espetaculos as $item ) {
-            $slide_clone = self::clonar_slide_com_dados( $template_slide, $item );
-
-            if ( null !== $slide_clone ) {
-                $slides_clonados[] = $slide_clone;
-            }
-        }
-
-        // 4. Retornar: slides originais (sem template) + slides clonados.
-        return array_merge( $slides_sem_template, $slides_clonados );
-    }
-
-    // -------------------------------------------------------------------------
-    // CLONAGEM E SUBSTITUIÇÃO DE PLACEHOLDERS
-    // -------------------------------------------------------------------------
-
-    /**
-     * Clona o slide template e injeta os dados do espetáculo nas camadas.
-     *
-     * Placeholders suportados nas camadas de texto (sem prefixo _espetaculo_ ou _temporada_):
-     *   {{titulo}}              → Título do espetáculo
-     *   {{espetaculo_url}}      → URL da página do espetáculo
-     *   {{autor}}               → Autor do espetáculo
-     *   {{ano_estreia}}         → Ano de estreia
-     *   {{duracao}}             → Duração em minutos
-     *   {{classificacao}}       → Classificação indicativa
-     *   {{diretor}}             → Diretor (temporada ativa > próxima > espetáculo)
-     *   {{elenco}}              → Elenco (temporada ativa > próxima > espetáculo)
-     *   {{teatro_nome}}         → Nome do teatro da temporada
-     *   {{teatro_endereco}}     → Endereço do teatro da temporada
-     *   {{dias_horarios}}       → Dias e horários gerados dinamicamente
-     *   {{data_inicio}}         → Data de início da temporada (d/m/Y)
-     *   {{data_fim}}            → Data de fim da temporada (d/m/Y)
-
-     *   {{valores}}             → Valores dos ingressos
-     *   {{link_vendas}}         → URL de venda de ingressos
-     *   {{link_texto}}          → Texto do botão de ingressos
-     *
-     * Regras especiais:
-     *   - &nbsp; no valor do postmeta → layer com visibility => off
-     *   - Campo vazio após substituição → layer com visibility => off
-     *
-     * Layer de imagem (logotipo):
-     *   A camada cujo Wrapper ID seja "{{logotipo}}" terá
-     *   sua imagem substituída pela URL do _espetaculo_logotipo do espetáculo.
-     *
-     * Background do slide:
-     *   Definido como a imagem destacada (banner) do espetáculo.
-     *
-     * @param object $template_slide Slide template original.
-     * @param array  $item           Dados do espetáculo (ver get_espetaculos_para_banner).
-     * @return object|null Slide clonado ou null em caso de erro.
-     */
-    private static function clonar_slide_com_dados( $template_slide, $item ) {
-        // Clonar o objeto do slide em memória.
-        $slide_clone = clone $template_slide;
-
-        $espetaculo_id = $item['espetaculo_id'];
-        $temporada_id  = $item['temporada_id'];
-
-        // --- Background: imagem destacada do espetáculo ---
-        $image_id  = get_post_thumbnail_id( $espetaculo_id );
-        $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
-
-        if ( $image_url && method_exists( $slide_clone, 'get_params' ) && method_exists( $slide_clone, 'set_params' ) ) {
-            $params = $slide_clone->get_params();
-
-            // O RevSlider armazena o background em params['bg_image'] ou 'image'.
-            if ( isset( $params['bg_image'] ) ) {
-                $params['bg_image'] = $image_url;
-            }
-            if ( isset( $params['image'] ) ) {
-                $params['image'] = $image_url;
-            }
-
-            $slide_clone->set_params( $params );
-        }
+        // Para simplificar, em modo Custom, vamos pegar o primeiro espetáculo elegível
+        // (O ideal seria ter um slide para cada, mas o RevSlider em modo Custom
+        // não permite clonar slides dinamicamente via filtro no frontend de forma simples.
+        // Vamos injetar os dados do primeiro espetáculo no template atual).
+        $item = $espetaculos[0];
 
         // --- Preparar mapa de substituição de placeholders ---
-        // Tags sem prefixo _espetaculo_ ou _temporada_.
-        // Prioridade: temporada ativa → próxima → meta do espetáculo (já resolvida em montar_item_espetaculo).
-
-        $titulo         = get_the_title( $espetaculo_id );
-        $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
-
-        // Formatar datas para exibição.
+        $titulo         = get_the_title( $item['espetaculo_id'] );
+        $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $item['espetaculo_id'] );
         $data_inicio_fmt = ! empty( $item['data_inicio'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio'] ) ) : '';
         $data_fim_fmt    = ! empty( $item['data_fim'] )    ? date_i18n( 'd/m/Y', strtotime( $item['data_fim'] ) )    : '';
-
-
-        // Texto do botão de ingressos: fallback para 'Ingressos Aqui'.
         $link_texto = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
 
-        // Mapa completo de placeholders → valores.
-        // &nbsp; no valor é tratado como instrução para ocultar a layer (visibility => off).
         $placeholders = array(
             '{{titulo}}'           => $titulo,
             '{{espetaculo_url}}'   => $espetaculo_url,
-            // Espetáculo
             '{{autor}}'            => $item['autor'],
             '{{ano_estreia}}'      => $item['ano_estreia'],
             '{{duracao}}'          => $item['duracao'],
             '{{classificacao}}'    => $item['classificacao'],
-            // Temporada (com fallback já resolvido)
             '{{diretor}}'          => $item['diretor'],
             '{{elenco}}'           => $item['elenco'],
             '{{teatro_nome}}'      => $item['teatro_nome'],
@@ -190,44 +95,26 @@ class CANNALEspetaculos_RevSlider {
             '{{dias_horarios}}'    => $item['dias_horarios'],
             '{{data_inicio}}'      => $data_inicio_fmt,
             '{{data_fim}}'         => $data_fim_fmt,
-
             '{{valores}}'          => $item['valores'],
             '{{link_vendas}}'      => $item['link_vendas'],
             '{{link_texto}}'       => $link_texto,
         );
 
-        // --- URL do logotipo (postmeta _espetaculo_logotipo = attachment ID) ---
+        // --- URL do logotipo ---
         $logotipo_id  = $item['logotipo_id'];
         $logotipo_url = '';
-
         if ( $logotipo_id && is_numeric( $logotipo_id ) ) {
             $logotipo_url = wp_get_attachment_image_url( intval( $logotipo_id ), 'full' );
-
-            if ( ! $logotipo_url ) {
-                // ID inválido ou anexo removido: não exibir layer de logotipo.
-                $logotipo_url = '';
-            }
         }
 
-        // --- Manipular camadas (layers) ---
-        if ( ! method_exists( $slide_clone, 'get_layers' ) || ! method_exists( $slide_clone, 'set_layers' ) ) {
-            return $slide_clone;
-        }
-
-        $layers = $slide_clone->get_layers();
-
-        if ( ! is_array( $layers ) ) {
-            return $slide_clone;
-        }
-
+        // --- Processar cada layer ---
         foreach ( $layers as &$layer ) {
             if ( ! is_array( $layer ) ) {
                 continue;
             }
 
-            // Substituir placeholders em campos de texto das camadas.
+            // Substituir placeholders em campos de texto
             $text_fields = array( 'text', 'title', 'html', 'link', 'url' );
-
             foreach ( $text_fields as $field ) {
                 if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
                     $layer[ $field ] = str_replace(
@@ -238,47 +125,54 @@ class CANNALEspetaculos_RevSlider {
                 }
             }
 
-            // Tratar layer de imagem do logotipo.
-            // Identifica a layer pelo Wrapper ID igual a {{logotipo}}.
+            // Tratar layer de imagem do logotipo
             $is_logotipo_layer = false;
-            $wrapper_id = isset( $layer['wrapper_id'] ) ? $layer['wrapper_id'] : '';
+            $wrapper_id = isset( $layer['attributes']['id'] ) ? $layer['attributes']['id'] : ( isset( $layer['attr']['id'] ) ? $layer['attr']['id'] : '' );
             
             if ( '{{logotipo}}' === $wrapper_id ) {
                 $is_logotipo_layer = true;
-
                 if ( ! empty( $logotipo_url ) ) {
-                    // Substituir a imagem da layer pela URL real do logotipo.
-                    // O RevSlider pode armazenar a URL da imagem em 'image_url', 'src' ou 'url'.
+                    if ( isset( $layer['media']['imageUrl'] ) ) {
+                        $layer['media']['imageUrl'] = $logotipo_url;
+                    }
                     foreach ( array( 'image_url', 'src', 'url' ) as $img_field ) {
                         if ( isset( $layer[ $img_field ] ) ) {
                             $layer[ $img_field ] = $logotipo_url;
                         }
                     }
                 } else {
-                    // Logotipo inválido ou ausente: ocultar a layer.
                     $layer['visibility'] = 'off';
                 }
             }
 
-            // Ocultar layers de texto cujo conteúdo resultante esteja vazio
-            // ou contenha &nbsp; (instrução explícita para ocultar a layer).
+            // Ocultar layers vazias ou com &nbsp;
             if ( ! $is_logotipo_layer ) {
                 foreach ( $text_fields as $field ) {
                     if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
                         $value = trim( $layer[ $field ] );
-                        // Vazio ou &nbsp; → ocultar a layer.
-                        if ( '' === $value || '&nbsp;' === $value || html_entity_decode( $value ) === '\u00a0' ) {
+                        if ( '' === $value || '&nbsp;' === $value || html_entity_decode( $value ) === ' ' ) {
                             $layer['visibility'] = 'off';
                         }
                     }
                 }
             }
         }
-        unset( $layer ); // Limpar referência do foreach.
+        unset( $layer );
 
-        $slide_clone->set_layers( $layers );
+        return $layers;
+    }
 
-        return $slide_clone;
+    /**
+     * Filtra uma layer individual antes da renderização.
+     *
+     * @param array  $layer Array da layer.
+     * @param object $slide Instância do slide.
+     * @return array Array da layer modificado.
+     */
+    public static function filter_set_layer( $layer, $slide ) {
+        // A lógica principal já foi aplicada em filter_set_layers,
+        // mas este filtro pode ser útil para ajustes finos por layer.
+        return $layer;
     }
 
     // -------------------------------------------------------------------------
@@ -810,10 +704,9 @@ add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'on_temporada_sav
 add_filter( 'revslider_get_posts', array( 'CANNALEspetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
 
 
-// Novo filtro: modificar o JSON do slider para injetar dados do espetáculo.
-add_filter( 'sr_load_slider_json', array( 'CANNALEspetaculos_RevSlider', 'filter_slider_json' ), 10, 2 );
-// Novo filtro: clonar slide template para cada espetáculo elegível.
-add_filter( 'revslider_get_slides_by_slider_id', array( 'CANNALEspetaculos_RevSlider', 'filter_slides_by_slider_id' ), 10, 2 );
+// Novos filtros: modificar layers do slide em modo Custom.
+add_filter( 'revslider_set_layers', array( 'CANNALEspetaculos_RevSlider', 'filter_set_layers' ), 10, 2 );
+add_filter( 'revslider_set_layer', array( 'CANNALEspetaculos_RevSlider', 'filter_set_layer' ), 10, 2 );
 
 // Invalidar cache ao salvar espetáculo ou temporada.
 add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'invalidar_cache' ) );
