@@ -36,12 +36,12 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                     <td><textarea id="modal_elenco" name="elenco" rows="3" class="large-text"></textarea></td>
                 </tr>
                 <tr>
-                    <th><label for="modal_data_inicio"><?php esc_html_e( 'Data de Início', 'cannal-espetaculos' ); ?> *</label></th>
-                    <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
+                    <th><label for="modal_data_inicio"><?php esc_html_e( 'Data de Início', 'cannal-espetaculos' ); ?></label></th>
+                    <td><input type="date" id="modal_data_inicio" name="data_inicio" /></td>
                 </tr>
                 <tr>
-                    <th><label for="modal_data_fim"><?php esc_html_e( 'Data Final', 'cannal-espetaculos' ); ?> *</label></th>
-                    <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
+                    <th><label for="modal_data_fim"><?php esc_html_e( 'Data Final', 'cannal-espetaculos' ); ?></label></th>
+                    <td><input type="date" id="modal_data_fim" name="data_fim" /></td>
                 </tr>
                 <tr>
                     <th><label for="modal_valores"><?php esc_html_e( 'Valores', 'cannal-espetaculos' ); ?></label></th>

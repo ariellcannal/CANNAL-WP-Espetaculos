@@ -9,7 +9,9 @@
      * ========================================================= */
 
     /**
-     * Exibe um notice padrão do WordPress no topo da página.
+     * Exibe um notice padrão do WordPress.
+     * Se o modal de temporadas estiver aberto, exibe dentro dele.
+     * Caso contrário, exibe no topo da página (.wrap).
      *
      * @param {string} message  Mensagem a exibir.
      * @param {string} type     'success' | 'error' | 'warning' | 'info'
@@ -26,27 +28,34 @@
             '</div>'
         );
 
-        // Inserir após o primeiro h1 ou h2 da página
-        var $target = $('.wrap h1, .wrap h2').first();
-        if ($target.length) {
-            $target.after($notice);
-        } else {
-            $('.wrap').prepend($notice);
-        }
-
-        // Botão de fechar nativo do WP
         $notice.on('click', '.notice-dismiss', function () {
             $notice.fadeOut(200, function () { $(this).remove(); });
         });
+
+        // Se o modal está visível, inserir dentro do modal
+        var $modal = $('#temporada-modal');
+        if ($modal.is(':visible')) {
+            var $modalContent = $modal.find('.temporada-modal-content');
+            // Remover notices anteriores dentro do modal
+            $modalContent.find('.cannal-ajax-notice').remove();
+            $modalContent.prepend($notice);
+        } else {
+            // Inserir após o primeiro h1 ou h2 da página
+            var $target = $('.wrap h1, .wrap h2').first();
+            if ($target.length) {
+                $target.after($notice);
+            } else {
+                $('.wrap').prepend($notice);
+            }
+            // Rolar até o notice
+            $('html, body').animate({ scrollTop: $notice.offset().top - 60 }, 300);
+        }
 
         if (duration > 0) {
             setTimeout(function () {
                 $notice.fadeOut(500, function () { $(this).remove(); });
             }, duration);
         }
-
-        // Rolar até o notice
-        $('html, body').animate({ scrollTop: $notice.offset().top - 60 }, 300);
     }
 
     /**
@@ -279,96 +288,83 @@
         function toggleSessoes() {
             var tipo = $('input[name="temporada_tipo_sessao"]:checked').val();
             if (tipo === 'avulsas') {
-                $('#sessoes-avulsas-container').show();
-                $('#sessoes-temporada-container').hide();
+                $('#sessoes_avulsas_container').show();
+                $('#sessoes_temporada_container').hide();
             } else {
-                $('#sessoes-avulsas-container').hide();
-                $('#sessoes-temporada-container').show();
+                $('#sessoes_avulsas_container').hide();
+                $('#sessoes_temporada_container').show();
             }
         }
 
-        $('input[name="temporada_tipo_sessao"]').on('change', toggleSessoes);
         toggleSessoes();
+        $('input[name="temporada_tipo_sessao"]').on('change', toggleSessoes);
 
-        $('#add-sessao-avulsa').on('click', function (e) {
+        $(document).on('click', '.add-sessao-avulsa', function (e) {
             e.preventDefault();
-            var data    = $('#nova_sessao_data').val();
-            var horario = $('#nova_sessao_horario').val();
-
-            if (!data || !horario) {
-                cannalShowNotice('Por favor, preencha data e horário.', 'warning');
-                return;
-            }
-
             var row =
-                '<tr>' +
-                '<td>' + data + '</td>' +
-                '<td>' + horario + '</td>' +
-                '<td><button type="button" class="button button-small remove-sessao">Remover</button>' +
-                '<input type="hidden" name="temporada_sessoes_avulsas[]" value="' + data + '|' + horario + '" /></td>' +
-                '</tr>';
-
-            $('#sessoes-avulsas-list tbody').append(row);
-            $('#nova_sessao_data').val('');
-            $('#nova_sessao_horario').val('');
+                '<div class="sessao-avulsa">' +
+                '<input type="date" class="sessao-data" />' +
+                '<input type="time" class="sessao-horario" />' +
+                '<button type="button" class="button remove-sessao">Remover</button>' +
+                '</div>';
+            $('#sessoes_avulsas_list').append(row);
             updateSessoesData();
         });
 
         $(document).on('click', '.remove-sessao', function (e) {
             e.preventDefault();
-            $(this).closest('tr').remove();
+            $(this).closest('.sessao-avulsa').remove();
             updateSessoesData();
         });
 
         function updateSessoesData() {
-            var sessoes = {
-                tipo: $('input[name="temporada_tipo_sessao"]:checked').val(),
-                avulsas: [],
-                temporada: {}
-            };
+            var tipo   = $('input[name="temporada_tipo_sessao"]:checked').val();
+            var sessoes = { tipo: tipo, avulsas: [], temporada: {} };
 
-            if (sessoes.tipo === 'avulsas') {
-                $('input[name="temporada_sessoes_avulsas[]"]').each(function () {
-                    var parts = $(this).val().split('|');
-                    sessoes.avulsas.push({ data: parts[0], horario: parts[1] });
+            if (tipo === 'avulsas') {
+                $('.sessao-avulsa').each(function () {
+                    var data    = $(this).find('.sessao-data').val();
+                    var horario = $(this).find('.sessao-horario').val();
+                    if (data && horario) {
+                        sessoes.avulsas.push({ data: data, horario: horario });
+                    }
                 });
             } else {
-                $('input[name^="temporada_sessoes_temporada"]').each(function () {
-                    var match = $(this).attr('name').match(/\[([^\]]+)\]/);
-                    if (match) {
-                        var dia    = match[1];
-                        var horario = $(this).val();
-                        if (horario) { sessoes.temporada[dia] = horario; }
+                ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'].forEach(function (dia) {
+                    var horarios = [];
+                    for (var i = 1; i <= 3; i++) {
+                        var h = $('#sessoes_' + dia + '_' + i).val();
+                        if (h) horarios.push(h);
                     }
+                    if (horarios.length) { sessoes.temporada[dia] = horarios.join(', '); }
                 });
             }
 
-            $('#temporada_sessoes_data').val(JSON.stringify(sessoes));
+            $('#sessoes_data').val(JSON.stringify(sessoes));
         }
 
-        $('input[name^="temporada_sessoes_temporada"]').on('change', updateSessoesData);
         $('input[name="temporada_tipo_sessao"]').on('change', updateSessoesData);
+        $(document).on('change', '.sessao-data, .sessao-horario', updateSessoesData);
+        $(document).on('change', '[id^="sessoes_"]', updateSessoesData);
     }
 
     /* =========================================================
-     * COPIAR CONTEÚDO DO ESPETÁCULO (tela de temporada)
+     * COPIAR CONTEÚDO DO ESPETÁCULO (tela de edição direta)
      * ========================================================= */
 
     function initCopiarConteudo() {
-        $('#temporada_espetaculo_id').on('change', function () {
-            $('#btn-copiar-conteudo').prop('disabled', !$(this).val());
-        });
+        if (!$('#copiar_conteudo_espetaculo').length) return;
 
-        $('#btn-copiar-conteudo').on('click', function (e) {
+        $('#copiar_conteudo_espetaculo').on('click', function (e) {
             e.preventDefault();
-            var espetaculoId = $('#temporada_espetaculo_id').val();
+            var espetaculoId = $('#modal_espetaculo_id').val() || $('#espetaculo_id').val();
 
             if (!espetaculoId) {
-                cannalShowNotice('Por favor, selecione um espetáculo primeiro.', 'warning');
+                cannalShowNotice('Nenhum espetáculo selecionado.', 'warning');
                 return;
             }
 
-            cannalConfirm('Isso irá substituir o conteúdo atual da temporada. Continuar?').then(function (confirmed) {
+            cannalConfirm('Isso irá substituir o conteúdo atual. Continuar?').then(function (confirmed) {
                 if (!confirmed) return;
 
                 $.ajax({
@@ -444,7 +440,7 @@
 
         /* --- Coletar dados de sessões do modal --- */
         function getModalSessoesData() {
-            var tipo   = $('input[name="modal_tipo_sessao"]:checked').val();
+            var tipo    = $('input[name="modal_tipo_sessao"]:checked').val();
             var sessoes = { tipo: tipo, avulsas: [], temporada: {} };
 
             if (tipo === 'avulsas') {
@@ -556,7 +552,7 @@
         });
 
         /* --- Abrir modal para nova temporada --- */
-        $('.open-temporada-modal').on('click', function (e) {
+        $(document).on('click', '.open-temporada-modal', function (e) {
             e.preventDefault();
             var $form = $('#temporada-form');
             if (!$form.length) {
@@ -570,6 +566,8 @@
             $('#modal_sessoes_avulsas_list').empty();
             $('#modal_tipo_sessao_avulsas').prop('checked', true);
             toggleModalSessoes();
+            // Limpar notices anteriores no modal
+            $('#temporada-modal .cannal-ajax-notice').remove();
             $('#temporada-modal').fadeIn();
         });
 
@@ -611,6 +609,7 @@
                                 $('#modal_conteudo').val(response.data.conteudo);
                             }
                         }
+                        $('#temporada-modal .cannal-ajax-notice').remove();
                         $('#temporada-modal').fadeIn();
                     } else {
                         cannalShowNotice('Erro ao carregar dados da temporada.', 'error');
@@ -657,7 +656,6 @@
                         }
 
                         // Restaurar tipo_sessao ANTES de setModalSessoesData
-                        // (setModalSessoesData também faz isso, mas só se sessoes_data existir)
                         if (response.data.tipo_sessao === 'temporada') {
                             $('#modal_tipo_sessao_temporada').prop('checked', true);
                         } else {
@@ -666,9 +664,10 @@
                         toggleModalSessoes();
 
                         setModalSessoesData(response.data.sessoes_data);
+                        $('#temporada-modal .cannal-ajax-notice').remove();
                         $('#temporada-modal').fadeIn();
                     } else {
-                        cannalShowNotice('Erro ao carregar temporada: ' + response.data.message, 'error');
+                        cannalShowNotice('Erro ao carregar temporada: ' + (response.data ? response.data.message : 'Erro desconhecido.'), 'error');
                     }
                 },
                 error: function () {
@@ -709,8 +708,9 @@
                             cannalShowNotice('Erro ao excluir temporada: ' + (response.data ? response.data.message : 'Erro desconhecido.'), 'error');
                         }
                     },
-                    error: function () {
-                        cannalShowNotice('Erro na requisição AJAX.', 'error');
+                    error: function (xhr) {
+                        console.error('CANNAL delete error', xhr.status, xhr.responseText);
+                        cannalShowNotice('Erro na requisição AJAX (status ' + xhr.status + ').', 'error');
                     }
                 });
             });
@@ -721,7 +721,7 @@
             $('#temporada-modal').fadeOut();
         });
 
-        $(window).on('click', function (e) {
+        $(document).on('click', '#temporada-modal', function (e) {
             if ($(e.target).is('#temporada-modal')) {
                 $('#temporada-modal').fadeOut();
             }
@@ -730,8 +730,34 @@
         /* --- Salvar temporada via AJAX (sem reload) --- */
         $(document).on('submit', '#temporada-form', function (e) {
             e.preventDefault();
+            e.stopPropagation();
 
-            var $btn = $(this).find('[type="submit"]');
+            var $form = $(this);
+            var $btn  = $form.find('[type="submit"]');
+
+            // Validação manual: teatro_nome obrigatório
+            var teatroNome = $('#modal_teatro_nome').val().trim();
+            if (!teatroNome) {
+                cannalShowNotice('O campo "Nome do Teatro" é obrigatório.', 'error');
+                $('#modal_teatro_nome').focus();
+                return;
+            }
+
+            // Validação: se tipo temporada, data_inicio e data_fim obrigatórios
+            var tipoSessao = $('input[name="modal_tipo_sessao"]:checked').val();
+            if (tipoSessao === 'temporada') {
+                if (!$('#modal_data_inicio').val()) {
+                    cannalShowNotice('Informe a Data de Início para temporadas por dias da semana.', 'error');
+                    $('#modal_data_inicio').focus();
+                    return;
+                }
+                if (!$('#modal_data_fim').val()) {
+                    cannalShowNotice('Informe a Data Final para temporadas por dias da semana.', 'error');
+                    $('#modal_data_fim').focus();
+                    return;
+                }
+            }
+
             $btn.prop('disabled', true).text('Salvando...');
 
             var conteudo = '';
@@ -740,6 +766,8 @@
             } else {
                 conteudo = $('#modal_conteudo').val();
             }
+
+            var sessoesData = getModalSessoesData();
 
             var formData = {
                 action:             'cannal_save_temporada',
@@ -756,8 +784,8 @@
                 link_vendas:        $('#modal_link_vendas').val(),
                 link_texto:         $('#modal_link_texto').val(),
                 data_inicio_cartaz: $('#modal_data_inicio_cartaz').val(),
-                tipo_sessao:        $('input[name="modal_tipo_sessao"]:checked').val(),
-                sessoes_data:       getModalSessoesData(),
+                tipo_sessao:        tipoSessao,
+                sessoes_data:       sessoesData,
                 conteudo:           conteudo
             };
 
@@ -769,16 +797,19 @@
                     $btn.prop('disabled', false).text('Salvar Temporada');
 
                     if (response.success) {
-                        $('#temporada-modal').fadeOut();
-                        cannalShowNotice('Temporada salva com sucesso!', 'success');
+                        $('#temporada-modal').fadeOut(300, function () {
+                            // Exibir notice na página após fechar o modal
+                            cannalShowNotice('Temporada salva com sucesso!', 'success');
+                        });
                         atualizarLinhaTemporada(response.data);
                     } else {
-                        cannalShowNotice('Erro ao salvar temporada: ' + response.data.message, 'error');
+                        cannalShowNotice('Erro ao salvar temporada: ' + (response.data ? response.data.message : 'Erro desconhecido.'), 'error');
                     }
                 },
-                error: function () {
+                error: function (xhr) {
                     $btn.prop('disabled', false).text('Salvar Temporada');
-                    cannalShowNotice('Erro de comunicação com o servidor.', 'error');
+                    console.error('CANNAL save error', xhr.status, xhr.responseText);
+                    cannalShowNotice('Erro de comunicação com o servidor (status ' + xhr.status + ').', 'error');
                 }
             });
         });
@@ -786,7 +817,7 @@
         /**
          * Atualiza ou insere a linha da temporada na tabela sem recarregar a página.
          *
-         * @param {Object} data Dados retornados pelo AJAX (temporada_id, teatro, periodo, dias_horarios, status_label, is_new)
+         * @param {Object} data Dados retornados pelo AJAX
          */
         function atualizarLinhaTemporada(data) {
             var $tbody  = $('#temporadas-tbody');
