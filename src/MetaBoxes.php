@@ -214,87 +214,68 @@ class CANNALEspetaculos_MetaBoxes {
      * Renderiza o meta box de temporadas do espetáculo.
      */
     public function render_espetaculo_temporadas_meta_box( $post ) {
-        $temporadas = get_posts( array(
-            'post_type' => 'temporada',
+        $temporadas_raw = get_posts( array(
+            'post_type'      => 'temporada',
             'posts_per_page' => -1,
-            'meta_key' => '_temporada_espetaculo_id',
-            'meta_value' => $post->ID,
-            'meta_query' => array(
-                array(
-                    'key' => '_temporada_data_fim',
-                    'compare' => 'EXISTS'
-                )
-            ),
-            'orderby' => 'meta_value',
-            'order' => 'DESC'
+            'meta_key'       => '_temporada_espetaculo_id',
+            'meta_value'     => $post->ID,
+            'orderby'        => 'meta_value',
+            'order'          => 'DESC',
         ) );
 
-        ?>
-        <div class="espetaculo-temporadas-list">
-            <?php if ( ! empty( $temporadas ) ) : ?>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead>
-                        <tr>
-                            <th>Nome do Teatro</th>
-                            <th>Período</th>
-                            <th>Dias e Horários</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ( $temporadas as $temporada ) : 
-                            $teatro = get_post_meta( $temporada->ID, '_temporada_teatro_nome', true );
-                            $data_inicio = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
-                            $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
-                            $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
-                            
-                            // Gerar Dias e Horários usando classe inteligente
-                            $dias_horarios_texto = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
-                            
-                            $hoje = current_time( 'Y-m-d' );
-                            if ( $data_inicio && $data_fim ) {
-                                if ( $hoje < $data_inicio ) {
-                                    $status = 'Em Breve';
-                                } elseif ( $hoje >= $data_inicio && $hoje <= $data_fim ) {
-                                    $status = 'Em Cartaz';
-                                } else {
-                                    $status = 'Encerrada';
-                                }
-                            } else {
-                                $status = 'Sem datas';
-                            }
-                        ?>
-                        <tr>
-                            <td><?php echo esc_html( $teatro ); ?></td>
-                            <td>
-                                <?php 
-                                if ( $data_inicio && $data_fim ) {
-                                    echo esc_html( date_i18n( 'd/m/Y', strtotime( $data_inicio ) ) ) . ' - ' . esc_html( date_i18n( 'd/m/Y', strtotime( $data_fim ) ) );
-                                }
-                                ?>
-                            </td>
-                            <td><?php echo esc_html( $dias_horarios_texto ); ?></td>
-                            <td><?php echo esc_html( $status ); ?></td>
-                            <td>
-                                <button type="button" class="button button-small edit-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Editar</button>
-                                <button type="button" class="button button-small duplicate-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Duplicar</button>
-                                <button type="button" class="button button-small button-link-delete delete-temporada-btn" data-temporada-id="<?php echo $temporada->ID; ?>">Excluir</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else : ?>
-                <p>Nenhuma temporada cadastrada ainda.</p>
-            <?php endif; ?>
-            <p style="margin-top: 15px;">
-                <button type="button" class="button button-primary open-temporada-modal" data-espetaculo-id="<?php echo $post->ID; ?>">Adicionar Nova Temporada</button>
-            </p>
-        </div>
-        <?php
-        
-        // Armazenar o ID do espetáculo para usar no modal
+        $hoje       = current_time( 'Y-m-d' );
+        $temporadas = array();
+
+        foreach ( $temporadas_raw as $t ) {
+            $data_inicio  = get_post_meta( $t->ID, '_temporada_data_inicio', true );
+            $data_fim     = get_post_meta( $t->ID, '_temporada_data_fim',    true );
+            $tipo_sessao  = get_post_meta( $t->ID, '_temporada_tipo_sessao', true );
+            $sessoes_data = get_post_meta( $t->ID, '_temporada_sessoes_data', true );
+
+            // Calcular status
+            if ( $data_fim && $data_fim < $hoje ) {
+                $status_label = 'Encerrada';
+            } elseif ( $data_inicio && $data_inicio <= $hoje && ( ! $data_fim || $data_fim >= $hoje ) ) {
+                $status_label = 'Em Cartaz';
+            } elseif ( $data_inicio && $data_inicio > $hoje ) {
+                $status_label = 'Em Breve';
+            } else {
+                $status_label = 'Sem datas';
+            }
+
+            // Formatar período
+            $periodo = '';
+            if ( $data_inicio ) {
+                $periodo = date_i18n( 'd/m/Y', strtotime( $data_inicio ) );
+                if ( $data_fim ) {
+                    $periodo .= ' – ' . date_i18n( 'd/m/Y', strtotime( $data_fim ) );
+                }
+            }
+
+            // Gerar dias e horários
+            $dias_horarios = '';
+            if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $sessoes_data ) ) {
+                $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
+            }
+
+            // Adicionar propriedades ao objeto para o template
+            $t->teatro        = get_post_meta( $t->ID, '_temporada_teatro_nome', true );
+            $t->data_inicio   = $data_inicio;
+            $t->data_fim      = $data_fim;
+            $t->dias_horarios = $dias_horarios;
+            $t->status_label  = $status_label;
+            $t->periodo       = $periodo;
+
+            $temporadas[] = $t;
+        }
+
+        // Usar template (MetaBoxes.php está em src/, então sobe um nível para a raiz do plugin)
+        $template = dirname( dirname( __FILE__ ) ) . '/templates/admin/lista-temporadas.php';
+        if ( file_exists( $template ) ) {
+            include $template;
+        }
+
+        // Registrar modal no footer
         add_action( 'admin_footer', function() use ( $post ) {
             $this->render_temporada_modal( $post->ID );
         } );

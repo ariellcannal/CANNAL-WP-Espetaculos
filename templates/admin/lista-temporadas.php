@@ -4,7 +4,8 @@
  *
  * Variáveis disponíveis:
  * @var WP_Post $post        Post do espetáculo
- * @var array   $temporadas  Array de WP_Post de temporadas
+ * @var array   $temporadas  Array de WP_Post enriquecidos com propriedades:
+ *                           ->teatro, ->periodo, ->dias_horarios, ->status_label
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -27,13 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                 <?php foreach ( $temporadas as $temporada ) : ?>
                 <tr id="temporada-row-<?php echo esc_attr( $temporada->ID ); ?>">
                     <td><?php echo esc_html( $temporada->teatro ); ?></td>
-                    <td>
-                        <?php if ( $temporada->data_inicio && $temporada->data_fim ) : ?>
-                            <?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $temporada->data_inicio ) ) ); ?>
-                            &ndash;
-                            <?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $temporada->data_fim ) ) ); ?>
-                        <?php endif; ?>
-                    </td>
+                    <td><?php echo esc_html( $temporada->periodo ); ?></td>
                     <td><?php echo esc_html( $temporada->dias_horarios ); ?></td>
                     <td><?php echo esc_html( $temporada->status_label ); ?></td>
                     <td>
