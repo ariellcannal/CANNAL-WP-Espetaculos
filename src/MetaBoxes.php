@@ -710,14 +710,6 @@ class CANNALEspetaculos_MetaBoxes {
                             <td><textarea id="modal_elenco" name="elenco" rows="3" class="large-text"></textarea></td>
                         </tr>
                         <tr>
-                            <th><label for="modal_data_inicio">Data de Início *</label></th>
-                            <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
-                        </tr>
-                        <tr>
-                            <th><label for="modal_data_fim">Data Final *</label></th>
-                            <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
-                        </tr>
-                        <tr>
                             <th><label for="modal_valores">Valores</label></th>
                             <td><textarea id="modal_valores" name="valores" rows="3" class="large-text"></textarea></td>
                         </tr>
@@ -732,6 +724,14 @@ class CANNALEspetaculos_MetaBoxes {
                         <tr>
                             <th><label for="modal_data_inicio_cartaz">Data de Início do Cartaz</label></th>
                             <td><input type="date" id="modal_data_inicio_cartaz" name="data_inicio_cartaz" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_inicio">Data de Início *</label></th>
+                            <td><input type="date" id="modal_data_inicio" name="data_inicio" required /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="modal_data_fim">Data Final *</label></th>
+                            <td><input type="date" id="modal_data_fim" name="data_fim" required /></td>
                         </tr>
                         <tr>
                             <th><label>Tipo de Sessão</label></th>

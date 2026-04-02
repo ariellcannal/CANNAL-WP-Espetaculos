@@ -795,14 +795,13 @@
                 data: formData,
                 success: function (response) {
                     $btn.prop('disabled', false).text('Salvar Temporada');
-                    console.log('[CANNAL DEBUG] save response:', JSON.stringify(response));
+                    
 
                     if (response.success) {
                         $('#temporada-modal').fadeOut(300, function () {
                             // Exibir notice na página após fechar o modal
                             cannalShowNotice('Temporada salva com sucesso!', 'success');
                         });
-                        console.log('[CANNAL DEBUG] Chamando atualizarLinhaTemporada com:', JSON.stringify(response.data));
                         atualizarLinhaTemporada(response.data);
                     } else {
                         cannalShowNotice('Erro ao salvar temporada: ' + (response.data ? response.data.message : 'Erro desconhecido.'), 'error');
@@ -826,8 +825,7 @@
             var $noMsg  = $('#no-temporadas-msg');
             var rowId   = 'temporada-row-' + data.temporada_id;
             var $row    = $('#' + rowId);
-            console.log('[CANNAL DEBUG] atualizarLinhaTemporada - rowId:', rowId, '| $row.length:', $row.length, '| $tbody.length:', $tbody.length);
-
+            
             var rowHtml =
                 '<td>' + (data.teatro || '') + '</td>' +
                 '<td>' + (data.periodo || '') + '</td>' +
