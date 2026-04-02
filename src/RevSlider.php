@@ -2,72 +2,507 @@
 /**
  * Integração com RevSlider para banners de espetáculos.
  *
+ * Utiliza o filtro revslider_get_slides_by_slider_id para clonar dinamicamente
+ * um slide template (identificado pelo ID HTML "TEMPLATE_ESPETACULO") para cada
+ * espetáculo elegível, substituindo placeholders nas camadas com dados reais.
+ *
+ * Regras de negócio:
+ *   - Grupo 1 (Temporadas Ativas): _temporada_data_fim >= hoje, ordenado ASC por data_fim.
+ *   - Grupo 2 (Próximas Temporadas): data_inicio_banner já passou mas temporada ainda não começou.
+ *   - Apenas espetáculos com imagem destacada são incluídos.
+ *
+ * Performance: resultados em cache via WordPress Transients por 12 horas.
+ * Cache invalidado ao salvar espetáculo ou temporada.
+ *
  * @package    CANNALEspetaculos_Plugin
  * @subpackage CANNALEspetaculos_Plugin/includes
  */
-
 class CANNALEspetaculos_RevSlider {
 
     /**
-     * Obtém os espetáculos para exibição no banner.
-     * 
-     * Ordem: Em cartaz (por data de estreia), depois futuros (por data de estreia)
+     * Chave do transient para os dados de espetáculos do banner.
+     */
+    const TRANSIENT_KEY = 'cannal_revslider_espetaculos';
+
+    /**
+     * Expiração do transient em segundos (12 horas).
+     */
+    const TRANSIENT_EXPIRY = 43200;
+
+    // -------------------------------------------------------------------------
+    // FILTRO PRINCIPAL: revslider_get_slides_by_slider_id
+    // -------------------------------------------------------------------------
+
+    /**
+     * Filtra os slides do RevSlider para clonar o slide template TEMPLATE_ESPETACULO
+     * para cada espetáculo elegível, substituindo placeholders com dados reais.
+     *
+     * @param array  $slides    Array de objetos de slide do RevSlider.
+     * @param object $slider    Instância do slider.
+     * @return array Array de slides modificado.
+     */
+    public static function filter_slides_by_slider_id( $slides, $slider ) {
+        if ( ! is_array( $slides ) || empty( $slides ) ) {
+            return $slides;
+        }
+
+        // 1. Identificar e remover o slide template da exibição original.
+        $template_slide = null;
+        $slides_sem_template = array();
+
+        foreach ( $slides as $slide ) {
+            // Verificar o ID HTML do slide via get_params().
+            $params = method_exists( $slide, 'get_params' ) ? $slide->get_params() : array();
+            $html_id = isset( $params['id'] ) ? $params['id'] : '';
+
+            if ( 'TEMPLATE_ESPETACULO' === $html_id ) {
+                // Guardar o template para clonagem — não o incluir na exibição.
+                $template_slide = $slide;
+            } else {
+                $slides_sem_template[] = $slide;
+            }
+        }
+
+        // Se não encontrou o template, retorna os slides sem modificação.
+        if ( null === $template_slide ) {
+            return $slides;
+        }
+
+        // 2. Buscar espetáculos elegíveis (com cache via transient).
+        $espetaculos = self::get_espetaculos_para_banner();
+
+        if ( empty( $espetaculos ) ) {
+            // Sem espetáculos elegíveis: retorna slides sem o template.
+            return $slides_sem_template;
+        }
+
+        // 3. Clonar o slide template para cada espetáculo e substituir placeholders.
+        $slides_clonados = array();
+
+        foreach ( $espetaculos as $item ) {
+            $slide_clone = self::clonar_slide_com_dados( $template_slide, $item );
+
+            if ( null !== $slide_clone ) {
+                $slides_clonados[] = $slide_clone;
+            }
+        }
+
+        // 4. Retornar: slides originais (sem template) + slides clonados.
+        return array_merge( $slides_sem_template, $slides_clonados );
+    }
+
+    // -------------------------------------------------------------------------
+    // CLONAGEM E SUBSTITUIÇÃO DE PLACEHOLDERS
+    // -------------------------------------------------------------------------
+
+    /**
+     * Clona o slide template e injeta os dados do espetáculo nas camadas.
+     *
+     * Placeholders suportados nas camadas de texto:
+     *   {{titulo}}         → Título do espetáculo
+     *   {{teatro}}         → Nome do teatro da temporada
+     *   {{dias_horarios}}  → Dias e horários gerados dinamicamente
+     *   {{data_inicio}}    → Data de início da temporada (d/m/Y)
+     *   {{data_fim}}       → Data de fim da temporada (d/m/Y)
+     *   {{link_vendas}}    → URL de venda de ingressos
+     *   {{link_texto}}     → Texto do botão de ingressos
+     *   {{espetaculo_url}} → URL da página do espetáculo
+     *   {{classificacao}}  → Classificação indicativa
+     *   {{duracao}}        → Duração em minutos
+     *
+     * Layer de imagem (logotipo):
+     *   A camada cujo src/url contenha o placeholder "{{logotipo}}" terá
+     *   sua imagem substituída pela URL do _espetaculo_logotipo do espetáculo.
+     *
+     * Background do slide:
+     *   Definido como a imagem destacada (banner) do espetáculo.
+     *
+     * @param object $template_slide Slide template original.
+     * @param array  $item           Dados do espetáculo (ver get_espetaculos_para_banner).
+     * @return object|null Slide clonado ou null em caso de erro.
+     */
+    private static function clonar_slide_com_dados( $template_slide, $item ) {
+        // Clonar o objeto do slide em memória.
+        $slide_clone = clone $template_slide;
+
+        $espetaculo_id = $item['espetaculo_id'];
+        $temporada_id  = $item['temporada_id'];
+
+        // --- Background: imagem destacada do espetáculo ---
+        $image_id  = get_post_thumbnail_id( $espetaculo_id );
+        $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
+
+        if ( $image_url && method_exists( $slide_clone, 'get_params' ) && method_exists( $slide_clone, 'set_params' ) ) {
+            $params = $slide_clone->get_params();
+
+            // O RevSlider armazena o background em params['bg_image'] ou 'image'.
+            if ( isset( $params['bg_image'] ) ) {
+                $params['bg_image'] = $image_url;
+            }
+            if ( isset( $params['image'] ) ) {
+                $params['image'] = $image_url;
+            }
+
+            $slide_clone->set_params( $params );
+        }
+
+        // --- Preparar mapa de substituição de placeholders ---
+        $titulo        = get_the_title( $espetaculo_id );
+        $teatro        = $item['teatro'];
+        $dias_horarios = $item['dias_horarios'];
+        $link_vendas   = $item['link_vendas'];
+        $link_texto    = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
+        $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
+        $classificacao = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
+        $duracao       = get_post_meta( $espetaculo_id, '_espetaculo_duracao', true );
+
+        // Formatar datas para exibição.
+        $data_inicio_raw = $item['data_inicio'];
+        $data_fim_raw    = $item['data_fim'];
+        $data_inicio_fmt = $data_inicio_raw ? date_i18n( 'd/m/Y', strtotime( $data_inicio_raw ) ) : '';
+        $data_fim_fmt    = $data_fim_raw    ? date_i18n( 'd/m/Y', strtotime( $data_fim_raw ) )    : '';
+
+        $placeholders = array(
+            '{{titulo}}'         => $titulo,
+            '{{teatro}}'         => $teatro,
+            '{{dias_horarios}}'  => $dias_horarios,
+            '{{data_inicio}}'    => $data_inicio_fmt,
+            '{{data_fim}}'       => $data_fim_fmt,
+            '{{link_vendas}}'    => $link_vendas,
+            '{{link_texto}}'     => $link_texto,
+            '{{espetaculo_url}}' => $espetaculo_url,
+            '{{classificacao}}'  => $classificacao,
+            '{{duracao}}'        => $duracao,
+        );
+
+        // --- URL do logotipo (postmeta _espetaculo_logotipo = attachment ID) ---
+        $logotipo_id  = get_post_meta( $espetaculo_id, '_espetaculo_logotipo', true );
+        $logotipo_url = '';
+
+        if ( $logotipo_id && is_numeric( $logotipo_id ) ) {
+            $logotipo_url = wp_get_attachment_image_url( intval( $logotipo_id ), 'full' );
+
+            if ( ! $logotipo_url ) {
+                // ID inválido ou anexo removido: não exibir layer de logotipo.
+                $logotipo_url = '';
+            }
+        }
+
+        // --- Manipular camadas (layers) ---
+        if ( ! method_exists( $slide_clone, 'get_layers' ) || ! method_exists( $slide_clone, 'set_layers' ) ) {
+            return $slide_clone;
+        }
+
+        $layers = $slide_clone->get_layers();
+
+        if ( ! is_array( $layers ) ) {
+            return $slide_clone;
+        }
+
+        foreach ( $layers as &$layer ) {
+            if ( ! is_array( $layer ) ) {
+                continue;
+            }
+
+            // Substituir placeholders em campos de texto das camadas.
+            $text_fields = array( 'text', 'title', 'html', 'link', 'url' );
+
+            foreach ( $text_fields as $field ) {
+                if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
+                    $layer[ $field ] = str_replace(
+                        array_keys( $placeholders ),
+                        array_values( $placeholders ),
+                        $layer[ $field ]
+                    );
+                }
+            }
+
+            // Tratar layer de imagem do logotipo.
+            // Identifica a layer pelo placeholder {{logotipo}} no src ou url.
+            $is_logotipo_layer = false;
+
+            foreach ( array( 'src', 'url', 'image_url' ) as $img_field ) {
+                if ( isset( $layer[ $img_field ] ) && false !== strpos( $layer[ $img_field ], '{{logotipo}}' ) ) {
+                    $is_logotipo_layer = true;
+
+                    if ( ! empty( $logotipo_url ) ) {
+                        // Substituir o placeholder pela URL real do logotipo.
+                        $layer[ $img_field ] = $logotipo_url;
+                    } else {
+                        // Logotipo inválido ou ausente: ocultar a layer.
+                        $layer['visibility'] = 'off';
+                    }
+                    break;
+                }
+            }
+
+            // Ocultar layers de texto cujo conteúdo resultante esteja vazio
+            // (postmeta vazio após substituição de placeholder).
+            if ( ! $is_logotipo_layer ) {
+                foreach ( $text_fields as $field ) {
+                    if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
+                        // Se após substituição o campo ficou vazio, ocultar a layer.
+                        $value = trim( $layer[ $field ] );
+                        if ( '' === $value ) {
+                            $layer['visibility'] = 'off';
+                        }
+                    }
+                }
+            }
+        }
+        unset( $layer ); // Limpar referência do foreach.
+
+        $slide_clone->set_layers( $layers );
+
+        return $slide_clone;
+    }
+
+    // -------------------------------------------------------------------------
+    // CONSULTA DE ESPETÁCULOS ELEGÍVEIS (COM CACHE)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Retorna os espetáculos elegíveis para o banner, com cache via transient.
+     *
+     * Grupo 1 — Temporadas Ativas:
+     *   _temporada_data_fim >= hoje, ordenado por _temporada_data_fim ASC.
+     *   Apenas espetáculos com imagem destacada.
+     *
+     * Grupo 2 — Próximas Temporadas:
+     *   _temporada_data_inicio_banner <= hoje (banner já liberado)
+     *   mas _temporada_data_inicio > hoje (temporada ainda não começou).
+     *   Apenas espetáculos com imagem destacada.
+     *
+     * @return array Lista de arrays com chaves:
+     *               espetaculo_id, temporada_id, teatro, dias_horarios,
+     *               link_vendas, link_texto, data_inicio, data_fim, grupo.
+     */
+    public static function get_espetaculos_para_banner() {
+        // Verificar cache.
+        $cached = get_transient( self::TRANSIENT_KEY );
+
+        if ( false !== $cached ) {
+            return $cached;
+        }
+
+        $hoje = current_time( 'Y-m-d' );
+        $resultado = array();
+        $espetaculo_ids_vistos = array(); // Evitar duplicatas.
+
+        // --- Grupo 1: Temporadas Ativas (_temporada_data_fim >= hoje) ---
+        $temporadas_ativas = get_posts( array(
+            'post_type'      => 'temporada',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                array(
+                    'key'     => '_temporada_data_fim',
+                    'value'   => $hoje,
+                    'compare' => '>=',
+                    'type'    => 'DATE',
+                ),
+            ),
+            'meta_key'  => '_temporada_data_fim',
+            'orderby'   => 'meta_value',
+            'order'     => 'ASC',
+        ) );
+
+        foreach ( $temporadas_ativas as $temporada ) {
+            $espetaculo_id = intval( get_post_meta( $temporada->ID, '_temporada_espetaculo_id', true ) );
+
+            if ( ! $espetaculo_id ) {
+                continue;
+            }
+
+            // Apenas espetáculos com imagem destacada.
+            if ( ! has_post_thumbnail( $espetaculo_id ) ) {
+                continue;
+            }
+
+            // Evitar duplicatas (um espetáculo pode ter várias temporadas ativas).
+            if ( in_array( $espetaculo_id, $espetaculo_ids_vistos, true ) ) {
+                continue;
+            }
+
+            $espetaculo_ids_vistos[] = $espetaculo_id;
+
+            $resultado[] = self::montar_item_espetaculo( $espetaculo_id, $temporada->ID, 'ativo' );
+        }
+
+        // --- Grupo 2: Próximas Temporadas ---
+        // Banner já liberado (data_inicio_banner <= hoje) mas temporada ainda não começou.
+        $temporadas_proximas = get_posts( array(
+            'post_type'      => 'temporada',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => '_temporada_data_inicio_banner',
+                    'value'   => $hoje,
+                    'compare' => '<=',
+                    'type'    => 'DATE',
+                ),
+                array(
+                    'key'     => '_temporada_data_inicio',
+                    'value'   => $hoje,
+                    'compare' => '>',
+                    'type'    => 'DATE',
+                ),
+            ),
+            'meta_key'  => '_temporada_data_inicio',
+            'orderby'   => 'meta_value',
+            'order'     => 'ASC',
+        ) );
+
+        foreach ( $temporadas_proximas as $temporada ) {
+            $espetaculo_id = intval( get_post_meta( $temporada->ID, '_temporada_espetaculo_id', true ) );
+
+            if ( ! $espetaculo_id ) {
+                continue;
+            }
+
+            // Apenas espetáculos com imagem destacada.
+            if ( ! has_post_thumbnail( $espetaculo_id ) ) {
+                continue;
+            }
+
+            // Não duplicar espetáculos que já estão no Grupo 1.
+            if ( in_array( $espetaculo_id, $espetaculo_ids_vistos, true ) ) {
+                continue;
+            }
+
+            $espetaculo_ids_vistos[] = $espetaculo_id;
+
+            $resultado[] = self::montar_item_espetaculo( $espetaculo_id, $temporada->ID, 'proximo' );
+        }
+
+        // Salvar no transient por 12 horas.
+        set_transient( self::TRANSIENT_KEY, $resultado, self::TRANSIENT_EXPIRY );
+
+        return $resultado;
+    }
+
+    /**
+     * Monta o array de dados de um espetáculo para uso na clonagem de slides.
+     *
+     * @param int    $espetaculo_id ID do post espetáculo.
+     * @param int    $temporada_id  ID do post temporada.
+     * @param string $grupo         'ativo' ou 'proximo'.
+     * @return array
+     */
+    private static function montar_item_espetaculo( $espetaculo_id, $temporada_id, $grupo ) {
+        $teatro        = get_post_meta( $temporada_id, '_temporada_teatro_nome', true );
+        $link_vendas   = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
+        $link_texto    = get_post_meta( $temporada_id, '_temporada_link_texto', true );
+        $data_inicio   = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
+        $data_fim      = get_post_meta( $temporada_id, '_temporada_data_fim', true );
+        $sessoes_raw   = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
+
+        // Gerar dias e horários dinamicamente.
+        $dias_horarios = '';
+        if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) && ! empty( $sessoes_raw ) ) {
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $sessoes_raw );
+        }
+
+        return array(
+            'espetaculo_id' => $espetaculo_id,
+            'temporada_id'  => $temporada_id,
+            'teatro'        => (string) $teatro,
+            'dias_horarios' => (string) $dias_horarios,
+            'link_vendas'   => (string) $link_vendas,
+            'link_texto'    => (string) $link_texto,
+            'data_inicio'   => (string) $data_inicio,
+            'data_fim'      => (string) $data_fim,
+            'grupo'         => $grupo,
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // INVALIDAÇÃO DE CACHE
+    // -------------------------------------------------------------------------
+
+    /**
+     * Invalida o transient ao salvar um espetáculo ou temporada.
+     *
+     * @param int $post_id ID do post salvo.
+     */
+    public static function invalidar_cache( $post_id ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( wp_is_post_revision( $post_id ) ) {
+            return;
+        }
+
+        $post_type = get_post_type( $post_id );
+
+        if ( in_array( $post_type, array( 'espetaculo', 'temporada' ), true ) ) {
+            delete_transient( self::TRANSIENT_KEY );
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // CÓDIGO LEGADO (mantido para compatibilidade com shortcode e outros usos)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Obtém os espetáculos para exibição no banner (método legado).
+     *
+     * @deprecated Usar get_espetaculos_para_banner() para o filtro do RevSlider.
      */
     public static function get_banner_espetaculos() {
         $hoje = current_time( 'Y-m-d' );
 
-        // Buscar espetáculos em cartaz
         $em_cartaz = get_posts( array(
-            'post_type' => 'espetaculo',
+            'post_type'      => 'espetaculo',
             'posts_per_page' => -1,
-            'meta_query' => array(
+            'meta_query'     => array(
                 'relation' => 'EXISTS',
                 array(
-                    'key' => '_espetaculo_banner_temporada_id',
-                    'compare' => 'EXISTS'
-                )
-            )
+                    'key'     => '_espetaculo_banner_temporada_id',
+                    'compare' => 'EXISTS',
+                ),
+            ),
         ) );
 
         $espetaculos_ordenados = array();
 
         foreach ( $em_cartaz as $espetaculo ) {
             $temporada_id = get_post_meta( $espetaculo->ID, '_espetaculo_banner_temporada_id', true );
-            
+
             if ( ! $temporada_id ) {
                 continue;
             }
 
-            $data_inicio = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
-            $data_fim = get_post_meta( $temporada_id, '_temporada_data_fim', true );
+            $data_inicio        = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
+            $data_fim           = get_post_meta( $temporada_id, '_temporada_data_fim', true );
             $data_inicio_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
 
-            // Verificar se o banner deve ser exibido
             if ( $data_inicio_cartaz && $hoje < $data_inicio_cartaz ) {
                 continue;
             }
 
-            // Classificar por status
             if ( $data_inicio && $data_fim ) {
                 if ( $hoje >= $data_inicio && $hoje <= $data_fim ) {
                     $status = 'em_cartaz';
                 } elseif ( $hoje < $data_inicio ) {
                     $status = 'futuro';
                 } else {
-                    continue; // Não exibir encerrados
+                    continue;
                 }
 
                 $espetaculos_ordenados[] = array(
-                    'post' => $espetaculo,
+                    'post'        => $espetaculo,
                     'temporada_id' => $temporada_id,
-                    'status' => $status,
-                    'data_inicio' => $data_inicio
+                    'status'      => $status,
+                    'data_inicio' => $data_inicio,
                 );
             }
         }
 
-        // Ordenar: em cartaz primeiro, depois futuros, ambos por data de estreia
-        usort( $espetaculos_ordenados, function( $a, $b ) {
+        usort( $espetaculos_ordenados, function ( $a, $b ) {
             if ( $a['status'] !== $b['status'] ) {
                 return $a['status'] === 'em_cartaz' ? -1 : 1;
             }
@@ -83,27 +518,26 @@ class CANNALEspetaculos_RevSlider {
     public static function update_banner_temporada( $espetaculo_id ) {
         $hoje = current_time( 'Y-m-d' );
 
-        // Buscar temporada em cartaz ou futura mais próxima
         $temporadas = get_posts( array(
-            'post_type' => 'temporada',
+            'post_type'      => 'temporada',
             'posts_per_page' => 1,
-            'meta_query' => array(
+            'meta_query'     => array(
                 'relation' => 'AND',
                 array(
-                    'key' => '_temporada_espetaculo_id',
-                    'value' => $espetaculo_id,
-                    'compare' => '='
+                    'key'     => '_temporada_espetaculo_id',
+                    'value'   => $espetaculo_id,
+                    'compare' => '=',
                 ),
                 array(
-                    'key' => '_temporada_data_fim',
-                    'value' => $hoje,
+                    'key'     => '_temporada_data_fim',
+                    'value'   => $hoje,
                     'compare' => '>=',
-                    'type' => 'DATE'
-                )
+                    'type'    => 'DATE',
+                ),
             ),
-            'orderby' => 'meta_value',
+            'orderby'  => 'meta_value',
             'meta_key' => '_temporada_data_inicio',
-            'order' => 'ASC'
+            'order'    => 'ASC',
         ) );
 
         if ( ! empty( $temporadas ) ) {
@@ -114,34 +548,33 @@ class CANNALEspetaculos_RevSlider {
     }
 
     /**
-     * Gera dados para uso no RevSlider.
+     * Gera dados para uso no RevSlider (método legado).
      */
     public static function get_slide_data( $espetaculo_id, $temporada_id ) {
         $espetaculo = get_post( $espetaculo_id );
-        $temporada = get_post( $temporada_id );
+        $temporada  = get_post( $temporada_id );
 
         if ( ! $espetaculo || ! $temporada ) {
             return null;
         }
 
-        $teatro_nome = get_post_meta( $temporada_id, '_temporada_teatro_nome', true );
+        $teatro_nome   = get_post_meta( $temporada_id, '_temporada_teatro_nome', true );
         $dias_horarios = get_post_meta( $temporada_id, '_temporada_dias_horarios', true );
-        $link_vendas = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
-        $link_texto = get_post_meta( $temporada_id, '_temporada_link_texto', true );
+        $link_vendas   = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
+        $link_texto    = get_post_meta( $temporada_id, '_temporada_link_texto', true );
         $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
 
-        // Obter imagem destaque (banner)
-        $image_id = get_post_thumbnail_id( $espetaculo_id );
+        $image_id  = get_post_thumbnail_id( $espetaculo_id );
         $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
 
         return array(
-            'titulo' => $espetaculo->post_title,
-            'teatro' => $teatro_nome,
+            'titulo'        => $espetaculo->post_title,
+            'teatro'        => $teatro_nome,
             'dias_horarios' => $dias_horarios,
-            'link_vendas' => $link_vendas,
-            'link_texto' => ! empty( $link_texto ) ? $link_texto : 'Ingressos Aqui',
+            'link_vendas'   => $link_vendas,
+            'link_texto'    => ! empty( $link_texto ) ? $link_texto : 'Ingressos Aqui',
             'espetaculo_url' => $espetaculo_url,
-            'image_url' => $image_url
+            'image_url'     => $image_url,
         );
     }
 
@@ -150,18 +583,16 @@ class CANNALEspetaculos_RevSlider {
      * Uso: [cannal_banner_espetaculos]
      */
     public static function shortcode_banner_espetaculos( $atts ) {
-        $atts = shortcode_atts( array(
-            'limit' => 10
-        ), $atts );
+        $atts = shortcode_atts( array( 'limit' => 10 ), $atts );
 
         $espetaculos = self::get_banner_espetaculos();
         $espetaculos = array_slice( $espetaculos, 0, intval( $atts['limit'] ) );
 
         $output = '<div class="cannal-banner-espetaculos">';
-        
+
         foreach ( $espetaculos as $item ) {
             $data = self::get_slide_data( $item['post']->ID, $item['temporada_id'] );
-            
+
             if ( ! $data ) {
                 continue;
             }
@@ -171,16 +602,16 @@ class CANNALEspetaculos_RevSlider {
             $output .= '<h2 class="banner-titulo">' . esc_html( $data['titulo'] ) . '</h2>';
             $output .= '<p class="banner-teatro">' . esc_html( $data['teatro'] ) . '</p>';
             $output .= '<p class="banner-horarios">' . esc_html( $data['dias_horarios'] ) . '</p>';
-            
+
             if ( $data['link_vendas'] ) {
                 $output .= '<a href="' . esc_url( $data['link_vendas'] ) . '" class="banner-button-ingressos" target="_blank">' . esc_html( $data['link_texto'] ) . '</a>';
             }
-            
+
             $output .= '<a href="' . esc_url( $data['espetaculo_url'] ) . '" class="banner-link-espetaculo">Ver mais</a>';
             $output .= '</div>';
             $output .= '</div>';
         }
-        
+
         $output .= '</div>';
 
         return $output;
@@ -194,7 +625,9 @@ class CANNALEspetaculos_RevSlider {
     }
 
     /**
-     * Hook para atualizar automaticamente a temporada do banner quando uma temporada é salva.
+     * Hook legado: atualiza a temporada do banner ao salvar uma temporada.
+     *
+     * @param int $post_id ID do post salvo.
      */
     public static function on_temporada_save( $post_id ) {
         if ( get_post_type( $post_id ) !== 'temporada' ) {
@@ -202,7 +635,7 @@ class CANNALEspetaculos_RevSlider {
         }
 
         $espetaculo_id = get_post_meta( $post_id, '_temporada_espetaculo_id', true );
-        
+
         if ( $espetaculo_id ) {
             self::update_banner_temporada( $espetaculo_id );
         }
@@ -233,43 +666,36 @@ class CANNALEspetaculos_RevSlider {
         $espetaculo_ids = self::get_cartaz_espetaculo_ids();
 
         if ( empty( $espetaculo_ids ) ) {
-            $query_args['post__in'] = array( 0 );
+            $query_args['post__in']      = array( 0 );
             $query_args['posts_per_page'] = 0;
             return $query_args;
         }
 
-        $query_args['post_type'] = 'espetaculo';
-        $query_args['post__in'] = $espetaculo_ids;
-        $query_args['orderby'] = 'post__in';
-        $query_args['posts_per_page'] = count( $espetaculo_ids );
+        $query_args['post_type']         = 'espetaculo';
+        $query_args['post__in']          = $espetaculo_ids;
+        $query_args['orderby']           = 'post__in';
+        $query_args['posts_per_page']    = count( $espetaculo_ids );
         $query_args['ignore_sticky_posts'] = true;
 
         return $query_args;
     }
 
     /**
-     * Retorna os IDs de espetáculos elegíveis para o cartaz.
-     *
-     * Critérios:
-     * - Temporada ativa (data de início <= hoje e data de fim <= hoje ou indefinida)
-     * - Ou data de início do cartaz vazio ou menor/igual a hoje
-     * - Apenas espetáculos com imagem destacada
+     * Retorna os IDs de espetáculos elegíveis para o cartaz (método legado).
      *
      * @return int[] Lista de IDs em ordem ascendente pela data de início da temporada.
      */
     private static function get_cartaz_espetaculo_ids() {
         $hoje = current_time( 'Y-m-d' );
 
-        $temporadas = get_posts(
-            array(
-                'post_type'      => 'temporada',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-                'meta_key'       => '_temporada_data_inicio',
-                'orderby'        => 'meta_value',
-                'order'          => 'ASC',
-            )
-        );
+        $temporadas = get_posts( array(
+            'post_type'      => 'temporada',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'meta_key'       => '_temporada_data_inicio',
+            'orderby'        => 'meta_value',
+            'order'          => 'ASC',
+        ) );
 
         $espetaculo_ids = array();
 
@@ -280,12 +706,12 @@ class CANNALEspetaculos_RevSlider {
                 continue;
             }
 
-            $data_inicio = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
-            $data_fim = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
+            $data_inicio        = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
+            $data_fim           = get_post_meta( $temporada->ID, '_temporada_data_fim', true );
             $data_inicio_cartaz = get_post_meta( $temporada->ID, '_temporada_data_inicio_cartaz', true );
 
-            $temporada_ativa = $data_inicio && $data_inicio <= $hoje && ( empty( $data_fim ) || $data_fim <= $hoje );
-            $cartaz_liberado = ( '' === $data_inicio_cartaz || empty( $data_inicio_cartaz ) || $data_inicio_cartaz <= $hoje );
+            $temporada_ativa  = $data_inicio && $data_inicio <= $hoje && ( empty( $data_fim ) || $data_fim <= $hoje );
+            $cartaz_liberado  = ( '' === $data_inicio_cartaz || empty( $data_inicio_cartaz ) || $data_inicio_cartaz <= $hoje );
 
             if ( ! $temporada_ativa && ! $cartaz_liberado ) {
                 continue;
@@ -302,7 +728,21 @@ class CANNALEspetaculos_RevSlider {
     }
 }
 
-// Registrar hooks e shortcodes
+// -------------------------------------------------------------------------
+// REGISTRO DE HOOKS E SHORTCODES
+// -------------------------------------------------------------------------
+
+// Shortcode legado.
 add_action( 'init', array( 'CANNALEspetaculos_RevSlider', 'register_shortcode' ) );
+
+// Hook legado: atualizar temporada do banner ao salvar.
 add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'on_temporada_save' ) );
+
+// Filtro legado: ajustar posts do slider cannal_cartaz.
 add_filter( 'revslider_get_posts', array( 'CANNALEspetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
+
+// Novo filtro: clonar slide template para cada espetáculo elegível.
+add_filter( 'revslider_get_slides_by_slider_id', array( 'CANNALEspetaculos_RevSlider', 'filter_slides_by_slider_id' ), 10, 2 );
+
+// Invalidar cache ao salvar espetáculo ou temporada.
+add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'invalidar_cache' ) );
