@@ -796,9 +796,22 @@
             } else {
                 // Inserir nova linha
                 if (!$tbody.length) {
-                    // Tabela ainda não existe — recarregar apenas o meta box
-                    location.reload();
-                    return;
+                    // Tabela ainda não existe (primeira temporada) — criá-la dinamicamente
+                    var $table = $(
+                        '<table class="wp-list-table widefat fixed striped">' +
+                            '<thead><tr>' +
+                                '<th>Teatro</th>' +
+                                '<th>Per\u00edodo</th>' +
+                                '<th>Dias e Hor\u00e1rios</th>' +
+                                '<th>Status</th>' +
+                                '<th>A\u00e7\u00f5es</th>' +
+                            '</tr></thead>' +
+                            '<tbody id="temporadas-tbody"></tbody>' +
+                        '</table>'
+                    );
+                    // Inserir a tabela antes do botão "Adicionar Nova Temporada"
+                    $('.temporadas-actions').before($table);
+                    $tbody = $('#temporadas-tbody');
                 }
                 var $newRow = $('<tr id="' + rowId + '">' + rowHtml + '</tr>');
                 $tbody.append($newRow);
