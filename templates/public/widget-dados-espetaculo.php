@@ -60,35 +60,35 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
     <?php endif; ?>
 	
-	<?php if ( $autor ) : ?>
+	<?php if ( $autor && $autor != "&nbsp;" ) : ?>
     <div class="info-item">
         <strong><?php esc_html_e( 'Autor', 'cannal-espetaculos' ); ?></strong>
         <span><?php echo esc_html( $autor ); ?></span>
     </div>
     <?php endif; ?>
 
-	<?php if ( $diretor ) : ?>
+	<?php if ( $diretor && $diretor != "&nbsp;"  ) : ?>
     <div class="info-item">
         <strong><?php esc_html_e( 'Direção', 'cannal-espetaculos' ); ?></strong>
         <span><?php echo esc_html( $diretor ); ?></span>
     </div>
     <?php endif; ?>
     
-    <?php if ( $elenco ) : ?>
+    <?php if ( $elenco && $elenco != "&nbsp;"  ) : ?>
     <div class="info-item">
         <strong><?php esc_html_e( 'Elenco', 'cannal-espetaculos' ); ?></strong>
         <div><?php echo nl2br( esc_html( $elenco ) ); ?></div>
     </div>
     <?php endif; ?>
 
-    <?php if ( $duracao ) : ?>
+    <?php if ( $duracao && $duracao != "&nbsp;"  ) : ?>
     <div class="info-item">
         <strong><?php esc_html_e( 'Duração', 'cannal-espetaculos' ); ?></strong>
         <span><?php echo esc_html( $duracao ); ?></span>
     </div>
     <?php endif; ?>
 
-    <?php if ( $ano_estreia ) : ?>
+    <?php if ( $ano_estreia && $ano_estreia != "&nbsp;"  ) : ?>
     <div class="info-item">
         <strong><?php esc_html_e( 'Estreou em', 'cannal-espetaculos' ); ?></strong>
         <span><?php echo esc_html( $ano_estreia ); ?></span>
