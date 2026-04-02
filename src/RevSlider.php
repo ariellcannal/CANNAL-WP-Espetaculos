@@ -2,9 +2,9 @@
 /**
  * Integração com RevSlider para banners de espetáculos.
  *
- * Utiliza o filtro revslider_get_slides_by_slider_id para clonar dinamicamente
- * um slide template (identificado pelo ID HTML "TEMPLATE_ESPETACULO") para cada
- * espetáculo elegível, substituindo placeholders nas camadas com dados reais.
+ * Utiliza a abordagem nativa Post-Based do RevSlider, filtrando os espetáculos
+ * elegíveis via 'revslider_get_posts' e injetando dados extras via
+ * 'sr_streamline_post_data_post' para substituição automática de placeholders.
  *
  * Regras de negócio:
  *   - Grupo 1 (Temporadas Ativas): _temporada_data_fim >= hoje, ordenado ASC por data_fim.
@@ -35,149 +35,102 @@ class CANNALEspetaculos_RevSlider {
     // -------------------------------------------------------------------------
 
     /**
-     * Filtra as layers de um slide antes da renderização.
-     * Usado para injetar dados do espetáculo nas layers do slide template.
+     * Injeta os dados extras do espetáculo no array de dados do post do RevSlider.
+     * Isso permite que o RevSlider substitua automaticamente os placeholders {{meta:chave}}
+     * nas layers do slide template.
      *
-     * @param array  $layers Array de layers do slide.
-     * @param object $slide  Instância do slide.
-     * @return array Array de layers modificado.
+     * @param array  $post_data Array de dados dos posts já processados pelo RevSlider.
+     * @param array  $data      Array de dados originais dos posts.
+     * @param array  $metas     Array de metas usados no slider.
+     * @param object $slider    Instância do slider.
+     * @return array Array de dados modificado.
      */
-    public static function filter_set_layers( $layers, $slide ) {
-        if ( ! is_array( $layers ) || empty( $layers ) ) {
-            return $layers;
-        }
-
-        // Verificar se é o slide template pelo alias ou ID HTML
-        $is_template = false;
-        if ( method_exists( $slide, 'get_param' ) ) {
-            $alias = $slide->get_param( 'alias', '' );
-            $id = $slide->get_param( 'id', '' );
-            if ( 'TEMPLATE_ESPETACULO' === $alias || 'TEMPLATE_ESPETACULO' === $id ) {
-                $is_template = true;
-            }
-        }
-
-        // Se não for o template, retorna as layers originais
-        if ( ! $is_template ) {
-            return $layers;
+    public static function filter_streamline_post_data( $post_data, $data, $metas, $slider ) {
+        if ( empty( $post_data ) || ! is_array( $post_data ) ) {
+            return $post_data;
         }
 
         // Buscar espetáculos elegíveis (com cache via transient)
         $espetaculos = self::get_espetaculos_para_banner();
         if ( empty( $espetaculos ) ) {
-            return $layers;
+            return $post_data;
         }
 
-        // Para simplificar, em modo Custom, vamos pegar o primeiro espetáculo elegível
-        // (O ideal seria ter um slide para cada, mas o RevSlider em modo Custom
-        // não permite clonar slides dinamicamente via filtro no frontend de forma simples.
-        // Vamos injetar os dados do primeiro espetáculo no template atual).
-        $item = $espetaculos[0];
-
-        // --- Preparar mapa de substituição de placeholders ---
-        $titulo         = get_the_title( $item['espetaculo_id'] );
-        $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $item['espetaculo_id'] );
-        $data_inicio_fmt = ! empty( $item['data_inicio'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio'] ) ) : '';
-        $data_fim_fmt    = ! empty( $item['data_fim'] )    ? date_i18n( 'd/m/Y', strtotime( $item['data_fim'] ) )    : '';
-        $link_texto = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
-
-        $placeholders = array(
-            '{{titulo}}'           => $titulo,
-            '{{espetaculo_url}}'   => $espetaculo_url,
-            '{{autor}}'            => $item['autor'],
-            '{{ano_estreia}}'      => $item['ano_estreia'],
-            '{{duracao}}'          => $item['duracao'],
-            '{{classificacao}}'    => $item['classificacao'],
-            '{{diretor}}'          => $item['diretor'],
-            '{{elenco}}'           => $item['elenco'],
-            '{{teatro_nome}}'      => $item['teatro_nome'],
-            '{{teatro_endereco}}'  => $item['teatro_endereco'],
-            '{{dias_horarios}}'    => $item['dias_horarios'],
-            '{{data_inicio}}'      => $data_inicio_fmt,
-            '{{data_fim}}'         => $data_fim_fmt,
-            '{{valores}}'          => $item['valores'],
-            '{{link_vendas}}'      => $item['link_vendas'],
-            '{{link_texto}}'       => $link_texto,
-        );
-
-        // --- URL do logotipo ---
-        $logotipo_id  = $item['logotipo_id'];
-        $logotipo_url = '';
-        if ( $logotipo_id && is_numeric( $logotipo_id ) ) {
-            $logotipo_url = wp_get_attachment_image_url( intval( $logotipo_id ), 'full' );
+        // Criar um mapa de espetáculos por ID para busca rápida
+        $espetaculos_map = array();
+        foreach ( $espetaculos as $item ) {
+            $espetaculos_map[ $item['espetaculo_id'] ] = $item;
         }
 
-        // --- Processar cada layer ---
-        foreach ( $layers as &$layer ) {
-            if ( ! is_array( $layer ) ) {
+        foreach ( $post_data as &$post ) {
+            $post_id = isset( $post['id'] ) ? intval( $post['id'] ) : 0;
+            
+            if ( ! $post_id || ! isset( $espetaculos_map[ $post_id ] ) ) {
                 continue;
             }
 
-            // Substituir placeholders em campos de texto
-            $text_fields = array( 'text', 'title', 'html', 'link', 'url' );
-            foreach ( $text_fields as $field ) {
-                if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
-                    $layer[ $field ] = str_replace(
-                        array_keys( $placeholders ),
-                        array_values( $placeholders ),
-                        $layer[ $field ]
-                    );
-                }
+            $item = $espetaculos_map[ $post_id ];
+
+            // --- Preparar dados extras ---
+            $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $item['espetaculo_id'] );
+            $data_inicio_fmt = ! empty( $item['data_inicio'] ) ? date_i18n( 'd/m/Y', strtotime( $item['data_inicio'] ) ) : '';
+            $data_fim_fmt    = ! empty( $item['data_fim'] )    ? date_i18n( 'd/m/Y', strtotime( $item['data_fim'] ) )    : '';
+            $link_texto = ! empty( $item['link_texto'] ) ? $item['link_texto'] : 'Ingressos Aqui';
+
+            // --- URL do logotipo ---
+            $logotipo_id  = $item['logotipo_id'];
+            $logotipo_url = '';
+            if ( $logotipo_id && is_numeric( $logotipo_id ) ) {
+                $logotipo_url = wp_get_attachment_image_url( intval( $logotipo_id ), 'full' );
             }
 
-            // Tratar layer de imagem do logotipo
-            $is_logotipo_layer = false;
-            $wrapper_id = isset( $layer['attributes']['id'] ) ? $layer['attributes']['id'] : ( isset( $layer['attr']['id'] ) ? $layer['attr']['id'] : '' );
+            // Injetar os dados no array 'meta' do post
+            // O RevSlider substituirá {{meta:chave}} por esses valores
+            if ( ! isset( $post['meta'] ) || ! is_array( $post['meta'] ) ) {
+                $post['meta'] = array();
+            }
+
+            $post['meta']['espetaculo_url']  = $espetaculo_url;
+            $post['meta']['autor']           = $item['autor'];
+            $post['meta']['ano_estreia']     = $item['ano_estreia'];
+            $post['meta']['duracao']         = $item['duracao'];
+            $post['meta']['classificacao']   = $item['classificacao'];
+            $post['meta']['diretor']         = $item['diretor'];
+            $post['meta']['elenco']          = $item['elenco'];
+            $post['meta']['teatro_nome']     = $item['teatro_nome'];
+            $post['meta']['teatro_endereco'] = $item['teatro_endereco'];
+            $post['meta']['dias_horarios']   = $item['dias_horarios'];
+            $post['meta']['data_inicio']     = $data_inicio_fmt;
+            $post['meta']['data_fim']        = $data_fim_fmt;
+            $post['meta']['valores']         = $item['valores'];
+            $post['meta']['link_vendas']     = $item['link_vendas'];
+            $post['meta']['link_texto']      = $link_texto;
+            $post['meta']['logotipo_url']    = $logotipo_url;
             
-            if ( '{{logotipo}}' === $wrapper_id ) {
-                $is_logotipo_layer = true;
-                if ( ! empty( $logotipo_url ) ) {
-                    if ( isset( $layer['media']['imageUrl'] ) ) {
-                        $layer['media']['imageUrl'] = $logotipo_url;
-                    }
-                    foreach ( array( 'image_url', 'src', 'url' ) as $img_field ) {
-                        if ( isset( $layer[ $img_field ] ) ) {
-                            $layer[ $img_field ] = $logotipo_url;
-                        }
-                    }
-                } else {
-                    $layer['visibility'] = 'off';
-                }
-            }
-
-            // Ocultar layers vazias ou com &nbsp;
-            if ( ! $is_logotipo_layer ) {
-                foreach ( $text_fields as $field ) {
-                    if ( isset( $layer[ $field ] ) && is_string( $layer[ $field ] ) ) {
-                        $value = trim( $layer[ $field ] );
-                        if ( '' === $value || '&nbsp;' === $value || html_entity_decode( $value ) === ' ' ) {
-                            $layer['visibility'] = 'off';
-                        }
-                    }
-                }
-            }
+            // Para compatibilidade com placeholders sem prefixo meta:
+            // (O RevSlider também verifica chaves diretas no array do post)
+            $post['espetaculo_url']  = $espetaculo_url;
+            $post['autor']           = $item['autor'];
+            $post['ano_estreia']     = $item['ano_estreia'];
+            $post['duracao']         = $item['duracao'];
+            $post['classificacao']   = $item['classificacao'];
+            $post['diretor']         = $item['diretor'];
+            $post['elenco']          = $item['elenco'];
+            $post['teatro_nome']     = $item['teatro_nome'];
+            $post['teatro_endereco'] = $item['teatro_endereco'];
+            $post['dias_horarios']   = $item['dias_horarios'];
+            $post['data_inicio']     = $data_inicio_fmt;
+            $post['data_fim']        = $data_fim_fmt;
+            $post['valores']         = $item['valores'];
+            $post['link_vendas']     = $item['link_vendas'];
+            $post['link_texto']      = $link_texto;
+            $post['logotipo_url']    = $logotipo_url;
         }
-        unset( $layer );
+        unset( $post );
 
-        return $layers;
+        return $post_data;
     }
 
-    /**
-     * Filtra uma layer individual antes da renderização.
-     *
-     * @param array  $layer Array da layer.
-     * @param object $slide Instância do slide.
-     * @return array Array da layer modificado.
-     */
-    public static function filter_set_layer( $layer, $slide ) {
-        // A lógica principal já foi aplicada em filter_set_layers,
-        // mas este filtro pode ser útil para ajustes finos por layer.
-        return $layer;
-    }
-
-    // -------------------------------------------------------------------------
-    // CONSULTA DE ESPETÁCULOS ELEGÍVEIS (COM CACHE)
-    // -------------------------------------------------------------------------
 
     /**
      * Retorna os espetáculos elegíveis para o banner, com cache via transient.
@@ -705,8 +658,7 @@ add_filter( 'revslider_get_posts', array( 'CANNALEspetaculos_RevSlider', 'filter
 
 
 // Novos filtros: modificar layers do slide em modo Custom.
-add_filter( 'revslider_set_layers', array( 'CANNALEspetaculos_RevSlider', 'filter_set_layers' ), 10, 2 );
-add_filter( 'revslider_set_layer', array( 'CANNALEspetaculos_RevSlider', 'filter_set_layer' ), 10, 2 );
+add_filter( 'sr_streamline_post_data_post', array( 'CANNALEspetaculos_RevSlider', 'filter_streamline_post_data' ), 10, 4 );
 
 // Invalidar cache ao salvar espetáculo ou temporada.
 add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'invalidar_cache' ) );
