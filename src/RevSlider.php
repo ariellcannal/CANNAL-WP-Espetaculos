@@ -2,11 +2,11 @@
 /**
  * Integração com RevSlider para banners de espetáculos.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_RevSlider {
+class CANNALEspetaculos_RevSlider {
 
     /**
      * Obtém os espetáculos para exibição no banner.
@@ -128,7 +128,7 @@ class Cannal_Espetaculos_RevSlider {
         $dias_horarios = get_post_meta( $temporada_id, '_temporada_dias_horarios', true );
         $link_vendas = get_post_meta( $temporada_id, '_temporada_link_vendas', true );
         $link_texto = get_post_meta( $temporada_id, '_temporada_link_texto', true );
-        $espetaculo_url = Cannal_Espetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
+        $espetaculo_url = CANNALEspetaculos_Rewrites::get_espetaculo_url( $espetaculo_id );
 
         // Obter imagem destaque (banner)
         $image_id = get_post_thumbnail_id( $espetaculo_id );
@@ -303,6 +303,6 @@ class Cannal_Espetaculos_RevSlider {
 }
 
 // Registrar hooks e shortcodes
-add_action( 'init', array( 'Cannal_Espetaculos_RevSlider', 'register_shortcode' ) );
-add_action( 'save_post', array( 'Cannal_Espetaculos_RevSlider', 'on_temporada_save' ) );
-add_filter( 'revslider_get_posts', array( 'Cannal_Espetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
+add_action( 'init', array( 'CANNALEspetaculos_RevSlider', 'register_shortcode' ) );
+add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'on_temporada_save' ) );
+add_filter( 'revslider_get_posts', array( 'CANNALEspetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );

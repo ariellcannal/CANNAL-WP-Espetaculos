@@ -2,11 +2,11 @@
 /**
  * Gerencia as rewrite rules e URLs personalizadas.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Rewrites {
+class CANNALEspetaculos_Rewrites {
 
     /**
      * Adiciona as rewrite rules personalizadas.

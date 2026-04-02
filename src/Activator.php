@@ -2,19 +2,19 @@
 /**
  * Disparado durante a ativação do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Activator {
+class CANNALEspetaculos_Activator {
 
     /**
      * Ações executadas na ativação do plugin.
      */
     public static function activate() {
         // Registrar os post types e taxonomias
-        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'src/class-cannal-espetaculos-post-types.php';
-        $post_types = new Cannal_Espetaculos_Post_Types();
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'src/PostTypes.php';
+        $post_types = new CANNALEspetaculos_PostTypes();
         $post_types->register_post_types();
         $post_types->register_taxonomies();
         

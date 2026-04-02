@@ -2,8 +2,8 @@
 /**
  * Funções utilitárias do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
 if ( ! function_exists( 'cannal_get_field' ) ) {

@@ -2,11 +2,11 @@
 /**
  * Disparado durante a desativação do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Deactivator {
+class CANNALEspetaculos_Deactivator {
 
     /**
      * Ações executadas na desativação do plugin.

@@ -3,7 +3,7 @@
  * Widget Próximas Apresentações do Elementor.
  */
 
-class Cannal_Espetaculos_Widget_Proximas_Apresentacoes extends \Elementor\Widget_Base {
+class CANNALEspetaculos_ElementorProximas extends \Elementor\Widget_Base {
 
     public function get_name() {
         return 'cannal_proximas_apresentacoes';
@@ -56,7 +56,7 @@ class Cannal_Espetaculos_Widget_Proximas_Apresentacoes extends \Elementor\Widget
         if ( ! $post || $post->post_type !== 'espetaculo' ) return;
 
         $settings = $this->get_settings_for_display();
-        $temporadas = Cannal_Espetaculos_Public::get_temporadas_by_status( $post->ID, 'futuras' );
+        $temporadas = CANNALEspetaculos_Public::get_temporadas_by_status( $post->ID, 'futuras' );
 
         if ( empty( $temporadas ) ) {
             echo '<p>Nenhuma apresentação futura agendada.</p>';

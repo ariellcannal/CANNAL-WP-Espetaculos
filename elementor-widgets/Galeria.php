@@ -2,11 +2,11 @@
 /**
  * Widget Galeria do Elementor.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/elementor-widgets
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/elementor-widgets
  */
 
-class Cannal_Espetaculos_Widget_Galeria extends \Elementor\Widget_Base {
+class CANNALEspetaculos_ElementorGaleria extends \Elementor\Widget_Base {
 
     public function get_name() {
         return 'cannal_espetaculo_galeria';

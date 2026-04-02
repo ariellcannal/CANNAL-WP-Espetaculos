@@ -2,11 +2,11 @@
 /**
  * Widget de Lista de Espetáculos
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Widget_Lista extends WP_Widget {
+class CANNALEspetaculos_WidgetLista extends WP_Widget {
 
     /**
      * Construtor do widget.
@@ -207,7 +207,7 @@ class Cannal_Espetaculos_Widget_Lista extends WP_Widget {
      * Gera texto de dias e horários usando classe inteligente.
      */
     private function gerar_dias_horarios( $tipo_sessao, $sessoes_data ) {
-        return Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
+        return CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
     }
 }
 
@@ -215,6 +215,6 @@ class Cannal_Espetaculos_Widget_Lista extends WP_Widget {
  * Registra o widget.
  */
 function cannal_register_widget_lista() {
-    register_widget( 'Cannal_Espetaculos_Widget_Lista' );
+    register_widget( 'CANNALEspetaculos_WidgetLista' );
 }
 add_action( 'widgets_init', 'cannal_register_widget_lista' );

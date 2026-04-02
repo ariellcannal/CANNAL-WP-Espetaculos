@@ -3,7 +3,7 @@
  * Widget Últimas Apresentações do Elementor.
  */
 
-class Cannal_Espetaculos_Widget_Ultimas_Apresentacoes extends \Elementor\Widget_Base {
+class CANNALEspetaculos_ElementorUltimas extends \Elementor\Widget_Base {
 
     public function get_name() {
         return 'cannal_ultimas_apresentacoes';
@@ -49,7 +49,7 @@ class Cannal_Espetaculos_Widget_Ultimas_Apresentacoes extends \Elementor\Widget_
         if ( ! $post || $post->post_type !== 'espetaculo' ) return;
 
         $settings = $this->get_settings_for_display();
-        $temporadas = Cannal_Espetaculos_Public::get_temporadas_by_status( $post->ID, 'encerradas' );
+        $temporadas = CANNALEspetaculos_Public::get_temporadas_by_status( $post->ID, 'encerradas' );
         $temporadas = array_slice( $temporadas, 0, $settings['limit'] );
 
         if ( empty( $temporadas ) ) {

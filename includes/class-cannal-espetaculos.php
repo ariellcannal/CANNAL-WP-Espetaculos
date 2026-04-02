@@ -2,11 +2,11 @@
 /**
  * A classe principal do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos {
+class CANNALEspetaculos_Plugin {
 
     /**
      * O loader responsável por manter e registrar todos os hooks do plugin.
@@ -43,49 +43,49 @@ class Cannal_Espetaculos {
         /**
          * A classe responsável por orquestrar as ações e filtros do plugin.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-loader.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/Loader.php';
 
         /**
          * A classe responsável por registrar os post types personalizados.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-post-types.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/PostTypes.php';
 
         /**
          * A classe responsável pelos campos personalizados.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-meta-boxes.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/MetaBoxes.php';
 
         /**
          * A classe responsável pelas rewrite rules.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-rewrites.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/Rewrites.php';
 
         /**
          * A classe responsável pela funcionalidade administrativa.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/Admin.php';
 
         /**
          * A classe responsável pelos avisos administrativos.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/class-cannal-espetaculos-admin-notices.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'admin/AdminNotices.php';
 
         /**
          * A classe responsável pela funcionalidade pública.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'public/class-cannal-espetaculos-public.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'public/Public.php';
 
         /**
          * A classe responsável pelos widgets do Elementor.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-elementor.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/Elementor.php';
 
         /**
          * A classe responsável pela integração com RevSlider.
          */
-        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/class-cannal-espetaculos-revslider.php';
+        require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'includes/RevSlider.php';
 
-        $this->loader = new Cannal_Espetaculos_Loader();
+        $this->loader = new CANNALEspetaculos_Loader();
     }
 
     /**
@@ -93,7 +93,7 @@ class Cannal_Espetaculos {
      */
     private function define_admin_hooks() {
         
-        $plugin_admin = new Cannal_Espetaculos_Admin( $this->get_plugin_name(), $this->get_version() );
+        $plugin_admin = new CANNALEspetaculos_Admin( $this->get_plugin_name(), $this->get_version() );
         
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
@@ -106,14 +106,14 @@ class Cannal_Espetaculos {
         $this->loader->add_action( 'wp_ajax_cannal_save_galeria', $plugin_admin, 'ajax_save_galeria' );
 
         // Registrar post types e taxonomias
-        $post_types = new Cannal_Espetaculos_Post_Types();
+        $post_types = new CANNALEspetaculos_PostTypes();
         $this->loader->add_action( 'init', $post_types, 'register_post_types' );
         $this->loader->add_action( 'init', $post_types, 'register_taxonomies' );
         $this->loader->add_filter( 'admin_post_thumbnail_html', $post_types, 'rename_featured_image' );
         $this->loader->add_action( 'template_redirect', $post_types, 'redirect_temporada_to_404' );
 
         // Registrar meta boxes
-        $meta_boxes = new Cannal_Espetaculos_Meta_Boxes();
+        $meta_boxes = new CANNALEspetaculos_MetaBoxes();
         $this->loader->add_action( 'add_meta_boxes', $meta_boxes, 'add_meta_boxes' );
         $this->loader->add_action( 'save_post', $meta_boxes, 'save_espetaculo_meta' );
         $this->loader->add_action( 'save_post', $meta_boxes, 'save_temporada_meta' );
@@ -122,7 +122,7 @@ class Cannal_Espetaculos {
         $this->loader->add_action( 'save_post_espetaculo', $post_types, 'ensure_default_category', 10, 3 );
 
         // Registrar rewrite rules
-        $rewrites = new Cannal_Espetaculos_Rewrites();
+        $rewrites = new CANNALEspetaculos_Rewrites();
         $this->loader->add_action( 'init', $rewrites, 'add_rewrite_rules' );
         $this->loader->add_filter( 'query_vars', $rewrites, 'add_query_vars' );
         $this->loader->add_action( 'template_redirect', $rewrites, 'handle_redirects' );
@@ -138,13 +138,13 @@ class Cannal_Espetaculos {
      */
     private function define_public_hooks() {
         
-        $plugin_public = new Cannal_Espetaculos_Public( $this->get_plugin_name(), $this->get_version() );
+        $plugin_public = new CANNALEspetaculos_Public( $this->get_plugin_name(), $this->get_version() );
         
         $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
         $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
         // Registrar widgets do Elementor
-        $elementor = new Cannal_Espetaculos_Elementor();
+        $elementor = new CANNALEspetaculos_Elementor();
         $this->loader->add_action( 'elementor/widgets/register', $elementor, 'register_widgets' );
         $this->loader->add_action( 'elementor/elements/categories_registered', $elementor, 'add_elementor_category' );
     }

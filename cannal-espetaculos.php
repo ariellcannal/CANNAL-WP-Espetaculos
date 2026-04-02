@@ -33,16 +33,16 @@ require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/cannal-helpers.php';
  * O código que roda durante a ativação do plugin.
  */
 function activate_cannal_espetaculos() {
-    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-activator.php';
-    Cannal_Espetaculos_Activator::activate();
+    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Activator.php';
+    CANNALEspetaculos_Activator::activate();
 }
 
 /**
  * O código que roda durante a desativação do plugin.
  */
 function deactivate_cannal_espetaculos() {
-    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos-deactivator.php';
-    Cannal_Espetaculos_Deactivator::deactivate();
+    require_once CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Deactivator.php';
+    CANNALEspetaculos_Deactivator::deactivate();
 }
 
 register_activation_hook( __FILE__, 'activate_cannal_espetaculos' );
@@ -51,22 +51,22 @@ register_deactivation_hook( __FILE__, 'deactivate_cannal_espetaculos' );
 /**
  * A classe principal do plugin.
  */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Plugin.php';
 
 /**
  * Widgets
  */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-cannal-espetaculos-widget-lista.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-proximas-apresentacoes.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-ultimas-apresentacoes.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-dados-espetaculo.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetLista.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetProximas.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetUltimas.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetDados.php';
 
 
 /**
  * Inicia a execução do plugin.
  */
 function run_cannal_espetaculos() {
-    $plugin = new Cannal_Espetaculos();
+    $plugin = new CANNALEspetaculos_Plugin();
     $plugin->run();
 }
 run_cannal_espetaculos();

@@ -2,11 +2,11 @@
 /**
  * A funcionalidade pública do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/public
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/public
  */
 
-class Cannal_Espetaculos_Public {
+class CANNALEspetaculos_Public {
 
     /**
      * O ID deste plugin.
@@ -274,7 +274,7 @@ class Cannal_Espetaculos_Public {
                 $teatro_endereco = get_post_meta( $temporada->ID, '_temporada_teatro_endereco', true );
                 $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
                 $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
-                $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
+                $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
             ?>
 
             <?php if ( $teatro_nome ) : ?>
@@ -443,7 +443,7 @@ class Cannal_Espetaculos_Public {
         $teatro_endereco = get_post_meta( $temporada->ID, '_temporada_teatro_endereco', true );
         $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
         $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
-        $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
+        $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
         $duracao = get_post_meta( $espetaculo_id, '_espetaculo_duracao', true );
         $classificacao = get_post_meta( $espetaculo_id, '_espetaculo_classificacao', true );
         $link_vendas = get_post_meta( $temporada->ID, '_temporada_link_vendas', true );

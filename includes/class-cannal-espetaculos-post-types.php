@@ -2,11 +2,11 @@
 /**
  * Registra os custom post types e taxonomias.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Post_Types {
+class CANNALEspetaculos_PostTypes {
 
     /**
      * Registra o custom post type de Espetáculos.

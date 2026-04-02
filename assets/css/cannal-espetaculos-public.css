@@ -105,17 +105,6 @@
     min-width: 0;
 }
 
-.espetaculo-sidebar {
-    width: 350px;
-    flex-shrink: 0;
-}
-
-.espetaculo-sidebar {
-    background: #f9f9f9;
-    padding: 20px;
-    top: 20px;
-}
-
 .espetaculo-sidebar h3 {
     margin-top: 0;
     margin-bottom: 20px;
@@ -125,8 +114,8 @@
 }
 
 .info-item {
-    margin-bottom: 15px;
-    padding-bottom: 15px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #e0e0e0;
 }
 
@@ -138,7 +127,7 @@
 
 .info-item strong {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 0px;
     color: #666;
     font-size: 0.9em;
     text-transform: uppercase;
@@ -146,9 +135,8 @@
 }
 
 .info-item-cta {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 2px solid #333;
+    margin-top: 15px;
+    padding-top: 5px;
 }
 
 .btn-comprar-ingressos {
@@ -168,43 +156,39 @@
     background: #c0392b;
 }
 
-.classificacao-item {
-    display: flex;
-    flex-direction: column;
-}
-
 .classificacao-selo {
     display: inline-block;
-    padding: 8px 15px;
+    padding: 10px;
     border-radius: 5px;
     font-weight: bold;
     text-align: center;
     margin-top: 5px;
     color: white;
     background: #2c3e50;
+	width: 45px;
 }
 
 .classificacao-livre {
     background: #27ae60;
 }
 
-.classificacao-10-anos {
+.classificacao-10 {
     background: #3498db;
 }
 
-.classificacao-12-anos {
+.classificacao-12 {
     background: #f39c12;
 }
 
-.classificacao-14-anos {
+.classificacao-14 {
     background: #e67e22;
 }
 
-.classificacao-16-anos {
+.classificacao-16 {
     background: #e74c3c;
 }
 
-.classificacao-18-anos {
+.classificacao-18 {
     background: #c0392b;
 }
 

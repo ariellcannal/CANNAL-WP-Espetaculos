@@ -2,11 +2,11 @@
 /**
  * Avisos administrativos do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/admin
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/admin
  */
 
-class Cannal_Espetaculos_Admin_Notices {
+class CANNALEspetaculos_AdminNotices {
 
     /**
      * Exibe aviso se os permalinks não estiverem configurados corretamente.
@@ -53,5 +53,5 @@ class Cannal_Espetaculos_Admin_Notices {
 }
 
 // Registrar avisos
-add_action( 'admin_notices', array( 'Cannal_Espetaculos_Admin_Notices', 'check_permalinks' ) );
-add_action( 'admin_notices', array( 'Cannal_Espetaculos_Admin_Notices', 'flush_rewrite_rules_notice' ) );
+add_action( 'admin_notices', array( 'CANNALEspetaculos_AdminNotices', 'check_permalinks' ) );
+add_action( 'admin_notices', array( 'CANNALEspetaculos_AdminNotices', 'flush_rewrite_rules_notice' ) );

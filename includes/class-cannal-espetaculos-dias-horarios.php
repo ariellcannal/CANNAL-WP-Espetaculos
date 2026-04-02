@@ -2,11 +2,11 @@
 /**
  * Classe para geração inteligente de texto de Dias e Horários
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Dias_Horarios {
+class CANNALEspetaculos_DiasHorarios {
 
     /**
      * Gera texto formatado de dias e horários

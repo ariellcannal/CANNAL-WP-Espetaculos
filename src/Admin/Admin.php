@@ -2,11 +2,11 @@
 /**
  * A funcionalidade específica do admin do plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/admin
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/admin
  */
 
-class Cannal_Espetaculos_Admin {
+class CANNALEspetaculos_Admin {
 
     /**
      * O ID deste plugin.

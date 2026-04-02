@@ -2,11 +2,11 @@
 /**
  * Registra todas as ações e filtros para o plugin.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Loader {
+class CANNALEspetaculos_Loader {
 
     /**
      * O array de ações registradas com o WordPress.

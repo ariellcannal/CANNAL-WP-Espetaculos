@@ -1,25 +1,25 @@
 <?php
 /**
- * Widget: CANNAL - Próximas Apresentações
+ * Widget: CANNAL - Últimas Apresentações
  *
- * Exibe as próximas temporadas do espetáculo na sidebar.
+ * Exibe as últimas temporadas encerradas do espetáculo na sidebar.
  * Funciona apenas em páginas single-espetaculo.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/Widgets
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/Widgets
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class Cannal_Widget_Proximas_Apresentacoes extends WP_Widget {
+class CANNALEspetaculos_WidgetUltimas extends WP_Widget {
 
     public function __construct() {
         parent::__construct(
-            'cannal_proximas_apresentacoes',
-            __( 'CANNAL - Próximas Apresentações', 'cannal-espetaculos' ),
+            'cannal_ultimas_apresentacoes',
+            __( 'CANNAL - Últimas Apresentações', 'cannal-espetaculos' ),
             array(
-                'description' => __( 'Exibe as próximas temporadas do espetáculo. Funciona apenas em páginas single-espetaculo.', 'cannal-espetaculos' ),
-                'classname'   => 'cannal-widget-proximas-apresentacoes',
+                'description' => __( 'Exibe as últimas temporadas encerradas do espetáculo. Funciona apenas em páginas single-espetaculo.', 'cannal-espetaculos' ),
+                'classname'   => 'cannal-widget-ultimas-apresentacoes',
             )
         );
     }
@@ -39,8 +39,8 @@ class Cannal_Widget_Proximas_Apresentacoes extends WP_Widget {
                    name="<?php echo esc_attr( $this->get_field_name( 'titulo' ) ); ?>"
                    value="<?php echo esc_attr( $titulo ); ?>"
                    class="widefat"
-                   placeholder="<?php esc_attr_e( 'Próximas Apresentações', 'cannal-espetaculos' ); ?>" />
-            <small><?php esc_html_e( 'Deixe em branco para usar "Próximas Apresentações".', 'cannal-espetaculos' ); ?></small>
+                   placeholder="<?php esc_attr_e( 'Últimas Apresentações', 'cannal-espetaculos' ); ?>" />
+            <small><?php esc_html_e( 'Deixe em branco para usar "Últimas Apresentações".', 'cannal-espetaculos' ); ?></small>
         </p>
         <?php
     }
@@ -49,7 +49,7 @@ class Cannal_Widget_Proximas_Apresentacoes extends WP_Widget {
      * Sanitiza as opções ao salvar.
      */
     public function update( $new_instance, $old_instance ) {
-        $instance          = array();
+        $instance           = array();
         $instance['titulo'] = sanitize_text_field( $new_instance['titulo'] );
         return $instance;
     }
@@ -65,7 +65,7 @@ class Cannal_Widget_Proximas_Apresentacoes extends WP_Widget {
         global $post;
         $espetaculo_id = $post->ID;
 
-        $temporadas = Cannal_Espetaculos_Public::get_proximas_temporadas_static( $espetaculo_id, 5 );
+        $temporadas = CANNALEspetaculos_Public::get_ultimas_temporadas_static( $espetaculo_id, 5 );
 
         if ( empty( $temporadas ) ) {
             return;
@@ -73,11 +73,11 @@ class Cannal_Widget_Proximas_Apresentacoes extends WP_Widget {
 
         $titulo = ! empty( $instance['titulo'] )
             ? $instance['titulo']
-            : __( 'Próximas Apresentações', 'cannal-espetaculos' );
+            : __( 'Últimas Apresentações', 'cannal-espetaculos' );
 
         echo $args['before_widget'];
 
-        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-proximas-apresentacoes.php';
+        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-ultimas-apresentacoes.php';
 
         echo $args['after_widget'];
     }

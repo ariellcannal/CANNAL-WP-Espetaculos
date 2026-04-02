@@ -2,11 +2,11 @@
 /**
  * Gerencia os meta boxes e campos personalizados.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/includes
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/includes
  */
 
-class Cannal_Espetaculos_Meta_Boxes {
+class CANNALEspetaculos_MetaBoxes {
 
     /**
      * Adiciona os meta boxes.
@@ -250,7 +250,7 @@ class Cannal_Espetaculos_Meta_Boxes {
                             $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
                             
                             // Gerar Dias e Horários usando classe inteligente
-                            $dias_horarios_texto = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
+                            $dias_horarios_texto = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
                             
                             $hoje = current_time( 'Y-m-d' );
                             if ( $data_inicio && $data_fim ) {

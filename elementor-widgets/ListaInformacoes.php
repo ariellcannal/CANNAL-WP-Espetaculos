@@ -2,11 +2,11 @@
 /**
  * Widget Lista de Informações do Elementor.
  *
- * @package    Cannal_Espetaculos
- * @subpackage Cannal_Espetaculos/elementor-widgets
+ * @package    CANNALEspetaculos_Plugin
+ * @subpackage CANNALEspetaculos_Plugin/elementor-widgets
  */
 
-class Cannal_Espetaculos_Widget_Lista_Informacoes extends \Elementor\Widget_Base {
+class CANNALEspetaculos_ElementorListaInformacoes extends \Elementor\Widget_Base {
 
     public function get_name() {
         return 'cannal_espetaculo_lista_informacoes';
@@ -204,7 +204,7 @@ class Cannal_Espetaculos_Widget_Lista_Informacoes extends \Elementor\Widget_Base
                 if ( ! $temporada ) return '';
                 $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
                 $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
-                return esc_html( Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data ) );
+                return esc_html( CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data ) );
             case 'valores':
                 return $temporada ? nl2br( esc_html( get_post_meta( $temporada->ID, '_temporada_valores', true ) ) ) : '';
             default:

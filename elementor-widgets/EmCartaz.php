@@ -3,7 +3,7 @@
  * Widget Em Cartaz do Elementor.
  */
 
-class Cannal_Espetaculos_Widget_Em_Cartaz extends \Elementor\Widget_Base {
+class CANNALEspetaculos_ElementorEmCartaz extends \Elementor\Widget_Base {
 
     public function get_name() {
         return 'cannal_em_cartaz';
@@ -80,7 +80,7 @@ class Cannal_Espetaculos_Widget_Em_Cartaz extends \Elementor\Widget_Base {
         if ( ! $post || $post->post_type !== 'espetaculo' ) return;
 
         $settings = $this->get_settings_for_display();
-        $temporadas = Cannal_Espetaculos_Public::get_temporadas_by_status( $post->ID, 'em_cartaz' );
+        $temporadas = CANNALEspetaculos_Public::get_temporadas_by_status( $post->ID, 'em_cartaz' );
 
         if ( empty( $temporadas ) ) {
             echo '<p>Não há apresentações em cartaz no momento.</p>';
@@ -94,7 +94,7 @@ class Cannal_Espetaculos_Widget_Em_Cartaz extends \Elementor\Widget_Base {
             // Gerar dias e horários dinamicamente
             $tipo_sessao = get_post_meta( $temporada->ID, '_temporada_tipo_sessao', true );
             $sessoes_data = get_post_meta( $temporada->ID, '_temporada_sessoes_data', true );
-            $dias_horarios = Cannal_Espetaculos_Dias_Horarios::gerar( $tipo_sessao, $sessoes_data );
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes_data );
             
             echo '<div class="cannal-em-cartaz-box">';
             echo '<div class="em-cartaz-teatro"><strong>' . esc_html( $teatro ) . '</strong></div>';
