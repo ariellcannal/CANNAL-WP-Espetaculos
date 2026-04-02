@@ -1,35 +1,39 @@
 <?php
+
 /**
  * Classe para geração inteligente de texto de Dias e Horários
  *
  * @package    CANNALEspetaculos_Plugin
  * @subpackage CANNALEspetaculos_Plugin/includes
  */
-
-class CANNALEspetaculos_DiasHorarios {
+class CANNALEspetaculos_DiasHorarios
+{
 
     /**
      * Gera texto formatado de dias e horários
      *
-     * @param string $tipo_sessao Tipo: 'avulsas' ou 'temporada'
-     * @param string $sessoes_data JSON com dados das sessões
+     * @param string $tipo_sessao
+     *            Tipo: 'avulsas' ou 'temporada'
+     * @param string $sessoes_data
+     *            JSON com dados das sessões
      * @return string Texto formatado
      */
-    public static function gerar( $tipo_sessao, $sessoes_data ) {
-        if ( empty( $sessoes_data ) ) {
+    public static function gerar($tipo_sessao, $sessoes_data)
+    {
+        if (empty($sessoes_data)) {
             return '';
         }
 
-        $sessoes = json_decode( $sessoes_data, true );
-        
-        if ( ! $sessoes || ! isset( $sessoes['tipo'] ) ) {
+        $sessoes = json_decode($sessoes_data, true);
+
+        if (! $sessoes || ! isset($sessoes['tipo'])) {
             return '';
         }
 
-        if ( $sessoes['tipo'] === 'avulsas' && ! empty( $sessoes['avulsas'] ) ) {
-            return self::gerar_avulsas( $sessoes['avulsas'] );
-        } elseif ( $sessoes['tipo'] === 'temporada' && ! empty( $sessoes['temporada'] ) ) {
-            return self::gerar_temporada( $sessoes['temporada'] );
+        if ($sessoes['tipo'] === 'avulsas' && ! empty($sessoes['avulsas'])) {
+            return self::gerar_avulsas($sessoes['avulsas']);
+        } elseif ($sessoes['tipo'] === 'temporada' && ! empty($sessoes['temporada'])) {
+            return self::gerar_temporada($sessoes['temporada']);
         }
 
         return '';
@@ -38,21 +42,22 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Gera texto para sessões avulsas
      */
-    private static function gerar_avulsas( $sessoes ) {
+    private static function gerar_avulsas($sessoes)
+    {
         // Ordenar por data e horário
-        usort( $sessoes, function( $a, $b ) {
-            $cmp = strcmp( $a['data'], $b['data'] );
-            if ( $cmp === 0 ) {
-                return strcmp( $a['horario'], $b['horario'] );
+        usort($sessoes, function ($a, $b) {
+            $cmp = strcmp($a['data'], $b['data']);
+            if ($cmp === 0) {
+                return strcmp($a['horario'], $b['horario']);
             }
             return $cmp;
-        } );
+        });
 
         // Agrupar por mês e horário
-        $grupos = self::agrupar_sessoes_avulsas( $sessoes );
+        $grupos = self::agrupar_sessoes_avulsas($sessoes);
 
         // Identificar padrão principal e sessões extras
-        $resultado = self::formatar_grupos_avulsas( $grupos );
+        $resultado = self::formatar_grupos_avulsas($grupos);
 
         return $resultado;
     }
@@ -60,30 +65,31 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Agrupa sessões avulsas por mês e horário
      */
-    private static function agrupar_sessoes_avulsas( $sessoes ) {
+    private static function agrupar_sessoes_avulsas($sessoes)
+    {
         $grupos = array();
 
-        foreach ( $sessoes as $sessao ) {
+        foreach ($sessoes as $sessao) {
             $data = $sessao['data'];
             $horario = $sessao['horario'];
-            
-            $timestamp = strtotime( $data );
-            $mes = date( 'n', $timestamp ); // Mês numérico
-            $ano = date( 'Y', $timestamp );
-            $dia = date( 'j', $timestamp );
-            
+
+            $timestamp = strtotime($data);
+            $mes = date('n', $timestamp); // Mês numérico
+            $ano = date('Y', $timestamp);
+            $dia = date('j', $timestamp);
+
             $chave = $ano . '-' . $mes . '-' . $horario;
-            
-            if ( ! isset( $grupos[ $chave ] ) ) {
-                $grupos[ $chave ] = array(
+
+            if (! isset($grupos[$chave])) {
+                $grupos[$chave] = array(
                     'mes' => $mes,
                     'ano' => $ano,
                     'horario' => $horario,
                     'datas' => array()
                 );
             }
-            
-            $grupos[ $chave ]['datas'][] = array(
+
+            $grupos[$chave]['datas'][] = array(
                 'dia' => $dia,
                 'data_completa' => $data,
                 'timestamp' => $timestamp
@@ -96,8 +102,9 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Formata grupos de sessões avulsas
      */
-    private static function formatar_grupos_avulsas( $grupos ) {
-        if ( empty( $grupos ) ) {
+    private static function formatar_grupos_avulsas($grupos)
+    {
+        if (empty($grupos)) {
             return '';
         }
 
@@ -105,9 +112,9 @@ class CANNALEspetaculos_DiasHorarios {
         $grupo_principal = null;
         $max_sessoes = 0;
 
-        foreach ( $grupos as $grupo ) {
-            $count = count( $grupo['datas'] );
-            if ( $count > $max_sessoes ) {
+        foreach ($grupos as $grupo) {
+            $count = count($grupo['datas']);
+            if ($count > $max_sessoes) {
                 $max_sessoes = $count;
                 $grupo_principal = $grupo;
             }
@@ -117,26 +124,26 @@ class CANNALEspetaculos_DiasHorarios {
         $extras = array();
 
         // Processar grupo principal
-        if ( $grupo_principal ) {
-            $texto_principal = self::formatar_grupo_avulso( $grupo_principal );
+        if ($grupo_principal) {
+            $texto_principal = self::formatar_grupo_avulso($grupo_principal);
             $partes[] = $texto_principal;
 
             // Remover grupo principal da lista
             $chave_principal = $grupo_principal['ano'] . '-' . $grupo_principal['mes'] . '-' . $grupo_principal['horario'];
-            unset( $grupos[ $chave_principal ] );
+            unset($grupos[$chave_principal]);
         }
 
         // Processar sessões extras
-        foreach ( $grupos as $grupo ) {
-            $extras[] = self::formatar_grupo_avulso( $grupo );
+        foreach ($grupos as $grupo) {
+            $extras[] = self::formatar_grupo_avulso($grupo);
         }
 
         // Montar texto final
-        $texto = implode( '. ', $partes );
+        $texto = implode('. ', $partes);
 
-        if ( ! empty( $extras ) ) {
-            $label_extra = count( $extras ) > 1 ? 'Sessões extras' : 'Sessão extra';
-            $texto .= '. ' . $label_extra . ': ' . implode( ', e ', $extras );
+        if (! empty($extras)) {
+            $label_extra = count($extras) > 1 ? 'Sessões extras' : 'Sessão extra';
+            $texto .= '. ' . $label_extra . ': ' . implode(', e ', $extras);
         }
 
         return $texto . '.';
@@ -145,25 +152,26 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Formata um grupo de sessões avulsas
      */
-    private static function formatar_grupo_avulso( $grupo ) {
+    private static function formatar_grupo_avulso($grupo)
+    {
         $datas = $grupo['datas'];
-        $mes_nome = self::get_mes_abreviado( $grupo['mes'] );
-        $horario = substr( $grupo['horario'], 0, 5 ); // Remove segundos
+        $mes_nome = self::get_mes_abreviado($grupo['mes']);
+        $horario = substr($grupo['horario'], 0, 5); // Remove segundos
 
         // Verificar se são dias consecutivos
-        $dias = array_column( $datas, 'dia' );
-        sort( $dias );
+        $dias = array_column($datas, 'dia');
+        sort($dias);
 
-        if ( count( $dias ) >= 3 && self::sao_consecutivos( $dias ) ) {
+        if (count($dias) >= 3 && self::sao_consecutivos($dias)) {
             // Usar formato "De X a Y de mês"
             $primeiro = $dias[0];
-            $ultimo = $dias[ count( $dias ) - 1 ];
+            $ultimo = $dias[count($dias) - 1];
             return "De {$primeiro} a {$ultimo} de {$mes_nome} às {$horario}h";
         } else {
             // Listar dias individualmente
-            $dias_texto = self::formatar_lista_dias( $dias );
-            
-            if ( count( $dias ) === 1 ) {
+            $dias_texto = self::formatar_lista_dias($dias);
+
+            if (count($dias) === 1) {
                 return "{$dias_texto} de {$mes_nome} às {$horario}h";
             } else {
                 return "Dias {$dias_texto} de {$mes_nome} às {$horario}h";
@@ -174,9 +182,10 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Verifica se os dias são consecutivos
      */
-    private static function sao_consecutivos( $dias ) {
-        for ( $i = 1; $i < count( $dias ); $i++ ) {
-            if ( $dias[ $i ] !== $dias[ $i - 1 ] + 1 ) {
+    private static function sao_consecutivos($dias)
+    {
+        for ($i = 1; $i < count($dias); $i ++) {
+            if ($dias[$i] !== $dias[$i - 1] + 1) {
                 return false;
             }
         }
@@ -186,19 +195,20 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Formata lista de dias com vírgulas e "e"
      */
-    private static function formatar_lista_dias( $dias ) {
-        if ( count( $dias ) === 1 ) {
+    private static function formatar_lista_dias($dias)
+    {
+        if (count($dias) === 1) {
             return (string) $dias[0];
         }
 
-        if ( count( $dias ) === 2 ) {
+        if (count($dias) === 2) {
             return $dias[0] . ' e ' . $dias[1];
         }
 
-        $ultimos_dois = array_slice( $dias, -2 );
-        $primeiros = array_slice( $dias, 0, -2 );
+        $ultimos_dois = array_slice($dias, - 2);
+        $primeiros = array_slice($dias, 0, - 2);
 
-        $texto = implode( ', ', $primeiros );
+        $texto = implode(', ', $primeiros);
         $texto .= ', ' . $ultimos_dois[0] . ' e ' . $ultimos_dois[1];
 
         return $texto;
@@ -207,7 +217,8 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Gera texto para temporada (dias da semana recorrentes)
      */
-    private static function gerar_temporada( $temporada_data ) {
+    private static function gerar_temporada($temporada_data)
+    {
         $dias_semana = array(
             'domingo' => 'Dom',
             'segunda' => 'Seg',
@@ -221,54 +232,63 @@ class CANNALEspetaculos_DiasHorarios {
         // Agrupar dias por horário
         $horarios_grupos = array();
 
-        foreach ( $temporada_data as $dia => $horarios_str ) {
-            $horarios = array_map( 'trim', explode( ',', $horarios_str ) );
-            
-            foreach ( $horarios as $horario ) {
-                $horario = substr( $horario, 0, 5 ); // Remove segundos
-                
-                if ( ! isset( $horarios_grupos[ $horario ] ) ) {
-                    $horarios_grupos[ $horario ] = array();
+        foreach ($temporada_data as $dia => $horarios_str) {
+            $horarios = array_map('trim', explode(',', $horarios_str));
+
+            foreach ($horarios as $horario) {
+                $horario = substr($horario, 0, 5); // Remove segundos
+
+                if (! isset($horarios_grupos[$horario])) {
+                    $horarios_grupos[$horario] = array();
                 }
-                
-                $horarios_grupos[ $horario ][] = $dia;
+
+                $horarios_grupos[$horario][] = $dia;
             }
         }
 
         // Formatar grupos
         $partes = array();
 
-        foreach ( $horarios_grupos as $horario => $dias ) {
+        foreach ($horarios_grupos as $horario => $dias) {
             $dias_abrev = array();
-            
-            foreach ( $dias as $dia ) {
-                if ( isset( $dias_semana[ $dia ] ) ) {
-                    $dias_abrev[] = $dias_semana[ $dia ];
+
+            foreach ($dias as $dia) {
+                if (isset($dias_semana[$dia])) {
+                    $dias_abrev[] = $dias_semana[$dia];
                 }
             }
 
-            if ( empty( $dias_abrev ) ) {
+            if (empty($dias_abrev)) {
                 continue;
             }
 
             // Verificar se são dias consecutivos da semana
-            $texto_dias = self::formatar_dias_semana( $dias, $dias_abrev );
+            $texto_dias = self::formatar_dias_semana($dias, $dias_abrev);
             $partes[] = $texto_dias . ' às ' . $horario . 'h';
         }
 
-        return implode( ', ', $partes ) . '.';
+        return implode(', ', $partes) . '.';
     }
 
     /**
      * Formata dias da semana (detecta sequências)
      */
-    private static function formatar_dias_semana( $dias_completos, $dias_abrev ) {
-        $ordem_semana = array( 'domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado' );
-        
+    private static function formatar_dias_semana($dias_completos, $dias_abrev)
+    {
+        $ordem_semana = array(
+            'domingo',
+            'segunda',
+            'terca',
+            'quarta',
+            'quinta',
+            'sexta',
+            'sabado'
+        );
+
         // Ordenar dias pela ordem da semana
         $dias_ordenados = array();
-        foreach ( $ordem_semana as $dia ) {
-            if ( in_array( $dia, $dias_completos ) ) {
+        foreach ($ordem_semana as $dia) {
+            if (in_array($dia, $dias_completos)) {
                 $dias_ordenados[] = $dia;
             }
         }
@@ -285,46 +305,47 @@ class CANNALEspetaculos_DiasHorarios {
         );
 
         $abrev_ordenadas = array();
-        foreach ( $dias_ordenados as $dia ) {
-            $abrev_ordenadas[] = $dias_semana_map[ $dia ];
+        foreach ($dias_ordenados as $dia) {
+            $abrev_ordenadas[] = $dias_semana_map[$dia];
         }
 
         // Detectar sequências (3 ou mais dias consecutivos)
-        if ( count( $abrev_ordenadas ) >= 3 && self::sao_dias_semana_consecutivos( $dias_ordenados, $ordem_semana ) ) {
+        if (count($abrev_ordenadas) >= 3 && self::sao_dias_semana_consecutivos($dias_ordenados, $ordem_semana)) {
             $primeiro = $abrev_ordenadas[0];
-            $ultimo = $abrev_ordenadas[ count( $abrev_ordenadas ) - 1 ];
+            $ultimo = $abrev_ordenadas[count($abrev_ordenadas) - 1];
             return "De {$primeiro} a {$ultimo}";
         }
 
         // Listar individualmente
-        if ( count( $abrev_ordenadas ) === 1 ) {
+        if (count($abrev_ordenadas) === 1) {
             return $abrev_ordenadas[0];
         }
 
-        if ( count( $abrev_ordenadas ) === 2 ) {
+        if (count($abrev_ordenadas) === 2) {
             return $abrev_ordenadas[0] . ' e ' . $abrev_ordenadas[1];
         }
 
-        $ultimos_dois = array_slice( $abrev_ordenadas, -2 );
-        $primeiros = array_slice( $abrev_ordenadas, 0, -2 );
+        $ultimos_dois = array_slice($abrev_ordenadas, - 2);
+        $primeiros = array_slice($abrev_ordenadas, 0, - 2);
 
-        return implode( ', ', $primeiros ) . ', ' . $ultimos_dois[0] . ' e ' . $ultimos_dois[1];
+        return implode(', ', $primeiros) . ', ' . $ultimos_dois[0] . ' e ' . $ultimos_dois[1];
     }
 
     /**
      * Verifica se dias da semana são consecutivos
      */
-    private static function sao_dias_semana_consecutivos( $dias, $ordem_semana ) {
+    private static function sao_dias_semana_consecutivos($dias, $ordem_semana)
+    {
         $indices = array();
-        
-        foreach ( $dias as $dia ) {
-            $indices[] = array_search( $dia, $ordem_semana );
+
+        foreach ($dias as $dia) {
+            $indices[] = array_search($dia, $ordem_semana);
         }
 
-        sort( $indices );
+        sort($indices);
 
-        for ( $i = 1; $i < count( $indices ); $i++ ) {
-            if ( $indices[ $i ] !== $indices[ $i - 1 ] + 1 ) {
+        for ($i = 1; $i < count($indices); $i ++) {
+            if ($indices[$i] !== $indices[$i - 1] + 1) {
                 return false;
             }
         }
@@ -335,7 +356,8 @@ class CANNALEspetaculos_DiasHorarios {
     /**
      * Retorna nome do mês abreviado
      */
-    private static function get_mes_abreviado( $mes ) {
+    private static function get_mes_abreviado($mes)
+    {
         $meses = array(
             1 => 'jan',
             2 => 'fev',
@@ -351,19 +373,22 @@ class CANNALEspetaculos_DiasHorarios {
             12 => 'dez'
         );
 
-        return isset( $meses[ $mes ] ) ? $meses[ $mes ] : '';
+        return isset($meses[$mes]) ? $meses[$mes] : '';
     }
-    
+
     /*
+     * OBSOLETA
      * Função para formatar dias e horários de forma legível
      */
     public static function format_dias_horarios_legivel($sessoes)
     {
-        if (empty($sessoes))
+        return;
+        if (empty($sessoes)) {
             return '';
-            
+        } else {
+            return $this->gerar($tipo_sessao, $sessoes_data);
             $output = '';
-            
+
             if ($sessoes['tipo'] === 'avulsas' && ! empty($sessoes['avulsas'])) {
                 // Agrupar por mês
                 $por_mes = array();
@@ -371,22 +396,22 @@ class CANNALEspetaculos_DiasHorarios {
                     $mes = date_i18n('F', strtotime($sessao['data'])); // Nome do mês
                     $dia = date_i18n('j', strtotime($sessao['data'])); // Dia sem zero à esquerda
                     $horario = $sessao['horario'];
-                    
+
                     if (! isset($por_mes[$mes])) {
                         $por_mes[$mes] = array();
                     }
-                    
+
                     $por_mes[$mes][] = array(
                         'dia' => $dia,
                         'horario' => $horario
                     );
                 }
-                
+
                 $partes = array();
                 foreach ($por_mes as $mes => $datas) {
                     $dias = array_unique(array_column($datas, 'dia'));
                     sort($dias);
-                    
+
                     if (count($dias) === 1) {
                         $dias_texto = $dias[0];
                     } elseif (count($dias) === 2) {
@@ -395,10 +420,10 @@ class CANNALEspetaculos_DiasHorarios {
                         $ultimo = array_pop($dias);
                         $dias_texto = implode(', ', $dias) . ' e ' . $ultimo;
                     }
-                    
+
                     $partes[] = $dias_texto . ' de ' . $mes;
                 }
-                
+
                 $output = implode(', ', $partes);
             } elseif ($sessoes['tipo'] === 'temporada' && ! empty($sessoes['temporada'])) {
                 // Agrupar por horário
@@ -412,20 +437,20 @@ class CANNALEspetaculos_DiasHorarios {
                     'sexta' => 'sex',
                     'sabado' => 'sáb'
                 );
-                
+
                 foreach ($sessoes['temporada'] as $dia => $horarios_str) {
                     if (empty($horarios_str))
                         continue;
-                        
-                        $dia_abrev = isset($dias_semana_map[$dia]) ? $dias_semana_map[$dia] : $dia;
-                        
-                        if (! isset($por_horario[$horarios_str])) {
-                            $por_horario[$horarios_str] = array();
-                        }
-                        
-                        $por_horario[$horarios_str][] = $dia_abrev;
+
+                    $dia_abrev = isset($dias_semana_map[$dia]) ? $dias_semana_map[$dia] : $dia;
+
+                    if (! isset($por_horario[$horarios_str])) {
+                        $por_horario[$horarios_str] = array();
+                    }
+
+                    $por_horario[$horarios_str][] = $dia_abrev;
                 }
-                
+
                 $partes = array();
                 foreach ($por_horario as $horarios => $dias) {
                     if (count($dias) === 1) {
@@ -448,7 +473,7 @@ class CANNALEspetaculos_DiasHorarios {
                             $indices[] = array_search($dia, $dias_ordem);
                         }
                         sort($indices);
-                        
+
                         $consecutivos = true;
                         for ($i = 1; $i < count($indices); $i ++) {
                             if ($indices[$i] !== $indices[$i - 1] + 1) {
@@ -456,7 +481,7 @@ class CANNALEspetaculos_DiasHorarios {
                                 break;
                             }
                         }
-                        
+
                         if ($consecutivos) {
                             $dias_texto = $dias_ordem[$indices[0]] . ' a ' . $dias_ordem[$indices[count($indices) - 1]];
                         } else {
@@ -464,13 +489,14 @@ class CANNALEspetaculos_DiasHorarios {
                             $dias_texto = implode(', ', $dias) . ' e ' . $ultimo;
                         }
                     }
-                    
+
                     $partes[] = $dias_texto . ' às ' . $horarios;
                 }
-                
+
                 $output = implode(', ', $partes);
             }
-            
+
             return $output;
+        }
     }
 }

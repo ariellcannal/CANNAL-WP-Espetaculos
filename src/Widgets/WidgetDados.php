@@ -130,20 +130,21 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
             }
 
             if ($temporada_fallback) {
-                $teatro_nome     = get_post_meta($temporada_fallback->ID, '_temporada_teatro_nome', true);
+                $teatro_nome = get_post_meta($temporada_fallback->ID, '_temporada_teatro_nome', true);
                 $teatro_endereco = get_post_meta($temporada_fallback->ID, '_temporada_teatro_endereco', true);
-                $valores         = get_post_meta($temporada_fallback->ID, '_temporada_valores', true);
-                $link_vendas     = get_post_meta($temporada_fallback->ID, '_temporada_link_vendas', true);
-                $link_texto      = get_post_meta($temporada_fallback->ID, '_temporada_link_texto', true);
-                $tipo_sessao     = get_post_meta($temporada_fallback->ID, '_temporada_tipo_sessao', true);
-                $sessoes_data    = get_post_meta($temporada_fallback->ID, '_temporada_sessoes_data', true);
-                $sessoes         = ! empty($sessoes_data) ? json_decode($sessoes_data, true) : null;
-                $dias_horarios   = CANNALEspetaculos_DiasHorarios::format_dias_horarios_legivel($sessoes);
+                $valores = get_post_meta($temporada_fallback->ID, '_temporada_valores', true);
+                $link_vendas = get_post_meta($temporada_fallback->ID, '_temporada_link_vendas', true);
+                $link_texto = get_post_meta($temporada_fallback->ID, '_temporada_link_texto', true);
+                $tipo_sessao = get_post_meta($temporada_fallback->ID, '_temporada_tipo_sessao', true);
+                $sessoes_data = get_post_meta($temporada_fallback->ID, '_temporada_sessoes_data', true);
+                $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar($tipo_sessao,$sessoes_data);
 
                 $diretor_temp = get_post_meta($temporada_fallback->ID, '_temporada_diretor', true);
-                $elenco_temp  = get_post_meta($temporada_fallback->ID, '_temporada_elenco', true);
-                if ($diretor_temp) $diretor = $diretor_temp;
-                if ($elenco_temp)  $elenco  = $elenco_temp;
+                $elenco_temp = get_post_meta($temporada_fallback->ID, '_temporada_elenco', true);
+                if ($diretor_temp)
+                    $diretor = $diretor_temp;
+                if ($elenco_temp)
+                    $elenco = $elenco_temp;
             }
         }
 
@@ -155,8 +156,7 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
             $link_texto = get_post_meta($temporada->ID, '_temporada_link_texto', true);
             $tipo_sessao = get_post_meta($temporada->ID, '_temporada_tipo_sessao', true);
             $sessoes_data = get_post_meta($temporada->ID, '_temporada_sessoes_data', true);
-            $sessoes = ! empty($sessoes_data) ? json_decode($sessoes_data, true) : null;
-            $dias_horarios = CANNALEspetaculos_DiasHorarios::format_dias_horarios_legivel($sessoes);
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar($tipo_sessao,$sessoes_data);
 
             // Fallback: diretor e elenco da temporada sobrescrevem os do espetáculo
             $diretor_temp = get_post_meta($temporada->ID, '_temporada_diretor', true);
@@ -187,6 +187,26 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
                 break;
         }
 
+        // --- Widgets complementares: renderizados como widgets independentes, FORA do before/after_widget ---
+        if (! $temporada) {
+            $proximas = CANNALEspetaculos_Public::get_proximas_temporadas_static($espetaculo_id, 5);
+
+            if (! empty($proximas)) {
+                $widget_proximas = new CANNALEspetaculos_WidgetProximas();
+                $widget_proximas->widget($args, array(
+                    'titulo' => ''
+                ));
+            } else {
+                $ultimas = CANNALEspetaculos_Public::get_ultimas_temporadas_static($espetaculo_id, 5);
+                if (! empty($ultimas)) {
+                    $widget_ultimas = new CANNALEspetaculos_WidgetUltimas();
+                    $widget_ultimas->widget($args, array(
+                        'titulo' => ''
+                    ));
+                }
+            }
+        }
+
         // --- Renderizar Widget de Dados ---
         echo $args['before_widget'];
 
@@ -196,21 +216,5 @@ class CANNALEspetaculos_WidgetDados extends WP_Widget
         include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-dados-espetaculo.php';
 
         echo $args['after_widget'];
-
-        // --- Widgets complementares: renderizados como widgets independentes, FORA do before/after_widget ---
-        if (! $temporada) {
-            $proximas = CANNALEspetaculos_Public::get_proximas_temporadas_static($espetaculo_id, 5);
-
-            if (! empty($proximas)) {
-                $widget_proximas = new CANNALEspetaculos_WidgetProximas();
-                $widget_proximas->widget($args, array('titulo' => ''));
-            } else {
-                $ultimas = CANNALEspetaculos_Public::get_ultimas_temporadas_static($espetaculo_id, 5);
-                if (! empty($ultimas)) {
-                    $widget_ultimas = new CANNALEspetaculos_WidgetUltimas();
-                    $widget_ultimas->widget($args, array('titulo' => ''));
-                }
-            }
-        }
     }
 }

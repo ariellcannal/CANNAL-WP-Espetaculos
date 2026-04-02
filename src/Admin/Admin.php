@@ -184,7 +184,7 @@ class CANNALEspetaculos_Admin {
         $sessoes       = ! empty( $sessoes_raw ) ? json_decode( $sessoes_raw, true ) : null;
         $dias_horarios = '';
         if ( class_exists( 'CANNALEspetaculos_DiasHorarios' ) ) {
-            $dias_horarios = CANNALEspetaculos_DiasHorarios::format_dias_horarios_legivel( $sessoes );
+            $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar( $tipo_sessao, $sessoes );
         }
 
         wp_send_json_success( array(

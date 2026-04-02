@@ -135,8 +135,7 @@
 }
 
 .info-item-cta {
-    margin-top: 15px;
-    padding-top: 5px;
+    margin-top: 5px;
 }
 
 .btn-comprar-ingressos {
@@ -144,7 +143,7 @@
     background: #e74c3c;
     color: white !important;
     text-align: center;
-    padding: 15px 20px;
+    padding: 8px 20px;
     border-radius: 5px;
     text-decoration: none;
     font-weight: bold;

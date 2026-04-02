@@ -74,10 +74,12 @@ class CANNALEspetaculos_WidgetUltimas extends WP_Widget {
         $titulo = ! empty( $instance['titulo'] )
             ? $instance['titulo']
             : __( 'Últimas Apresentações', 'cannal-espetaculos' );
+        
+        $exibe_link = false;
 
         echo $args['before_widget'];
 
-        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-ultimas-apresentacoes.php';
+        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-ultimas-e-proximas-apresentacoes.php';
 
         echo $args['after_widget'];
     }

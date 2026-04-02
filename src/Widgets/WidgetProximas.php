@@ -74,10 +74,12 @@ class CANNALEspetaculos_WidgetProximas extends WP_Widget {
         $titulo = ! empty( $instance['titulo'] )
             ? $instance['titulo']
             : __( 'Próximas Apresentações', 'cannal-espetaculos' );
+        
+        $exibe_link = true;
 
         echo $args['before_widget'];
 
-        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-proximas-apresentacoes.php';
+        include CANNAL_ESPETACULOS_PLUGIN_DIR . 'templates/public/widget-ultimas-e-proximas-apresentacoes.php';
 
         echo $args['after_widget'];
     }
