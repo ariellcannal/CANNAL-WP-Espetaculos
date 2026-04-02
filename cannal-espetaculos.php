@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Versão atual do plugin.
  */
-define( 'CANNAL_ESPETACULOS_VERSION', '1.0.0' );
+define( 'CANNAL_ESPETACULOS_VERSION', '2.5.0' );
 define( 'CANNAL_ESPETACULOS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CANNAL_ESPETACULOS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -57,6 +57,9 @@ require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/class-cannal-espetaculos.php';
  * Widgets
  */
 require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-cannal-espetaculos-widget-lista.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-proximas-apresentacoes.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-ultimas-apresentacoes.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/class-widget-dados-espetaculo.php';
 
 
 /**
