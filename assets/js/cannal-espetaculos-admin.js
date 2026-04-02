@@ -430,9 +430,9 @@
             e.preventDefault();
             var row =
                 '<div class="modal-sessao-avulsa">' +
-                '<label>Data: <input type="date" class="modal-sessao-data" /></label>' +
-                '<label>Horário: <input type="time" class="modal-sessao-horario" /></label>' +
-                '<button type="button" class="button button-small modal-remove-sessao">Remover</button>' +
+                '<input type="date" class="modal-sessao-data" />' +
+                '<input type="time" class="modal-sessao-horario" />' +
+                '<button type="button" class="button modal-remove-sessao">Remover</button>' +
                 '</div>';
             $('#modal_sessoes_avulsas_list').append(row);
         });
@@ -489,9 +489,9 @@
                     sessoes.avulsas.forEach(function (s) {
                         var row =
                             '<div class="modal-sessao-avulsa">' +
-                            '<label>Data: <input type="date" class="modal-sessao-data" value="' + s.data + '" /></label>' +
-                            '<label>Horário: <input type="time" class="modal-sessao-horario" value="' + s.horario + '" /></label>' +
-                            '<button type="button" class="button button-small modal-remove-sessao">Remover</button>' +
+                            '<input type="date" class="modal-sessao-data" value="' + s.data + '" />' +
+                            '<input type="time" class="modal-sessao-horario" value="' + s.horario + '" />' +
+                            '<button type="button" class="button modal-remove-sessao">Remover</button>' +
                             '</div>';
                         $('#modal_sessoes_avulsas_list').append(row);
                     });

@@ -422,7 +422,7 @@ class CANNALEspetaculos_MetaBoxes {
             </p>
 
             <div id="sessoes-avulsas-container" style="display: none;">
-                <p><strong>Sessões Avulsas:</strong></p>
+                <strong>Sessões Avulsas:</strong>
                 <div id="sessoes-avulsas-list"></div>
                 <button type="button" class="button add-sessao-avulsa">Adicionar Sessão</button>
             </div>
@@ -769,29 +769,29 @@ class CANNALEspetaculos_MetaBoxes {
                     </table>
                     
                     <div id="modal_sessoes_avulsas_container" style="margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-                        <p><strong>Sessões Avulsas:</strong></p>
+                        <strong>Sessões Avulsas:</strong>
                         <div id="modal_sessoes_avulsas_list"></div>
                         <button type="button" class="button modal-add-sessao-avulsa">Adicionar Sessão</button>
                     </div>
                     
                     <div id="modal_sessoes_temporada_container" style="display: none; margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-                        <p><strong>Dias da Semana e Horários:</strong></p>
+                        <strong>Dias da Semana e Horários:</strong>
                         <table class="form-table">
                             <?php
                             $dias_semana = array(
-                                'domingo' => 'Domingo',
                                 'segunda' => 'Segunda-feira',
                                 'terca' => 'Terça-feira',
                                 'quarta' => 'Quarta-feira',
                                 'quinta' => 'Quinta-feira',
                                 'sexta' => 'Sexta-feira',
-                                'sabado' => 'Sábado'
+                                'sabado' => 'Sábado',
+                                'domingo' => 'Domingo'
                             );
                             foreach ( $dias_semana as $key => $label ) :
                             ?>
                             <tr>
                                 <th><label><?php echo esc_html( $label ); ?></label></th>
-                                <td style="display: flex; gap: 10px;">
+                                <td style="display: flex; gap: 2px;">
                                     <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" />
                                     <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" />
                                     <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" />
