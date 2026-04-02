@@ -809,6 +809,9 @@ add_action( 'save_post', array( 'CANNALEspetaculos_RevSlider', 'on_temporada_sav
 // Filtro legado: ajustar posts do slider cannal_cartaz.
 add_filter( 'revslider_get_posts', array( 'CANNALEspetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
 
+
+// Novo filtro: modificar o JSON do slider para injetar dados do espetáculo.
+add_filter( 'sr_load_slider_json', array( 'CANNALEspetaculos_RevSlider', 'filter_slider_json' ), 10, 2 );
 // Novo filtro: clonar slide template para cada espetáculo elegível.
 add_filter( 'revslider_get_slides_by_slider_id', array( 'CANNALEspetaculos_RevSlider', 'filter_slides_by_slider_id' ), 10, 2 );
 
