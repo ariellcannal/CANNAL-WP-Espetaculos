@@ -302,83 +302,112 @@ class Cannal_Espetaculos_RevSlider {
     }
 
     /**
-     * Remove o attr.id das layers durante a renderização HTML de slides Post-Based.
+     * Filtro principal aplicado a cada layer antes de ser renderizada no HTML.
      *
-     * Quando o RevSlider clona um slide template para cada post (Post-Based mode),
-     * todas as layers clonadas herdam o mesmo attr.id do template. Isso faz com que
-     * o JavaScript do RevSlider detecte IDs duplicados e altere o ID interno para
-     * um valor aleatório (ex: "minha-layer_DBL_1234"), mas o elemento HTML ainda
-     * mantém o ID original — causando falha ao localizar a layer no DOM e quebrando
-     * as animações a partir do segundo slide.
+     * Responsabilidades:
+     * 1. Corrigir ID duplicado do slide: remove attr.id da layer em slides clonados
+     *    (Post-Based mode, slide_id contém "STR"), forçando o RevSlider a gerar um
+     *    ID único por slide no padrão slider_html_id-slide_id-layer_uid.
+     * 2. Logotipo: se a layer for do tipo imagem e tiver attr.wrapId == "{{logotipo}}",
+     *    substitui o src da imagem pelo logotipo do espetáculo (post meta _logotipo_url
+     *    ou campo ACF logotipo), se disponível.
+     * 3. Classificação: se o conteúdo de texto da layer for "{{classificacao}}",
+     *    adiciona a classe "classificacao-{valor}" à layer.
      *
-     * A solução é remover o attr.id da layer durante a renderização HTML para slides
-     * clonados (cujo slide_id contém "STR"). Sem attr.id, o JS gera automaticamente
-     * um ID único baseado em: slider_html_id + "-" + slide_id + "-" + layer.id,
-     * que é exatamente o ID que o PHP também gera para o elemento HTML.
-     *
-     * @param array  $layer         Dados da layer.
-     * @param object $output        Objeto RevSlider Output.
+     * @param array  $layer  Dados da layer.
+     * @param object $output Objeto RevSlider Output.
      * @return array Layer modificada.
      */
-    public static function fix_cloned_slide_layer_ids( $layer, $output ) {
-        // Verificar se estamos em um slide clonado (Post-Based mode)
+    public static function process_layer( $layer, $output ) {
+        $slide    = $output->get_slide();
         $slide_id = $output->get_slide_id();
-        if ( strpos( (string) $slide_id, 'STR' ) === false ) {
-            return $layer;
-        }
+        $is_clone = ( strpos( (string) $slide_id, 'STR' ) !== false );
 
-        // Remover o attr.id da layer para que o JS gere um ID único automaticamente
-        if ( isset( $layer['attr']['id'] ) && '' !== $layer['attr']['id'] ) {
+        // ── 1. ID único do slide ──────────────────────────────────────────────────
+        // Remove attr.id da layer em slides clonados para evitar duplicatas no HTML.
+        if ( $is_clone && isset( $layer['attr']['id'] ) && '' !== $layer['attr']['id'] ) {
             $layer['attr']['id'] = '';
         }
 
-        return $layer;
-    }
+        // ── 2. Logotipo ───────────────────────────────────────────────────────────
+        // Substitui o src da imagem quando o Wrapper ID da layer for "{{logotipo}}".
+        $wrap_id = isset( $layer['attr']['wrapId'] ) ? $layer['attr']['wrapId'] : '';
+        if ( '{{logotipo}}' === trim( $wrap_id ) && 'image' === ( isset( $layer['type'] ) ? $layer['type'] : '' ) ) {
+            $post_id    = isset( $slide->post_data['id'] ) ? intval( $slide->post_data['id'] ) : 0;
+            $logotipo   = '';
 
-    /**
-     * Remove o attr.id das layers no JSON do slider para slides Post-Based.
-     *
-     * O JSON das layers (SR7.JSON) é gerado a partir dos slides template (sem STR).
-     * O JavaScript do RevSlider copia esse JSON para criar slides clonados com IDs
-     * como template_id+STR1, template_id+STR2, etc. Se as layers tiverem attr.id
-     * definido no JSON, o JS usará esse ID fixo para localizar o elemento HTML —
-     * e ao processar o segundo slide em diante, detectará duplicata e alterará o ID
-     * interno para um valor aleatório, quebrando a localização do elemento no DOM.
-     *
-     * Ao remover o attr.id das layers no JSON, o JS usa o padrão automático:
-     * slider_html_id + "-" + slide_id + "-" + layer.id, que é único por slide.
-     *
-     * @param array  $obj    JSON completo do slider.
-     * @param object $slider Instância do slider.
-     * @return array JSON modificado.
-     */
-    public static function fix_slider_json_layer_ids( $obj, $slider ) {
-        // Aplicar apenas para sliders Post-Based
-        if ( ! is_object( $slider ) || ! method_exists( $slider, 'is_stream_post' ) ) {
-            return $obj;
-        }
-        if ( ! $slider->is_stream_post() ) {
-            return $obj;
-        }
+            if ( $post_id ) {
+                // Tentar campo post meta direto
+                $logotipo = get_post_meta( $post_id, '_logotipo_url', true );
 
-        if ( empty( $obj['slides'] ) || ! is_array( $obj['slides'] ) ) {
-            return $obj;
-        }
+                // Fallback: campo ACF "logotipo" (retorna ID do attachment)
+                if ( empty( $logotipo ) && function_exists( 'get_field' ) ) {
+                    $acf_val = get_field( 'logotipo', $post_id );
+                    if ( is_array( $acf_val ) && ! empty( $acf_val['url'] ) ) {
+                        $logotipo = $acf_val['url'];
+                    } elseif ( is_numeric( $acf_val ) ) {
+                        $logotipo = wp_get_attachment_url( intval( $acf_val ) );
+                    } elseif ( is_string( $acf_val ) && ! empty( $acf_val ) ) {
+                        $logotipo = $acf_val;
+                    }
+                }
 
-        foreach ( $obj['slides'] as $slide_key => &$slide_data ) {
-            if ( empty( $slide_data['layers'] ) || ! is_array( $slide_data['layers'] ) ) {
-                continue;
-            }
-            foreach ( $slide_data['layers'] as $layer_key => &$layer ) {
-                if ( isset( $layer['attr']['id'] ) && '' !== $layer['attr']['id'] ) {
-                    $layer['attr']['id'] = '';
+                // Fallback: post meta "logotipo" como ID de attachment
+                if ( empty( $logotipo ) ) {
+                    $meta = get_post_meta( $post_id, 'logotipo', true );
+                    if ( is_numeric( $meta ) && intval( $meta ) > 0 ) {
+                        $logotipo = wp_get_attachment_url( intval( $meta ) );
+                    } elseif ( is_string( $meta ) && ! empty( $meta ) ) {
+                        $logotipo = $meta;
+                    }
                 }
             }
-            unset( $layer );
-        }
-        unset( $slide_data );
 
-        return $obj;
+            if ( ! empty( $logotipo ) ) {
+                // Substituir src da imagem no campo correto (v7)
+                if ( isset( $layer['media']['image']['src'] ) ) {
+                    $layer['media']['image']['src'] = $logotipo;
+                }
+                // Limpar lib_id para não buscar no media library
+                if ( isset( $layer['media']['image']['lib_id'] ) ) {
+                    $layer['media']['image']['lib_id'] = '';
+                }
+            }
+        }
+
+        // ── 3. Classificação ─────────────────────────────────────────────────────
+        // Adiciona classe "classificacao-{valor}" quando o conteúdo for "{{classificacao}}".
+        $content_text = '';
+        if ( isset( $layer['content']['text'] ) ) {
+            $content_text = trim( $layer['content']['text'] );
+        } elseif ( isset( $layer['text'] ) ) {
+            $content_text = trim( $layer['text'] );
+        }
+
+        if ( '{{classificacao}}' === $content_text ) {
+            $post_id        = isset( $slide->post_data['id'] ) ? intval( $slide->post_data['id'] ) : 0;
+            $classificacao  = '';
+
+            if ( $post_id ) {
+                $classificacao = get_post_meta( $post_id, '_classificacao', true );
+
+                if ( empty( $classificacao ) && function_exists( 'get_field' ) ) {
+                    $classificacao = get_field( 'classificacao', $post_id );
+                }
+
+                if ( empty( $classificacao ) ) {
+                    $classificacao = get_post_meta( $post_id, 'classificacao', true );
+                }
+            }
+
+            if ( ! empty( $classificacao ) ) {
+                $classe_nova = 'classificacao-' . sanitize_html_class( (string) $classificacao );
+                $classes_atuais = isset( $layer['attr']['class'] ) ? $layer['attr']['class'] : '';
+                $layer['attr']['class'] = trim( $classes_atuais . ' ' . $classe_nova );
+            }
+        }
+
+        return $layer;
     }
 }
 
@@ -386,5 +415,4 @@ class Cannal_Espetaculos_RevSlider {
 add_action( 'init', array( 'Cannal_Espetaculos_RevSlider', 'register_shortcode' ) );
 add_action( 'save_post', array( 'Cannal_Espetaculos_RevSlider', 'on_temporada_save' ) );
 add_filter( 'revslider_get_posts', array( 'Cannal_Espetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
-add_filter( 'revslider_putLayer_pre', array( 'Cannal_Espetaculos_RevSlider', 'fix_cloned_slide_layer_ids' ), 10, 2 );
-add_filter( 'sr_get_full_slider_JSON', array( 'Cannal_Espetaculos_RevSlider', 'fix_slider_json_layer_ids' ), 10, 2 );
+add_filter( 'revslider_putLayer_pre', array( 'Cannal_Espetaculos_RevSlider', 'process_layer' ), 10, 2 );
