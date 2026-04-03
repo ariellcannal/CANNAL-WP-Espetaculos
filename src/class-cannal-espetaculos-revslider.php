@@ -300,9 +300,91 @@ class Cannal_Espetaculos_RevSlider {
 
         return $espetaculo_ids;
     }
+
+    /**
+     * Remove o attr.id das layers durante a renderização HTML de slides Post-Based.
+     *
+     * Quando o RevSlider clona um slide template para cada post (Post-Based mode),
+     * todas as layers clonadas herdam o mesmo attr.id do template. Isso faz com que
+     * o JavaScript do RevSlider detecte IDs duplicados e altere o ID interno para
+     * um valor aleatório (ex: "minha-layer_DBL_1234"), mas o elemento HTML ainda
+     * mantém o ID original — causando falha ao localizar a layer no DOM e quebrando
+     * as animações a partir do segundo slide.
+     *
+     * A solução é remover o attr.id da layer durante a renderização HTML para slides
+     * clonados (cujo slide_id contém "STR"). Sem attr.id, o JS gera automaticamente
+     * um ID único baseado em: slider_html_id + "-" + slide_id + "-" + layer.id,
+     * que é exatamente o ID que o PHP também gera para o elemento HTML.
+     *
+     * @param array  $layer         Dados da layer.
+     * @param object $output        Objeto RevSlider Output.
+     * @return array Layer modificada.
+     */
+    public static function fix_cloned_slide_layer_ids( $layer, $output ) {
+        // Verificar se estamos em um slide clonado (Post-Based mode)
+        $slide_id = $output->get_slide_id();
+        if ( strpos( (string) $slide_id, 'STR' ) === false ) {
+            return $layer;
+        }
+
+        // Remover o attr.id da layer para que o JS gere um ID único automaticamente
+        if ( isset( $layer['attr']['id'] ) && '' !== $layer['attr']['id'] ) {
+            $layer['attr']['id'] = '';
+        }
+
+        return $layer;
+    }
+
+    /**
+     * Remove o attr.id das layers no JSON do slider para slides Post-Based.
+     *
+     * O JSON das layers (SR7.JSON) é gerado a partir dos slides template (sem STR).
+     * O JavaScript do RevSlider copia esse JSON para criar slides clonados com IDs
+     * como template_id+STR1, template_id+STR2, etc. Se as layers tiverem attr.id
+     * definido no JSON, o JS usará esse ID fixo para localizar o elemento HTML —
+     * e ao processar o segundo slide em diante, detectará duplicata e alterará o ID
+     * interno para um valor aleatório, quebrando a localização do elemento no DOM.
+     *
+     * Ao remover o attr.id das layers no JSON, o JS usa o padrão automático:
+     * slider_html_id + "-" + slide_id + "-" + layer.id, que é único por slide.
+     *
+     * @param array  $obj    JSON completo do slider.
+     * @param object $slider Instância do slider.
+     * @return array JSON modificado.
+     */
+    public static function fix_slider_json_layer_ids( $obj, $slider ) {
+        // Aplicar apenas para sliders Post-Based
+        if ( ! is_object( $slider ) || ! method_exists( $slider, 'is_stream_post' ) ) {
+            return $obj;
+        }
+        if ( ! $slider->is_stream_post() ) {
+            return $obj;
+        }
+
+        if ( empty( $obj['slides'] ) || ! is_array( $obj['slides'] ) ) {
+            return $obj;
+        }
+
+        foreach ( $obj['slides'] as $slide_key => &$slide_data ) {
+            if ( empty( $slide_data['layers'] ) || ! is_array( $slide_data['layers'] ) ) {
+                continue;
+            }
+            foreach ( $slide_data['layers'] as $layer_key => &$layer ) {
+                if ( isset( $layer['attr']['id'] ) && '' !== $layer['attr']['id'] ) {
+                    $layer['attr']['id'] = '';
+                }
+            }
+            unset( $layer );
+        }
+        unset( $slide_data );
+
+        return $obj;
+    }
 }
 
 // Registrar hooks e shortcodes
 add_action( 'init', array( 'Cannal_Espetaculos_RevSlider', 'register_shortcode' ) );
 add_action( 'save_post', array( 'Cannal_Espetaculos_RevSlider', 'on_temporada_save' ) );
 add_filter( 'revslider_get_posts', array( 'Cannal_Espetaculos_RevSlider', 'filter_cartaz_slider_posts' ), 10, 2 );
+add_filter( 'revslider_putLayer_pre', array( 'Cannal_Espetaculos_RevSlider', 'fix_cloned_slide_layer_ids' ), 10, 2 );
+add_filter( 'sr_get_full_slider_JSON', array( 'Cannal_Espetaculos_RevSlider', 'fix_slider_json_layer_ids' ), 10, 2 );
