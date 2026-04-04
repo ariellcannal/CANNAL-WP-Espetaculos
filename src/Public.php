@@ -78,9 +78,7 @@ class CANNALEspetaculos_Public
      */
     public function enqueue_styles()
     {
-        if (is_singular('espetaculo') || is_post_type_archive('espetaculo') || is_tax('espetaculo_categoria')) {
-            wp_enqueue_style($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/css/cannal-espetaculos-public.css', array(), $this->version, 'all');
-        }
+        wp_enqueue_style($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/css/cannal-espetaculos-public.css', array(), $this->version, 'all');
     }
 
     /**
@@ -106,6 +104,20 @@ class CANNALEspetaculos_Public
      */
     public function template_loader($template)
     {
+        // 1. VERIFICAÇÃO DO ELEMENTOR
+        if (is_singular()) {
+            // Checa se o post/espetáculo atual foi construído com o Elementor
+            $is_built_with_elementor = get_post_meta(get_the_ID(), '_elementor_edit_mode', true) === 'builder';
+            
+            // Checa se estamos na tela de edição/preview do Elementor
+            $is_elementor_preview = isset($_GET['elementor-preview']);
+            
+            // Se o Elementor estiver ativo para esta página, abortamos a nossa lógica
+            if ($is_built_with_elementor || $is_elementor_preview) {
+                return $template;
+            }
+        }
+        
         if (is_singular('espetaculo')) {
             // Verificar se há um template de página personalizado definido
             $page_template = get_post_meta(get_the_ID(), '_wp_page_template', true);
@@ -224,16 +236,16 @@ class CANNALEspetaculos_Public
                 continue;
 
             $url_thumb = wp_get_attachment_image_url($attachment_id, 'medium');
-            $url_full  = wp_get_attachment_image_url($attachment_id, 'full');
-            $alt       = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+            $url_full = wp_get_attachment_image_url($attachment_id, 'full');
+            $alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
 
             if (! $url_thumb)
                 continue;
 
             $imagens[] = array(
                 'url_thumb' => $url_thumb,
-                'url_full'  => $url_full,
-                'alt'       => $alt,
+                'url_full' => $url_full,
+                'alt' => $alt
             );
         }
 

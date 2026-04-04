@@ -149,42 +149,6 @@
     background: #c0392b;
 }
 
-.classificacao-selo {
-    display: inline-block;
-    padding: 10px;
-    border-radius: 5px;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 5px;
-    color: white;
-    background: #2c3e50;
-	width: 45px;
-}
-
-.classificacao-livre {
-    background: #27ae60;
-}
-
-.classificacao-10 {
-    background: #3498db;
-}
-
-.classificacao-12 {
-    background: #f39c12;
-}
-
-.classificacao-14 {
-    background: #e67e22;
-}
-
-.classificacao-16 {
-    background: #e74c3c;
-}
-
-.classificacao-18 {
-    background: #c0392b;
-}
-
 .espetaculo-galeria-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -213,4 +177,45 @@
         width: 100%;
         position: static;
     }
+}
+
+
+
+/* CLASSIFICAÇÃO INDICATIVA */
+.classificacao-selo {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+    color: white;
+    background: #2c3e50;
+	font-size: 1.2rem;
+}
+
+.classificacao-livre {
+    background: #00A54F;
+}
+
+.classificacao-10 {
+    background: #0072BC;
+}
+
+.classificacao-12 {
+    background: #FFCC00;
+}
+
+.classificacao-14 {
+    background: #F47321;
+}
+
+.classificacao-16 {
+    background: #ED1C24;
+}
+
+.classificacao-18 {
+    background: #000000;
 }

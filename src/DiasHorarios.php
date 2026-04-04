@@ -267,7 +267,7 @@ class CANNALEspetaculos_DiasHorarios
             $partes[] = $texto_dias . ' às ' . $horario . 'h';
         }
 
-        return implode(', ', $partes) . '.';
+        return implode(', ', $partes);
     }
 
     /**
