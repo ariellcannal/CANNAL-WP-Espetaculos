@@ -14,71 +14,152 @@ class CANNALEspetaculos_MetaBoxes
      */
     public function add_meta_boxes()
     {
-
-        // Meta boxes para Espetáculos
-        add_meta_box('espetaculo_detalhes', 'Detalhes do Espetáculo', array(
-            $this,
-            'render_espetaculo_detalhes_meta_box'
-        ), 'espetaculo', 'normal', 'high');
-
-        add_meta_box('espetaculo_galeria', 'Galeria de Fotos', array(
-            $this,
-            'render_espetaculo_galeria_meta_box'
-        ), 'espetaculo', 'normal', 'default');
-
-        add_meta_box('espetaculo_temporadas', 'Temporadas', array(
-            $this,
-            'render_espetaculo_temporadas_meta_box'
-        ), 'espetaculo', 'normal', 'default');
-    }
-
-    /**
-     * Renderiza o meta box de detalhes do espetáculo.
-     */
-    public function render_espetaculo_detalhes_meta_box($post)
-    {
-        wp_nonce_field('cannal_espetaculo_meta_box', 'cannal_espetaculo_meta_box_nonce');
-
-        $autor = get_post_meta($post->ID, '_espetaculo_autor', true);
-        $diretor = get_post_meta($post->ID, '_espetaculo_diretor', true);
-        $elenco = get_post_meta($post->ID, '_espetaculo_elenco', true);
-        $sinopse = get_post_meta($post->ID, '_espetaculo_sinopse', true);
-        $ano_estreia = get_post_meta($post->ID, '_espetaculo_ano_estreia', true);
-        $duracao = get_post_meta($post->ID, '_espetaculo_duracao', true);
-        $classificacao = get_post_meta($post->ID, '_espetaculo_classificacao', true);
-        $logotipo_id = get_post_meta($post->ID, '_espetaculo_logotipo', true);
-        $logotipo_url = $logotipo_id ? wp_get_attachment_image_url($logotipo_id, 'medium') : '';
-        $icone_id = (int) get_post_meta($post->ID, '_espetaculo_icone', true);
-        $icone_url = $icone_id ? wp_get_attachment_image_url($icone_id, 'thumbnail') : '';
-        $exibir_galeria = get_post_meta($post->ID, '_espetaculo_exibir_galeria', true);
-
-        $template = dirname(dirname(__FILE__)) . '/templates/admin/metabox-detalhes-espetaculo.php';
-        if (file_exists($template)) {
-            include $template;
-        }
-    }
-
-    /**
-     * Renderiza o meta box de galeria do espetáculo.
-     */
-    public function render_espetaculo_galeria_meta_box($post)
-    {
-        wp_nonce_field('cannal_espetaculo_galeria_meta_box', 'cannal_espetaculo_galeria_meta_box_nonce');
-
-        $galeria = get_post_meta($post->ID, '_espetaculo_galeria', true);
-        $galeria_ids = ! empty($galeria) ? explode(',', $galeria) : array();
-
-        $template = dirname(dirname(__FILE__)) . '/templates/admin/metabox-galeria-espetaculo.php';
-        if (file_exists($template)) {
-            include $template;
+        if (class_exists('OT_Loader')) {
+            $espetaculo_detalhes = array(
+                'id' => 'espetaculo_detalhes',
+                'title' => esc_html__('Detalhes do Espetáculo', 'cannal-espetaculos'),
+                'pages' => array(
+                    'espetaculo'
+                ),
+                'context' => 'normal',
+                'priority' => 'high',
+                'fields' => array(
+                    array(
+                        'type' => 'tab',
+                        'id' => 'cannal-espetaculos-detalhes',
+                        'label' => esc_html__('Detalhes', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'text',
+                        'id' => '_espetaculo_autor',
+                        'label' => esc_html__('Autor', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'text',
+                        'id' => '_espetaculo_diretor',
+                        'label' => esc_html__('Diretor', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'text',
+                        'id' => '_espetaculo_elenco',
+                        'label' => esc_html__('Elenco', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Nomes separados por vírgula', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'textarea-simple',
+                        'id' => '_espetaculo_sinopse',
+                        'label' => esc_html__('Sinopse', 'cannal-espetaculos'),
+                        'rows' => 3
+                    ),
+                    array(
+                        'type' => 'number',
+                        'id' => '_espetaculo_ano_estreia',
+                        'label' => esc_html__('Ano de Estreia', 'cannal-espetaculos'),
+                        'desc' => esc_html__('O ano em que o espetáculo estreou', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'number',
+                        'id' => '_espetaculo_duracao',
+                        'label' => esc_html__('Duração', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Duração do espetáculo em minutos', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'select',
+                        'id' => '_espetaculo_classificacao',
+                        'label' => esc_html__('Classificação Indicativa', 'cannal-espetaculos'),
+                        'std' => 'default',
+                        'choices' => array(
+                            array(
+                                'label' => esc_html__('Livre', 'cannal-espetaculos'),
+                                'value' => 'livre'
+                            ),
+                            array(
+                                'label' => esc_html__('12 anos', 'cannal-espetaculos'),
+                                'value' => '12'
+                            ),
+                            array(
+                                'label' => esc_html__('14 anos', 'cannal-espetaculos'),
+                                'value' => '14'
+                            ),
+                            array(
+                                'label' => esc_html__('16 anos', 'cannal-espetaculos'),
+                                'value' => '16 anos'
+                            ),
+                            array(
+                                'label' => esc_html__('18 anos', 'cannal-espetaculos'),
+                                'value' => '18'
+                            )
+                        )
+                    ),
+                    array(
+                        'type' => 'tab',
+                        'id' => 'cannal-espetaculos-midia',
+                        'label' => esc_html__('Mídia', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'upload',
+                        'id' => '_espetaculo_logotipo',
+                        'label' => esc_html__('Logotipo do Espetáculo', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Logotipo do espetáculo', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'upload',
+                        'id' => '_espetaculo_logotipo_preto',
+                        'label' => esc_html__('Logotipo do Espetáculo', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Logotipo para fundos claros', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'upload',
+                        'id' => '_espetaculo_logotipo_branco',
+                        'label' => esc_html__('Logotipo do Espetáculo', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Logotipo para fundos escuros', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'upload',
+                        'id' => '_espetaculo_icone',
+                        'label' => esc_html__('Ícone do Espetáculo', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Ícone da página do espetáculo (favicon). Obrigatoriamente quadrado, máximo 512×512px. Formatos aceitos: PNG, ICO, SVG.', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'on_off',
+                        'id' => '_espetaculo_exibir_galeria',
+                        'label' => esc_html__('Exibir galeria', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Exibir galeria de fotos ao final da página', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'gallery',
+                        'id' => '_espetaculo_galeria',
+                        'label' => esc_html__('Galeria de Imagens', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'tab',
+                        'id' => 'cannal-espetaculos-temporada',
+                        'label' => esc_html__('Temporadas', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'custom_box',
+                        'id' => '_espetaculo_temporadas',
+                        'label' => esc_html__('Temporadas do Espetáculo', 'cannal-espetaculos'),
+                        'callback' => array(
+                            $this,
+                            'render_espetaculo_temporadas_meta_box'
+                        )
+                    )
+                )
+            );
+            ot_register_meta_box($espetaculo_detalhes);
         }
     }
 
     /**
      * Renderiza o meta box de temporadas do espetáculo.
      */
-    public function render_espetaculo_temporadas_meta_box($post)
+    public function render_espetaculo_temporadas_meta_box($args = array())
     {
+        extract($args); // phpcs:ignore
+        
+        $post = get_post($post_id);
+        
         $temporadas_raw = get_posts(array(
             'post_type' => 'temporada',
             'posts_per_page' => - 1,
@@ -170,22 +251,6 @@ class CANNALEspetaculos_MetaBoxes
     public function save_espetaculo_meta($post_id)
     {
 
-        // Verificar se pelo menos um dos nonces está presente
-        $has_detalhes_nonce = isset($_POST['cannal_espetaculo_meta_box_nonce']);
-        $has_galeria_nonce = isset($_POST['cannal_espetaculo_galeria_meta_box_nonce']);
-
-        if (! $has_detalhes_nonce && ! $has_galeria_nonce) {
-            return;
-        }
-
-        // Verificar nonces
-        $detalhes_valid = $has_detalhes_nonce && wp_verify_nonce($_POST['cannal_espetaculo_meta_box_nonce'], 'cannal_espetaculo_meta_box');
-        $galeria_valid = $has_galeria_nonce && wp_verify_nonce($_POST['cannal_espetaculo_galeria_meta_box_nonce'], 'cannal_espetaculo_galeria_meta_box');
-
-        if (! $detalhes_valid && ! $galeria_valid) {
-            return;
-        }
-
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
         }
@@ -200,70 +265,14 @@ class CANNALEspetaculos_MetaBoxes
 
         $post_data = [];
 
-        // Salvar campos
-        if (isset($_POST['espetaculo_autor'])) {
-            update_post_meta($post_id, '_espetaculo_autor', sanitize_text_field($_POST['espetaculo_autor']));
-        }
-
-        if (isset($_POST['espetaculo_diretor'])) {
-            update_post_meta($post_id, '_espetaculo_diretor', sanitize_text_field($_POST['espetaculo_diretor']));
-        }
-
-        if (isset($_POST['espetaculo_elenco'])) {
-            update_post_meta($post_id, '_espetaculo_elenco', sanitize_textarea_field($_POST['espetaculo_elenco']));
-        }
-
         if (isset($_POST['espetaculo_sinopse'])) {
-            update_post_meta($post_id, '_espetaculo_sinopse', sanitize_textarea_field($_POST['espetaculo_sinopse']));
             $post_data['post_excerpt'] = sanitize_textarea_field($_POST['espetaculo_sinopse']);
         }
-
-        if (isset($_POST['espetaculo_ano_estreia'])) {
-            update_post_meta($post_id, '_espetaculo_ano_estreia', sanitize_text_field($_POST['espetaculo_ano_estreia']));
-        }
-
-        if (isset($_POST['espetaculo_duracao'])) {
-            update_post_meta($post_id, '_espetaculo_duracao', sanitize_text_field($_POST['espetaculo_duracao']));
-        }
-
-        if (isset($_POST['espetaculo_classificacao'])) {
-            update_post_meta($post_id, '_espetaculo_classificacao', sanitize_text_field($_POST['espetaculo_classificacao']));
-        }
-
-        if (isset($_POST['espetaculo_logotipo'])) {
-            update_post_meta($post_id, '_espetaculo_logotipo', sanitize_text_field($_POST['espetaculo_logotipo']));
-        }
-
-        // Salvar ícone (favicon da single page)
-        if (isset($_POST['espetaculo_icone_id'])) {
-            $icone_id = absint($_POST['espetaculo_icone_id']);
-            if ($icone_id > 0) {
-                // Validar proporção quadrada e tamanho máximo no servidor
-                $meta = wp_get_attachment_metadata($icone_id);
-                if ($meta && isset($meta['width'], $meta['height'])) {
-                    if ($meta['width'] === $meta['height'] && $meta['width'] <= 512) {
-                        update_post_meta($post_id, '_espetaculo_icone', $icone_id);
-                    }
-                } else {
-                    // Sem metadados (ex: SVG) — salva assim mesmo
-                    update_post_meta($post_id, '_espetaculo_icone', $icone_id);
-                }
-            } else {
-                delete_post_meta($post_id, '_espetaculo_icone');
-            }
-        }
-
-        // Exibir galeria (checkbox)
-        $exibir_galeria = isset($_POST['espetaculo_exibir_galeria']) ? '1' : '0';
-        update_post_meta($post_id, '_espetaculo_exibir_galeria', $exibir_galeria);
-
+        
         if (count($post_data)) {
             $post_data['ID'] = $post_id;
             wp_update_post($post_data);
         }
-
-        // GALERIA: Agora é salva via AJAX, não pelo formulário
-        // O salvamento via formulário foi removido para evitar sobrescrever o valor salvo via AJAX
     }
 
     /**

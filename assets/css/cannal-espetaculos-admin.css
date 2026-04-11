@@ -57,7 +57,6 @@
 
 .modal-sessoes-container {
 	display: none;
-	margin: 15px 0;
 	padding: 15px;
 	background: #f9f9f9;
 	border: 1px solid #ddd;
@@ -85,103 +84,35 @@
 	margin-bottom: 10px;
 }
 
+#sessoes-temporada-container table.form-table th {
+	width: 150px;
+}
+
+/* Botão de remover o dia da semana na tabela */
+.btn-remove-dia, .btn-remove-sessao {
+	color: #d63638 !important;
+	border-color: #d63638 !important;
+	padding: 0 8px !important;
+	font-weight: 900 !important;
+	background: transparent;
+}
+
+.btn-remove-dia:hover, .btn-remove-sessao:hover {
+	background: #d63638 !important;
+	color: #fff !important;
+}
+
+#modal_sessoes_avulsas_list, #temporada-form .form-table {
+	margin-top: .5em;
+}
+
+/* METABOX TEMPORADAS */
 .espetaculo-temporadas-list table {
 	margin-top: 15px;
 }
 
 .espetaculo-temporadas-list table th {
 	font-weight: 600;
-}
-
-#sessoes-temporada-container table.form-table th {
-	width: 150px;
-}
-
-.temporada-modal {
-	display: none;
-	position: fixed;
-	z-index: 100000;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow: auto;
-	background-color: rgba(0, 0, 0, 0.5);
-}
-
-.temporada-modal-content {
-	background-color: #fefefe;
-	margin: 2%;
-	padding: 30px;
-	border: 1px solid #888;
-	border-radius: 5px;
-	position: relative;
-}
-
-.temporada-modal-close {
-	color: #aaa;
-	float: right;
-	font-size: 28px;
-	font-weight: bold;
-	cursor: pointer;
-	line-height: 20px;
-}
-
-.temporada-modal-close:hover, .temporada-modal-close:focus {
-	color: #000;
-}
-
-#temporada-modal-title {
-	margin-top: 0;
-	margin-bottom: 20px;
-	text-align: center;
-	font-size: 2em;
-    margin: .67em 0;
-}
-#temporada-modal-title small{
-	color: #999;
-}
-.temporada-modal-content th{
-	width: inherit;
-}
-.temporada-modal-content input[type="text"],
-.temporada-modal-content input[type="url"],
-.temporada-modal-content textarea{
-	width: 98%;
-}
-.temporada-modal-content label[for]{
-	font-weight: 600;
-	font-size: 14px;
-	display: block;
-	margin-bottom: 5px;
-}
-.temporada-modal-content .wp-editor-wrap{
-	margin-top: -30px!important;
-}
-#modal_sessoes_avulsas_list, #temporada-form .form-table {
-	margin-top: 20px;
-	margin-bottom: 5px;
-}
-
-#temporada-form td, #temporada-form th {
-	padding: 8px;
-}
-
-#temporada-form th {
-	text-align: right;
-}
-
-#modal_sessoes_temporada_container td {
-	padding: 2px;
-	margin: 0px;
-	vertical-align: middle;
-}
-
-#modal_sessoes_temporada_container th {
-	width: 20%;
-	padding: 2px;
-	padding-right: 2px;
-	vertical-align: middle;
 }
 
 /* =========================================================
@@ -228,4 +159,168 @@
 .cannal-row-updated {
 	background-color: #edfaed !important;
 	transition: background-color 2s ease;
+}
+
+/* =========================================================
+ * MODAL DO FORMULÁRIO DE TEMPORADA
+ * ========================================================= */
+.temporada-modal {
+	display: none;
+	position: fixed;
+	z-index: 100000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+.temporada-modal-content {
+	background-color: #fefefe;
+	margin: 2%;
+	padding: 30px;
+	border: 1px solid #888;
+	border-radius: 5px;
+	position: relative;
+}
+
+.temporada-modal-close {
+	color: #aaa;
+	float: right;
+	font-size: 28px;
+	cursor: pointer;
+	line-height: 20px;
+}
+
+.temporada-modal-close:hover, .temporada-modal-close:focus {
+	color: #000;
+}
+
+#temporada-modal-title {
+	margin-top: 0;
+	margin-bottom: 20px;
+	text-align: center;
+	font-size: 2em;
+	margin: .67em 0;
+}
+
+#temporada-modal-title small {
+	color: #999;
+}
+
+.cannal-espetaculos-temporada-form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 30px;
+}
+
+.cannal-espetaculos-temporada-form-grid .form-group {
+	display: grid;
+	grid-template-columns: 140px 1fr;
+	/* 140px para o label, o resto para o input */
+	gap: 15px;
+	align-items: start; /* Alinha pelo topo (ideal para textareas) */
+	margin-bottom: 5px;
+}
+
+.cannal-espetaculos-temporada-form-grid .form-group>label {
+	display: block;
+	text-align: right; /* Joga o texto para a borda do input */
+	font-weight: 600;
+	font-size: 13px;
+	margin-bottom: 0;
+	margin-top: 5px;
+	/* Abaixa levemente o texto para alinhar com o input do lado */
+}
+
+.cannal-espetaculos-temporada-form-grid .form-group input[type="text"],
+	.cannal-espetaculos-temporada-form-grid .form-group input[type="url"],
+	.cannal-espetaculos-temporada-form-grid .form-group input[type="date"],
+	.cannal-espetaculos-temporada-form-grid .form-group textarea,
+	.cannal-espetaculos-temporada-form-grid .form-group select {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Garante que a caixa de dias da semana ocupe toda a largura sob os botões de rádio */
+.cannal-espetaculos-temporada-form-grid .modal-sessoes-container {
+	display: none;
+	padding: 15px;
+	background: #f9f9f9;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: 10px;
+}
+
+.cannal-espetaculos-temporada-form-grid .sessoes-lista-dinamica {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.cannal-espetaculos-temporada-form-grid .sessao-linha-dinamica {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+/* Largura fixa para os labels dos dias da semana ficarem alinhados */
+.cannal-espetaculos-temporada-form-grid .sessao-linha-dinamica>label {
+	width: 100px;
+	text-align: right;
+	font-weight: 600;
+	font-size: 13px;
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.cannal-espetaculos-temporada-form-grid .modal-sessoes-horarios {
+	display: flex;
+	gap: 2px;
+	flex: 1;
+}
+
+/* Padroniza os inputs das sessões avulsas (que não usam width 100%) */
+.cannal-espetaculos-temporada-form-grid .sessao-linha-dinamica input[type="date"],
+	.cannal-espetaculos-temporada-form-grid .sessao-linha-dinamica input[type="time"]
+	{
+	width: auto;
+}
+
+.cannal-editor-container {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #ddd;
+	/* Uma linha suave para separar os dados do texto */
+}
+
+.cannal-editor-header{
+	position: relative;
+    z-index: 999;
+}
+
+.cannal-editor-header label {
+	display: block;
+	font-weight: 600;
+	font-size: 14px;
+	margin-bottom: 8px;
+	color: #2c3338;
+}
+
+.cannal-editor-header .modal-btn-copiar {
+	display: inline-block;
+}
+
+.cannal-editor-container  .wp-editor-wrap {
+	margin-top: -30px;
+}
+
+.cannal-form-actions {
+	display: flex;
+	justify-content: flex-end; /* Alinha os botões à direita */
+	gap: 10px; /* Espaço entre os botões */
+	margin-top: 25px;
 }

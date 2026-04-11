@@ -119,7 +119,7 @@ class CANNALEspetaculos_Plugin {
 
         // Registrar meta boxes
         $meta_boxes = new CANNALEspetaculos_MetaBoxes();
-        $this->loader->add_action( 'add_meta_boxes', $meta_boxes, 'add_meta_boxes' );
+        $this->loader->add_action( 'admin_init', $meta_boxes, 'add_meta_boxes' );
         $this->loader->add_action( 'save_post', $meta_boxes, 'save_espetaculo_meta' );
         
         // Garantir categoria padrão em espetáculos
