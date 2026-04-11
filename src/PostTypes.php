@@ -3,7 +3,7 @@
  * Registra os custom post types e taxonomias.
  *
  * @package    CANNALEspetaculos_Plugin
- * @subpackage CANNALEspetaculos_Plugin/includes
+ * @subpackage CANNALEspetaculos_Plugin/src
  */
 
 class CANNALEspetaculos_PostTypes {

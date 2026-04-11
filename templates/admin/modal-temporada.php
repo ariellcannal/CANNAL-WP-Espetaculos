@@ -20,8 +20,43 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
             <table class="form-table">
                 <tr>
-                    <th><label for="modal_teatro_nome"><?php esc_html_e( 'Nome do Teatro', 'cannal-espetaculos' ); ?> *</label></th>
-                    <td><input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required /></td>
+                    <th style="width: 20%"><label for="modal_teatro_nome"><?php esc_html_e( 'Nome do Teatro', 'cannal-espetaculos' ); ?></label></th>
+                    <td style="width: 40%"><input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required /></td>
+                    <td style="width: 40%; vertical-align: unset;" class="" rowspan="9">
+                    	<label for="modal_tipo_sessao"><?php esc_html_e( 'Tipo de Sessão', 'cannal-espetaculos' ); ?></label>
+                    	<label >
+                            <input type="radio" name="modal_tipo_sessao" value="temporada" id="modal_tipo_sessao_temporada" checked />
+                            <?php esc_html_e( 'Temporada (dias da semana)', 'cannal-espetaculos' ); ?>
+                        </label>
+                        &nbsp;&nbsp;
+                        <label>
+                            <input type="radio" name="modal_tipo_sessao" value="avulsas" id="modal_tipo_sessao_avulsas"  />
+                            <?php esc_html_e( 'Sessões Avulsas', 'cannal-espetaculos' ); ?>
+                        </label>
+                        <div id="modal_sessoes_avulsas_container" class="modal-sessoes-container">
+                            <strong><?php esc_html_e( 'Sessões Avulsas:', 'cannal-espetaculos' ); ?></strong>
+                            <div id="modal_sessoes_avulsas_list"></div>
+                            <button type="button" class="button modal-add-sessao-avulsa">
+                                <?php esc_html_e( 'Adicionar Sessão', 'cannal-espetaculos' ); ?>
+                            </button>
+                        </div>
+            
+                        <div id="modal_sessoes_temporada_container" class="modal-sessoes-container">
+                            <strong><?php esc_html_e( 'Dias da Semana e Horários:', 'cannal-espetaculos' ); ?></strong>
+                            <table class="form-table">
+                                <?php foreach ( $dias_semana as $key => $label ) : ?>
+                                <tr>
+                                    <th><label><?php echo esc_html( $label ); ?></label></th>
+                                    <td class="modal-sessoes-horarios">
+                                        <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" />
+                                        <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" />
+                                        <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" />
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </table>
+                        </div>
+                    </td>
                 </tr>
                 <tr>
                     <th><label for="modal_teatro_endereco"><?php esc_html_e( 'Endereço do Teatro', 'cannal-espetaculos' ); ?></label></th>
@@ -33,100 +68,52 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                 </tr>
                 <tr>
                     <th><label for="modal_elenco"><?php esc_html_e( 'Elenco', 'cannal-espetaculos' ); ?></label></th>
-                    <td><textarea id="modal_elenco" name="elenco" rows="3" class="large-text"></textarea></td>
+                    <td><textarea id="modal_elenco" name="elenco" rows="2" class="large-text"></textarea></td>
                 </tr>
                 <tr>
-                    <th><label for="modal_data_inicio"><?php esc_html_e( 'Data de Início', 'cannal-espetaculos' ); ?></label></th>
-                    <td><input type="date" id="modal_data_inicio" name="data_inicio" /></td>
-                </tr>
-                <tr>
-                    <th><label for="modal_data_fim"><?php esc_html_e( 'Data Final', 'cannal-espetaculos' ); ?></label></th>
-                    <td><input type="date" id="modal_data_fim" name="data_fim" /></td>
-                </tr>
-                <tr>
-                    <th><label for="modal_valores"><?php esc_html_e( 'Valores', 'cannal-espetaculos' ); ?></label></th>
-                    <td><textarea id="modal_valores" name="valores" rows="3" class="large-text"></textarea></td>
-                </tr>
-                <tr>
-                    <th><label for="modal_link_vendas"><?php esc_html_e( 'Link de Vendas', 'cannal-espetaculos' ); ?></label></th>
+                	<th><label for="modal_link_vendas"><?php esc_html_e( 'Link de Vendas', 'cannal-espetaculos' ); ?></label></th>
                     <td><input type="url" id="modal_link_vendas" name="link_vendas" class="regular-text" /></td>
                 </tr>
                 <tr>
-                    <th><label for="modal_link_texto"><?php esc_html_e( 'Texto do Link', 'cannal-espetaculos' ); ?></label></th>
+                	<th><label for="modal_link_texto"><?php esc_html_e( 'Texto do Link', 'cannal-espetaculos' ); ?></label></th>
                     <td><input type="text" id="modal_link_texto" name="link_texto" class="regular-text" placeholder="<?php esc_attr_e( 'Ingressos Aqui', 'cannal-espetaculos' ); ?>" /></td>
                 </tr>
                 <tr>
-                    <th><label for="modal_data_inicio_cartaz"><?php esc_html_e( 'Data de Início do Cartaz', 'cannal-espetaculos' ); ?></label></th>
-                    <td><input type="date" id="modal_data_inicio_cartaz" name="data_inicio_cartaz" /></td>
+                	<th><label for="modal_data_banner"><?php esc_html_e( 'Data de Início do Banner', 'cannal-espetaculos' ); ?></label></th>
+                    <td><input type="date" id="modal_data_banner" name="data_banner" /></td>
                 </tr>
                 <tr>
-                    <th><label><?php esc_html_e( 'Tipo de Sessão', 'cannal-espetaculos' ); ?></label></th>
+                	<th><label for="modal_data_inicio"><?php esc_html_e( 'Período ', 'cannal-espetaculos' ); ?></label></th>
                     <td>
-                        <label>
-                            <input type="radio" name="modal_tipo_sessao" value="avulsas" id="modal_tipo_sessao_avulsas" checked />
-                            <?php esc_html_e( 'Sessões Avulsas', 'cannal-espetaculos' ); ?>
-                        </label>
-                        &nbsp;&nbsp;
-                        <label>
-                            <input type="radio" name="modal_tipo_sessao" value="temporada" id="modal_tipo_sessao_temporada" />
-                            <?php esc_html_e( 'Temporada (dias da semana)', 'cannal-espetaculos' ); ?>
-                        </label>
+                    	<input type="date" id="modal_data_inicio" name="data_inicio" />
+                    	<input type="date" id="modal_data_fim" name="data_fim" />
                     </td>
                 </tr>
-            </table>
-
-            <div id="modal_sessoes_avulsas_container" class="modal-sessoes-container">
-                <p><strong><?php esc_html_e( 'Sessões Avulsas:', 'cannal-espetaculos' ); ?></strong></p>
-                <div id="modal_sessoes_avulsas_list"></div>
-                <button type="button" class="button modal-add-sessao-avulsa">
-                    <?php esc_html_e( 'Adicionar Sessão', 'cannal-espetaculos' ); ?>
-                </button>
-            </div>
-
-            <div id="modal_sessoes_temporada_container" class="modal-sessoes-container modal-sessoes-temporada">
-                <p><strong><?php esc_html_e( 'Dias da Semana e Horários:', 'cannal-espetaculos' ); ?></strong></p>
-                <table class="form-table">
-                    <?php foreach ( $dias_semana as $key => $label ) : ?>
-                    <tr>
-                        <th><label><?php echo esc_html( $label ); ?></label></th>
-                        <td class="modal-sessoes-horarios">
-                            <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_1" />
-                            <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_2" />
-                            <input type="time" name="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" id="modal_sessoes_<?php echo esc_attr( $key ); ?>_3" />
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </table>
-            </div>
-
-            <input type="hidden" id="modal_sessoes_data" name="sessoes_data" value="" />
-
-            <table class="form-table">
                 <tr>
-                    <th><label for="modal_conteudo"><?php esc_html_e( 'Conteúdo', 'cannal-espetaculos' ); ?></label></th>
-                    <td>
-                        <button type="button" id="modal_copiar_conteudo" class="button modal-btn-copiar">
-                            <?php esc_html_e( 'Copiar conteúdo do espetáculo', 'cannal-espetaculos' ); ?>
-                        </button>
-                        <?php
-                        wp_editor( '', 'modal_conteudo', array(
-                            'textarea_name' => 'conteudo',
-                            'textarea_rows' => 8,
-                            'media_buttons' => false,
-                            'teeny'         => true,
-                            'quicktags'     => true,
-                        ) );
-                        ?>
-                    </td>
+                    <th><label for="modal_valores"><?php esc_html_e( 'Valores', 'cannal-espetaculos' ); ?></label></th>
+                    <td><textarea id="modal_valores" name="valores" rows="2" class="large-text"></textarea></td>
                 </tr>
             </table>
-
+			<input type="hidden" id="modal_sessoes_data" name="sessoes_data" value="" />
+			<label for="modal_conteudo"><?php esc_html_e( 'Release da Temporada', 'cannal-espetaculos' ); ?></label>
+            <button type="button" id="modal_copiar_conteudo" class="button button-small modal-btn-copiar">
+                <?php esc_html_e( 'Copiar Release do Espetáculo', 'cannal-espetaculos' ); ?>
+            </button>
+            <?php
+            wp_editor( '', 'modal_conteudo', array(
+                'textarea_name' => 'conteudo',
+                'textarea_rows' => 8,
+                'media_buttons' => false,
+                'teeny'         => true,
+                'quicktags'     => true,
+            ) );
+            ?>
             <p class="submit">
-                <button type="submit" class="button button-primary">
-                    <?php esc_html_e( 'Salvar Temporada', 'cannal-espetaculos' ); ?>
-                </button>
                 <button type="button" class="button temporada-modal-close">
                     <?php esc_html_e( 'Cancelar', 'cannal-espetaculos' ); ?>
+                </button>
+                <button type="submit" class="button button-primary">
+                    <?php esc_html_e( 'Salvar Temporada', 'cannal-espetaculos' ); ?>
                 </button>
             </p>
         </form>

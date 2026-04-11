@@ -586,7 +586,7 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        $('#temporada-modal-title').text('Duplicar Temporada');
+                        $('#temporada-modal-title').html(response.data.espetaculo_nome+' <small>Duplicar Temporada</small>');
                         $('#modal_temporada_id').val('');
                         $('#modal_teatro_nome').val(response.data.teatro_nome);
                         $('#modal_teatro_endereco').val(response.data.teatro_endereco);
@@ -597,7 +597,7 @@
                         $('#modal_valores').val(response.data.valores);
                         $('#modal_link_vendas').val(response.data.link_vendas);
                         $('#modal_link_texto').val(response.data.link_texto);
-                        $('#modal_data_inicio_cartaz').val('');
+                        $('#modal_data_banner').val('');
 
                         if (response.data.sessoes_data) {
                             setModalSessoesData(response.data.sessoes_data);
@@ -636,7 +636,7 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        $('#temporada-modal-title').text('Editar Temporada');
+                        $('#temporada-modal-title').html(response.data.espetaculo_nome+' <small>Editar Temporada</small>');
                         $('#modal_temporada_id').val(temporadaId);
                         $('#modal_teatro_nome').val(response.data.teatro_nome);
                         $('#modal_teatro_endereco').val(response.data.teatro_endereco);
@@ -647,7 +647,7 @@
                         $('#modal_valores').val(response.data.valores);
                         $('#modal_link_vendas').val(response.data.link_vendas);
                         $('#modal_link_texto').val(response.data.link_texto);
-                        $('#modal_data_inicio_cartaz').val(response.data.data_inicio_cartaz);
+                        $('#modal_data_banner').val(response.data.data_banner);
 
                         if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
                             tinymce.get('modal_conteudo').setContent(response.data.conteudo || '');
@@ -783,7 +783,7 @@
                 valores:            $('#modal_valores').val(),
                 link_vendas:        $('#modal_link_vendas').val(),
                 link_texto:         $('#modal_link_texto').val(),
-                data_inicio_cartaz: $('#modal_data_inicio_cartaz').val(),
+                data_banner: $('#modal_data_banner').val(),
                 tipo_sessao:        tipoSessao,
                 sessoes_data:       sessoesData,
                 conteudo:           conteudo

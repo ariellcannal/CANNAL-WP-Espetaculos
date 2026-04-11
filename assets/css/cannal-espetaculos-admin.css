@@ -1,6 +1,7 @@
 /**
  * Estilos para a área administrativa do plugin CANNAL Espetáculos
  */
+/* GALERIA */
 .espetaculo-galeria-container {
 	margin: 15px 0;
 }
@@ -41,14 +42,25 @@
 	font-size: 14px;
 	line-height: 1;
 	font-weight: bold;
+	line-height: 1;
 }
 
 .espetaculo-galeria-image .remove-image:hover {
 	background: #a00;
 }
 
-.temporada-sessoes-container {
+/* MODAL TEMPORADA */
+.modal-sessoes-horarios {
+	display: flex;
+	gap: 2px;
+}
+
+.modal-sessoes-container {
+	display: none;
 	margin: 15px 0;
+	padding: 15px;
+	background: #f9f9f9;
+	border: 1px solid #ddd;
 }
 
 .add-sessao-avulsa {
@@ -81,19 +93,10 @@
 	font-weight: 600;
 }
 
-#sessoes-avulsas-container, #sessoes-temporada-container {
-	margin-top: 20px;
-	padding: 15px;
-	background: #f9f9f9;
-	border: 1px solid #ddd;
-	border-radius: 3px;
-}
-
 #sessoes-temporada-container table.form-table th {
 	width: 150px;
 }
 
-/* Modal de Temporadas */
 .temporada-modal {
 	display: none;
 	position: fixed;
@@ -108,11 +111,9 @@
 
 .temporada-modal-content {
 	background-color: #fefefe;
-	margin: 5% auto;
+	margin: 2%;
 	padding: 30px;
 	border: 1px solid #888;
-	width: 80%;
-	max-width: 700px;
 	border-radius: 5px;
 	position: relative;
 }
@@ -133,8 +134,30 @@
 #temporada-modal-title {
 	margin-top: 0;
 	margin-bottom: 20px;
+	text-align: center;
+	font-size: 2em;
+    margin: .67em 0;
 }
-
+#temporada-modal-title small{
+	color: #999;
+}
+.temporada-modal-content th{
+	width: inherit;
+}
+.temporada-modal-content input[type="text"],
+.temporada-modal-content input[type="url"],
+.temporada-modal-content textarea{
+	width: 98%;
+}
+.temporada-modal-content label[for]{
+	font-weight: 600;
+	font-size: 14px;
+	display: block;
+	margin-bottom: 5px;
+}
+.temporada-modal-content .wp-editor-wrap{
+	margin-top: -30px!important;
+}
 #modal_sessoes_avulsas_list, #temporada-form .form-table {
 	margin-top: 20px;
 	margin-bottom: 5px;
@@ -147,14 +170,16 @@
 #temporada-form th {
 	text-align: right;
 }
-#modal_sessoes_temporada_container td{
-	padding: 0px;
+
+#modal_sessoes_temporada_container td {
+	padding: 2px;
 	margin: 0px;
-	vertical-align: middle;	
+	vertical-align: middle;
 }
+
 #modal_sessoes_temporada_container th {
 	width: 20%;
-	padding: 0px;
+	padding: 2px;
 	padding-right: 2px;
 	vertical-align: middle;
 }
@@ -164,40 +189,43 @@
  * z-index deve ser maior que o modal de temporadas (100000)
  * ========================================================= */
 .cannal-confirm-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 200000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 200000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
+
 .cannal-confirm-box {
-    background: #fff;
-    border-radius: 4px;
-    padding: 24px 28px;
-    max-width: 420px;
-    width: 90%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	background: #fff;
+	border-radius: 4px;
+	padding: 24px 28px;
+	max-width: 420px;
+	width: 90%;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
+
 .cannal-confirm-box p {
-    margin: 0 0 16px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: #1d2327;
+	margin: 0 0 16px;
+	font-size: 14px;
+	line-height: 1.5;
+	color: #1d2327;
 }
+
 .cannal-confirm-actions {
-    margin: 0 !important;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+	margin: 0 !important;
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
 }
 
 /* Highlight de linha atualizada na tabela de temporadas */
 .cannal-row-updated {
-    background-color: #edfaed !important;
-    transition: background-color 2s ease;
+	background-color: #edfaed !important;
+	transition: background-color 2s ease;
 }

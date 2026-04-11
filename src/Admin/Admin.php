@@ -147,7 +147,7 @@ class CANNALEspetaculos_Admin {
         update_post_meta( $temporada_id, '_temporada_valores', isset( $_POST['valores'] ) ? sanitize_textarea_field( $_POST['valores'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_vendas', isset( $_POST['link_vendas'] ) ? esc_url_raw( $_POST['link_vendas'] ) : '' );
         update_post_meta( $temporada_id, '_temporada_link_texto', isset( $_POST['link_texto'] ) ? sanitize_text_field( $_POST['link_texto'] ) : '' );
-        update_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', isset( $_POST['data_inicio_cartaz'] ) ? sanitize_text_field( $_POST['data_inicio_cartaz'] ) : '' );
+        update_post_meta( $temporada_id, '_temporada_data_banner', isset( $_POST['data_banner'] ) ? sanitize_text_field( $_POST['data_banner'] ) : '' );
         $tipo_sessao_input = isset( $_POST['tipo_sessao'] ) ? sanitize_text_field( $_POST['tipo_sessao'] ) : 'avulsas';
         // Usar wp_unslash para preservar o JSON intacto (sanitize_textarea_field corrompe aspas e chaves)
         $sessoes_data_raw  = isset( $_POST['sessoes_data'] ) ? wp_unslash( $_POST['sessoes_data'] ) : '';
@@ -178,7 +178,7 @@ class CANNALEspetaculos_Admin {
         $hoje        = current_time( 'Y-m-d' );
         $data_inicio = get_post_meta( $temporada_id, '_temporada_data_inicio', true );
         $data_fim    = get_post_meta( $temporada_id, '_temporada_data_fim',    true );
-        $data_cartaz = get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true );
+        $data_banner = get_post_meta( $temporada_id, '_temporada_data_banner', true );
         $tipo_sessao = get_post_meta( $temporada_id, '_temporada_tipo_sessao', true );
         $sessoes_raw = get_post_meta( $temporada_id, '_temporada_sessoes_data', true );
 
@@ -226,18 +226,22 @@ class CANNALEspetaculos_Admin {
         check_ajax_referer( 'cannal_temporada_ajax', 'nonce' );
 
         $temporada_id = isset( $_POST['temporada_id'] ) ? intval( $_POST['temporada_id'] ) : 0;
-
+ 
         if ( ! $temporada_id ) {
             wp_send_json_error( array( 'message' => 'ID da temporada não fornecido.' ) );
         }
 
         $temporada = get_post( $temporada_id );
+        
+        $espetaculo_id = get_post_meta( $temporada_id, '_temporada_espetaculo_id', true );
+        $espetaculo = get_post( $espetaculo_id );
 
         if ( ! $temporada || $temporada->post_type !== 'temporada' ) {
             wp_send_json_error( array( 'message' => 'Temporada não encontrada.' ) );
         }
 
         $data = array(
+            'espetaculo_nome' => $espetaculo->post_title,
             'teatro_nome' => get_post_meta( $temporada_id, '_temporada_teatro_nome', true ),
             'teatro_endereco' => get_post_meta( $temporada_id, '_temporada_teatro_endereco', true ),
             'diretor' => get_post_meta( $temporada_id, '_temporada_diretor', true ),
@@ -247,7 +251,7 @@ class CANNALEspetaculos_Admin {
             'valores' => get_post_meta( $temporada_id, '_temporada_valores', true ),
             'link_vendas' => get_post_meta( $temporada_id, '_temporada_link_vendas', true ),
             'link_texto' => get_post_meta( $temporada_id, '_temporada_link_texto', true ),
-            'data_inicio_cartaz' => get_post_meta( $temporada_id, '_temporada_data_inicio_cartaz', true ),
+            'data_banner' => get_post_meta( $temporada_id, '_temporada_data_banner', true ),
             'conteudo' => $temporada->post_content,
             'tipo_sessao' => get_post_meta( $temporada_id, '_temporada_tipo_sessao', true ),
             'sessoes_data' => get_post_meta( $temporada_id, '_temporada_sessoes_data', true )

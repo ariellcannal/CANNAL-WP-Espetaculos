@@ -145,7 +145,7 @@ class CANNALEspetaculos_RevSlider
      * Apenas espetáculos com imagem destacada.
      *
      * Grupo 2 — Próximas Temporadas:
-     * _temporada_data_inicio_banner <= hoje (banner já liberado)
+     * _temporada_data_banner <= hoje (banner já liberado)
      * mas _temporada_data_inicio > hoje (temporada ainda não começou).
      * Apenas espetáculos com imagem destacada.
      *
@@ -219,7 +219,7 @@ class CANNALEspetaculos_RevSlider
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key' => '_temporada_data_inicio_banner',
+                    'key' => '_temporada_data_banner',
                     'value' => $hoje,
                     'compare' => '<=',
                     'type' => 'DATE'
@@ -409,9 +409,9 @@ class CANNALEspetaculos_RevSlider
 
             $data_inicio = get_post_meta($temporada_id, '_temporada_data_inicio', true);
             $data_fim = get_post_meta($temporada_id, '_temporada_data_fim', true);
-            $data_inicio_cartaz = get_post_meta($temporada_id, '_temporada_data_inicio_cartaz', true);
+            $data_banner = get_post_meta($temporada_id, '_temporada_data_banner', true);
 
-            if ($data_inicio_cartaz && $hoje < $data_inicio_cartaz) {
+            if ($data_banner && $hoje < $data_banner) {
                 continue;
             }
 
@@ -702,10 +702,10 @@ class CANNALEspetaculos_RevSlider
 
             $data_inicio = get_post_meta($temporada->ID, '_temporada_data_inicio', true);
             $data_fim = get_post_meta($temporada->ID, '_temporada_data_fim', true);
-            $data_inicio_cartaz = get_post_meta($temporada->ID, '_temporada_data_inicio_cartaz', true);
+            $data_banner = get_post_meta($temporada->ID, '_temporada_data_banner', true);
 
             $temporada_ativa = $data_inicio && $data_inicio <= $hoje && (empty($data_fim) || $data_fim <= $hoje);
-            $cartaz_liberado = ('' === $data_inicio_cartaz || empty($data_inicio_cartaz) || $data_inicio_cartaz <= $hoje);
+            $cartaz_liberado = ('' === $data_banner || empty($data_banner) || $data_banner <= $hoje);
 
             if (! $temporada_ativa && ! $cartaz_liberado) {
                 continue;
