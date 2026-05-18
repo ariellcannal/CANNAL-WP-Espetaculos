@@ -29,12 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                         <label for="teatro_endereco"><?php esc_html_e( 'Endereço do Teatro', 'cannal-espetaculos' ); ?></label>
                         <input type="text" id="teatro_endereco" name="teatro_endereco" class="regular-text" />
                     </div>
-            
-                    <div class="form-group">
-                        <label for="modal_diretor"><?php esc_html_e( 'Diretor', 'cannal-espetaculos' ); ?></label>
-                        <input type="text" id="modal_diretor" name="diretor" class="regular-text" />
-                    </div>
-            
+                    
                     <div class="form-group">
                         <label for="modal_elenco"><?php esc_html_e( 'Elenco', 'cannal-espetaculos' ); ?></label>
                         <input type="text" id="modal_elenco" name="elenco" class="regular-text" />
@@ -66,18 +61,18 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             
                 <div class="temporada-coluna">
                     <div class="form-group">
-                        <label for="modal_data_banner"><?php esc_html_e( 'Início do Banner', 'cannal-espetaculos' ); ?></label>
-                        <input type="date" id="modal_data_banner" name="data_banner" />
+                        <label for="modal_banner_data"><?php esc_html_e( 'Início do Banner', 'cannal-espetaculos' ); ?></label>
+                        <input type="date" id="modal_banner_data" name="banner_data" />
                     </div>
                     
                     <div class="form-group">
-                        <label for="banner_destaque1"><?php esc_html_e( 'Destaque 1', 'cannal-espetaculos' ); ?></label>
-                        <input type="text" id="banner_destaque1" name="banner_destaque1" class="regular-text" />
+                        <label for="modal_banner_destaque1"><?php esc_html_e( 'Destaque 1', 'cannal-espetaculos' ); ?></label>
+                        <input type="text" id="modal_banner_destaque1" name="banner_destaque1" class="regular-text" />
                     </div>
             
                     <div class="form-group">
-                        <label for="banner_destaque2"><?php esc_html_e( 'Destaque 2', 'cannal-espetaculos' ); ?></label>
-                        <input type="text" id="banner_destaque2" name="banner_destaque2" class="regular-text" />
+                        <label for="modal_banner_destaque2"><?php esc_html_e( 'Destaque 2', 'cannal-espetaculos' ); ?></label>
+                        <input type="text" id="modal_banner_destaque2" name="banner_destaque2" class="regular-text" />
                     </div>
             
                     <div class="form-group">

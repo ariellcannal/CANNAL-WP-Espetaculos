@@ -8,393 +8,330 @@
  */
 class CANNALEspetaculos_DiasHorarios
 {
-
-    /**
-     * Gera texto formatado de dias e horários
-     *
-     * @param string $tipo_sessao
-     *            Tipo: 'avulsas' ou 'temporada'
-     * @param string $sessoes_data
-     *            JSON com dados das sessões
-     * @return string Texto formatado
-     */
     public static function gerar($tipo_sessao, $sessoes_data)
     {
-        $out = '';
-        if (empty($sessoes_data)) {
-            return $out;
-        }
-
+        if (empty($sessoes_data)) return '';
+        
         $sessoes = json_decode($sessoes_data, true);
-
-        if (! $sessoes || ! isset($sessoes['tipo'])) {
-            return $out;
-        }
-
-        if ($sessoes['tipo'] === 'avulsas' && ! empty($sessoes['avulsas'])) {
+        if (!$sessoes || !isset($sessoes['tipo'])) return '';
+        
+        $out = '';
+        if ($sessoes['tipo'] === 'avulsas' && !empty($sessoes['avulsas'])) {
             $out = self::gerar_avulsas($sessoes['avulsas']);
-        } elseif ($sessoes['tipo'] === 'temporada' && ! empty($sessoes['temporada'])) {
+        } elseif ($sessoes['tipo'] === 'temporada' && !empty($sessoes['temporada'])) {
             $out = self::gerar_temporada($sessoes['temporada']);
         }
         
-        $out = str_replace(':00', '', $out);
-
-        return $out;
+        // Mantido para as sessões avulsas, a nova temporada lida com isso nativamente
+        return str_replace(':00', '', $out);
     }
-
-    /**
-     * Gera texto para sessões avulsas
-     */
-    private static function gerar_avulsas($sessoes)
+    
+    public static function get_status_temporada($temporada)
     {
-        // Ordenar por data e horário
-        usort($sessoes, function ($a, $b) {
-            $cmp = strcmp($a['data'], $b['data']);
-            if ($cmp === 0) {
-                return strcmp($a['horario'], $b['horario']);
-            }
-            return $cmp;
-        });
-
-        // Agrupar por mês e horário
-        $grupos = self::agrupar_sessoes_avulsas($sessoes);
-
-        // Identificar padrão principal e sessões extras
-        $resultado = self::formatar_grupos_avulsas($grupos);
-
-        return $resultado;
+        $temporada_id = ($temporada instanceof WP_Post) ? $temporada->ID : (is_numeric($temporada) ? (int) $temporada : 0);
+        if (!$temporada_id) return null;
+        
+        $data_inicio            = get_post_meta($temporada_id, '_temporada_data_inicio', true);
+        $data_fim               = get_post_meta($temporada_id, '_temporada_data_fim', true);
+        $tipo_sessao            = get_post_meta($temporada_id, '_temporada_tipo_sessao', true);
+        $hoje                   = wp_date('Y-m-d');
+        $fim_penultimo_ciclo    = !empty($data_fim)? date('Y-m-d', strtotime('-7 days', strtotime($data_fim))):null;
+        
+        if ($data_fim && $data_fim < $hoje) {
+            return __('Encerrada', 'cannal-espetaculos');
+        } elseif ($tipo_sessao == "temporada" && $hoje > $fim_penultimo_ciclo) {
+            return __('Última Semana', 'cannal-espetaculos');
+        } elseif ($data_inicio && $data_inicio <= $hoje && (!$data_fim || $data_fim >= $hoje)) {
+            return __('Em Cartaz', 'cannal-espetaculos');
+        } elseif ($data_inicio && $data_inicio > $hoje) {
+            return __('Em Breve', 'cannal-espetaculos');
+        }
+        
+        return __('Sem datas', 'cannal-espetaculos');
     }
-
-    /**
-     * Agrupa sessões avulsas por mês e horário
-     */
-    private static function agrupar_sessoes_avulsas($sessoes)
+    
+    public static function get_data_formatada($data)
     {
-        $grupos = array();
-
-        foreach ($sessoes as $sessao) {
-            $data = $sessao['data'];
-            $horario = $sessao['horario'];
-
-            $timestamp = strtotime($data);
-            $mes = date('n', $timestamp); // Mês numérico
-            $ano = date('Y', $timestamp);
-            $dia = date('j', $timestamp);
-
-            $chave = $ano . '-' . $mes . '-' . $horario;
-
-            if (! isset($grupos[$chave])) {
-                $grupos[$chave] = array(
-                    'mes' => $mes,
-                    'ano' => $ano,
-                    'horario' => $horario,
-                    'datas' => array()
-                );
-            }
-
-            $grupos[$chave]['datas'][] = array(
-                'dia' => $dia,
-                'data_completa' => $data,
-                'timestamp' => $timestamp
-            );
-        }
-
-        return $grupos;
+        if (!$data) return null;
+        
+        $ts = strtotime($data);
+        $formato = (wp_date('Y', $ts) === wp_date('Y'))
+        ? __('d \d\e M', 'cannal-espetaculos')
+        : __('d \d\e M \d\e Y', 'cannal-espetaculos');
+        
+        return mb_strtolower(wp_date($formato, $ts), 'UTF-8');
     }
-
-    /**
-     * Formata grupos de sessões avulsas
-     */
-    private static function formatar_grupos_avulsas($grupos)
+    
+    public static function get_periodo_temporada($data_inicio, $data_fim)
     {
-        if (empty($grupos)) {
-            return '';
-        }
-
-        // Encontrar grupo principal (maior número de sessões)
-        $grupo_principal = null;
-        $max_sessoes = 0;
-
-        foreach ($grupos as $grupo) {
-            $count = count($grupo['datas']);
-            if ($count > $max_sessoes) {
-                $max_sessoes = $count;
-                $grupo_principal = $grupo;
-            }
-        }
-
-        $partes = array();
-        $extras = array();
-
-        // Processar grupo principal
-        if ($grupo_principal) {
-            $texto_principal = self::formatar_grupo_avulso($grupo_principal);
-            $partes[] = $texto_principal;
-
-            // Remover grupo principal da lista
-            $chave_principal = $grupo_principal['ano'] . '-' . $grupo_principal['mes'] . '-' . $grupo_principal['horario'];
-            unset($grupos[$chave_principal]);
-        }
-
-        // Processar sessões extras
-        foreach ($grupos as $grupo) {
-            $extras[] = self::formatar_grupo_avulso($grupo);
-        }
-
-        // Montar texto final
-        $texto = implode('. ', $partes);
-
-        if (! empty($extras)) {
-            $label_extra = count($extras) > 1 ? 'Sessões extras' : 'Sessão extra';
-            $texto .= '. ' . $label_extra . ': ' . implode(', e ', $extras);
-        }
-
-        return $texto . '.';
+        $inicio = self::get_data_formatada($data_inicio);
+        $fim    = self::get_data_formatada($data_fim);
+        
+        if ($inicio && $fim) return sprintf(__('de %1$s até %2$s', 'cannal-espetaculos'), $inicio, $fim);
+        if ($inicio)         return sprintf(__('a partir de %s', 'cannal-espetaculos'), $inicio);
+        if ($fim)            return sprintf(__('até %s', 'cannal-espetaculos'), $fim);
+        
+        return null;
     }
-
-    /**
-     * Formata um grupo de sessões avulsas
-     */
-    private static function formatar_grupo_avulso($grupo)
-    {
-        $datas = $grupo['datas'];
-        $mes_nome = self::get_mes_abreviado($grupo['mes']);
-        $horario = substr($grupo['horario'], 0, 5); // Remove segundos
-
-        // Verificar se são dias consecutivos
-        $dias = array_column($datas, 'dia');
-        sort($dias);
-
-        if (count($dias) >= 3 && self::sao_consecutivos($dias)) {
-            // Usar formato "De X a Y de mês"
-            $primeiro = $dias[0];
-            $ultimo = $dias[count($dias) - 1];
-            return "De {$primeiro} a {$ultimo} de {$mes_nome} às {$horario}h";
-        } else {
-            // Listar dias individualmente
-            $dias_texto = self::formatar_lista_dias($dias);
-
-            if (count($dias) === 1) {
-                return "{$dias_texto} de {$mes_nome} às {$horario}h";
-            } else {
-                return "Dias {$dias_texto} de {$mes_nome} às {$horario}h";
-            }
-        }
-    }
-
-    /**
-     * Verifica se os dias são consecutivos
-     */
-    private static function sao_consecutivos($dias)
-    {
-        for ($i = 1; $i < count($dias); $i ++) {
-            if ($dias[$i] !== $dias[$i - 1] + 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Formata lista de dias com vírgulas e "e"
-     */
-    private static function formatar_lista_dias($dias)
-    {
-        if (count($dias) === 1) {
-            return (string) $dias[0];
-        }
-
-        if (count($dias) === 2) {
-            return $dias[0] . ' e ' . $dias[1];
-        }
-
-        $ultimos_dois = array_slice($dias, - 2);
-        $primeiros = array_slice($dias, 0, - 2);
-
-        $texto = implode(', ', $primeiros);
-        $texto .= ', ' . $ultimos_dois[0] . ' e ' . $ultimos_dois[1];
-
-        return $texto;
-    }
-
-    /**
-     * Gera texto para temporada (dias da semana recorrentes)
-     */
+    
+    /* =========================================================
+     * TEMPORADAS REGULARES (Com Ciclo Teatral Avançado)
+     * ========================================================= */
+    
     private static function gerar_temporada($temporada_data)
     {
-        $dias_semana = array(
-            'domingo' => 'Dom',
-            'segunda' => 'Seg',
-            'terca' => 'Ter',
-            'quarta' => 'Qua',
-            'quinta' => 'Qui',
-            'sexta' => 'Sex',
-            'sabado' => 'Sáb'
+        global $wp_locale;
+        
+        $mapa_legado = array(
+            'domingo' => 0, 'segunda' => 1, 'terca' => 2,
+            'quarta' => 3, 'quinta' => 4, 'sexta' => 5, 'sabado' => 6
         );
-
-        // Agrupar dias por horário
-        $horarios_grupos = array();
-
-        foreach ($temporada_data as $dia => $horarios_str) {
-            $horarios = array_map('trim', explode(',', $horarios_str));
-
-            foreach ($horarios as $horario) {
-                $horario = substr($horario, 0, 5); // Remove segundos
-
-                if (! isset($horarios_grupos[$horario])) {
-                    $horarios_grupos[$horario] = array();
+        
+        $dias_ativos   = array();
+        $dias_horarios = array();
+        
+        // 1. Normalização e Agrupamento Bruto
+        foreach ($temporada_data as $dia_key => $horarios_str) {
+            $dia_num = isset($mapa_legado[$dia_key]) ? $mapa_legado[$dia_key] : (int) $dia_key;
+            if ($dia_num < 0 || $dia_num > 6) continue;
+            
+            $horarios = array();
+            foreach (explode(',', $horarios_str) as $h) {
+                $h = trim($h);
+                if ($h) $horarios[] = $h;
+            }
+            
+            if (!empty($horarios)) {
+                sort($horarios); // Garante que pacotes iguais sejam idênticos independente da ordem salva
+                $dias_ativos[] = $dia_num;
+                $dias_horarios[$dia_num] = $horarios;
+            }
+        }
+        
+        if (empty($dias_ativos)) return '';
+        
+        // 2. A Bússola: Descobrir o Início do Ciclo Teatral
+        $dias_ativos = array_unique($dias_ativos);
+        sort($dias_ativos);
+        
+        $start_day = 1; // Padrão: Segunda-feira
+        $total_dias = count($dias_ativos);
+        
+        if ($total_dias > 1) {
+            $max_gap = 0;
+            $start_day_candidate = $dias_ativos[0];
+            
+            for ($i = 0; $i < $total_dias; $i++) {
+                $next_i = ($i + 1) % $total_dias;
+                // Calcula a distância do buraco (circular)
+                $gap = ($dias_ativos[$next_i] - $dias_ativos[$i] + 7) % 7;
+                
+                if ($gap > $max_gap) {
+                    $max_gap = $gap;
+                    $start_day_candidate = $dias_ativos[$next_i];
                 }
-
-                $horarios_grupos[$horario][] = $dia;
             }
+            $start_day = $start_day_candidate;
+        } elseif ($total_dias === 1) {
+            $start_day = $dias_ativos[0];
         }
-
-        // Formatar grupos
-        $partes = array();
-
-        foreach ($horarios_grupos as $horario => $dias) {
-            $dias_abrev = array();
-
-            foreach ($dias as $dia) {
-                if (isset($dias_semana[$dia])) {
-                    $dias_abrev[] = $dias_semana[$dia];
+        
+        // Constrói a régua da semana baseada no Início do Ciclo
+        $week_order = array();
+        for ($i = 0; $i < 7; $i++) {
+            $week_order[] = ($start_day + $i) % 7;
+        }
+        
+        // 3. Agrupar Dias por Pacotes de Horários Exatos
+        $grupos = array();
+        foreach ($dias_horarios as $dia_num => $horarios) {
+            $time_str = self::format_time_package($horarios);
+            if (!isset($grupos[$time_str])) {
+                $grupos[$time_str] = array();
+            }
+            $grupos[$time_str][] = $dia_num;
+        }
+        
+        // 4. Processar e Formatar Textos
+        $partes_grupo = array();
+        foreach ($grupos as $time_str => $dias) {
+            // Ordena os dias respeitando a régua do ciclo teatral
+            usort($dias, function($a, $b) use ($week_order) {
+                return array_search($a, $week_order) - array_search($b, $week_order);
+            });
+                
+                // Guarda qual o primeiro dia desse grupo para ordenação final
+                $first_day_idx = array_search($dias[0], $week_order);
+                
+                // Fatiamento inteligente dos dias
+                $dias_formatados = self::format_days_chunked($dias, $week_order, $wp_locale);
+                
+                $texto = sprintf(__('%1$s <span class="horarios">%2$s</span>', 'cannal-espetaculos'), $dias_formatados, $time_str);
+                
+                $partes_grupo[] = array(
+                    'texto'         => $texto,
+                    'first_day_idx' => $first_day_idx
+                );
+        }
+        
+        // 5. Ordenar grupos cronologicamente na frase
+        usort($partes_grupo, function($a, $b) {
+            return $a['first_day_idx'] - $b['first_day_idx'];
+        });
+            
+            // Extrai apenas as strings e monta o texto
+            $textos_finais = array();
+            foreach ($partes_grupo as $pg) {
+                $textos_finais[] = $pg['texto'];
+            }
+            
+            return implode('. ', $textos_finais) . '.';
+    }
+    
+    /**
+     * Formata um pacote de horários lidando com minutos quebrados e múltiplos
+     */
+    private static function format_time_package($horarios)
+    {
+        $formatted = array();
+        foreach ($horarios as $h) {
+            $h = substr($h, 0, 5); // "20:00" ou "19:30"
+            $minutos = substr($h, 3, 2);
+            $hora    = substr($h, 0, 2);
+            
+            $f = ($minutos === '00') ? $hora . 'h' : $hora . 'h' . $minutos;
+            $formatted[] = sprintf(__('às <span class="horas">%s</span>', 'cannal-espetaculos'), $f);
+        }
+        
+        return self::format_list($formatted);
+    }
+    
+    /**
+     * Fatiador lógico: Descobre se os dias são picados ou contínuos (usando a régua do ciclo)
+     */
+    private static function format_days_chunked($dias, $week_order, $wp_locale)
+    {
+        $chunks = array();
+        $current_chunk = array();
+        $last_idx = -2;
+        
+        foreach ($dias as $day) {
+            $idx = array_search($day, $week_order);
+            // Se o índice pular em +1 exato, é consecutivo
+            if ($idx === $last_idx + 1) {
+                $current_chunk[] = $day;
+            } else {
+                if (!empty($current_chunk)) {
+                    $chunks[] = $current_chunk;
+                }
+                $current_chunk = array($day);
+            }
+            $last_idx = $idx;
+        }
+        if (!empty($current_chunk)) {
+            $chunks[] = $current_chunk;
+        }
+        
+        // Constrói os textos a partir das fatias
+        $items = array();
+        foreach ($chunks as $chunk) {
+            if (count($chunk) >= 3) {
+                $start = $wp_locale->get_weekday_abbrev($wp_locale->get_weekday($chunk[0]));
+                $end   = $wp_locale->get_weekday_abbrev($wp_locale->get_weekday(end($chunk)));
+                $items[] = sprintf(__('<span class="dias">%1$s</span> a <span class="dias">%2$s</span>', 'cannal-espetaculos'), $start, $end);
+            } else {
+                foreach ($chunk as $d) {
+                    $items[] = $wp_locale->get_weekday_abbrev($wp_locale->get_weekday($d));
                 }
             }
-
-            if (empty($dias_abrev)) {
-                continue;
-            }
-
-            // Verificar se são dias consecutivos da semana
-            $texto_dias = self::formatar_dias_semana($dias, $dias_abrev);
-            $partes[] = $texto_dias . ' às ' . $horario . 'h';
         }
-
-        return implode(', ', $partes);
+        
+        return self::format_list($items);
     }
-
-    /**
-     * Formata dias da semana (detecta sequências)
-     */
-    private static function formatar_dias_semana($dias_completos, $dias_abrev)
+    
+    /* =========================================================
+     * SESSÕES AVULSAS E AJUDANTES GENÉRICOS
+     * ========================================================= */
+    
+    private static function gerar_avulsas($sessoes)
     {
-        $ordem_semana = array(
-            'domingo',
-            'segunda',
-            'terca',
-            'quarta',
-            'quinta',
-            'sexta',
-            'sabado'
-        );
-
-        // Ordenar dias pela ordem da semana
-        $dias_ordenados = array();
-        foreach ($ordem_semana as $dia) {
-            if (in_array($dia, $dias_completos)) {
-                $dias_ordenados[] = $dia;
+        $grupos = array();
+        
+        foreach ($sessoes as $sessao) {
+            $ts      = strtotime($sessao['data']);
+            $horario = substr($sessao['horario'], 0, 5);
+            $chave   = wp_date('Y-m', $ts) . '-' . $horario;
+            
+            if (!isset($grupos[$chave])) {
+                $grupos[$chave] = array('ts' => $ts, 'horario' => $horario, 'dias' => array());
+            }
+            $grupos[$chave]['dias'][] = (int) wp_date('j', $ts);
+        }
+        
+        $chave_principal = '';
+        $max_dias = 0;
+        foreach ($grupos as $k => $g) {
+            if (count($g['dias']) > $max_dias) {
+                $max_dias = count($g['dias']);
+                $chave_principal = $k;
             }
         }
-
-        // Mapear para abreviações
-        $dias_semana_map = array(
-            'domingo' => 'Dom',
-            'segunda' => 'Seg',
-            'terca' => 'Ter',
-            'quarta' => 'Qua',
-            'quinta' => 'Qui',
-            'sexta' => 'Sex',
-            'sabado' => 'Sáb'
-        );
-
-        $abrev_ordenadas = array();
-        foreach ($dias_ordenados as $dia) {
-            $abrev_ordenadas[] = $dias_semana_map[$dia];
+        
+        $principal = $grupos[$chave_principal];
+        unset($grupos[$chave_principal]);
+        
+        $partes     = array(self::format_grupo_avulso($principal));
+        $extras_str = array();
+        
+        foreach ($grupos as $grupo) {
+            $extras_str[] = self::format_grupo_avulso($grupo);
         }
-
-        // Detectar sequências (3 ou mais dias consecutivos)
-        if (count($abrev_ordenadas) >= 3 && self::sao_dias_semana_consecutivos($dias_ordenados, $ordem_semana)) {
-            $primeiro = $abrev_ordenadas[0];
-            $ultimo = $abrev_ordenadas[count($abrev_ordenadas) - 1];
-            return "De {$primeiro} a {$ultimo}";
+        
+        $texto = implode('. ', $partes);
+        
+        if (!empty($extras_str)) {
+            $label = _n('Sessão extra', 'Sessões extras', count($extras_str), 'cannal-espetaculos');
+            $texto .= sprintf(__('. %1$s: %2$s', 'cannal-espetaculos'), $label, self::format_list($extras_str));
         }
-
-        // Listar individualmente
-        if (count($abrev_ordenadas) === 1) {
-            return $abrev_ordenadas[0];
-        }
-
-        if (count($abrev_ordenadas) === 2) {
-            return $abrev_ordenadas[0] . ' e ' . $abrev_ordenadas[1];
-        }
-
-        $ultimos_dois = array_slice($abrev_ordenadas, - 2);
-        $primeiros = array_slice($abrev_ordenadas, 0, - 2);
-
-        return implode(', ', $primeiros) . ', ' . $ultimos_dois[0] . ' e ' . $ultimos_dois[1];
+        
+        return $texto . '.';
     }
-
-    /**
-     * Verifica se dias da semana são consecutivos
-     */
-    private static function sao_dias_semana_consecutivos($dias, $ordem_semana)
+    
+    private static function format_grupo_avulso($grupo)
     {
-        $indices = array();
-
-        foreach ($dias as $dia) {
-            $indices[] = array_search($dia, $ordem_semana);
+        $dias = $grupo['dias'];
+        sort($dias);
+        $mes_nome = mb_strtolower(wp_date('M', $grupo['ts']), 'UTF-8');
+        
+        if (count($dias) >= 3 && self::is_consecutive_math($dias)) {
+            return sprintf(
+                __('De <span class="dias">%1$s</span> a <span class="dias">%2$s</span> de <span class="meses">%3$s</span> às <span class="horarios">%4$sh</span>', 'cannal-espetaculos'),
+                reset($dias), end($dias), $mes_nome, $grupo['horario']
+                );
         }
-
-        sort($indices);
-
-        for ($i = 1; $i < count($indices); $i ++) {
-            if ($indices[$i] !== $indices[$i - 1] + 1) {
-                return false;
-            }
-        }
-
-        return true;
+        
+        $dias_texto = self::format_list($dias);
+        $formato    = (count($dias) === 1)
+        ? __('<span class="dias">%1$s</span> de <span class="meses">%2$s</span> às <span class="horarios">%3$sh</span>', 'cannal-espetaculos')
+        : __('Dias <span class="dias">%1$s</span> de <span class="meses">%2$s</span> às <span class="horarios">%3$sh</span>', 'cannal-espetaculos');
+        
+        return sprintf($formato, $dias_texto, $mes_nome, $grupo['horario']);
     }
-
-    /**
-     * Retorna nome do mês abreviado
-     */
-    private static function get_mes_abreviado($mes)
+    
+    private static function format_list($items)
     {
-        $meses = array(
-            1 => 'jan',
-            2 => 'fev',
-            3 => 'mar',
-            4 => 'abr',
-            5 => 'mai',
-            6 => 'jun',
-            7 => 'jul',
-            8 => 'ago',
-            9 => 'set',
-            10 => 'out',
-            11 => 'nov',
-            12 => 'dez'
-        );
-
-        return isset($meses[$mes]) ? $meses[$mes] : '';
+        $count = count($items);
+        if ($count === 0) return '';
+        if ($count === 1) return $items[0];
+        if ($count === 2) return sprintf(__('<span class="dias">%1$s</span> e <span class="dias">%2$s</span>', 'cannal-espetaculos'), $items[0], $items[1]);
+        
+        $last = array_pop($items);
+        return sprintf(__('<span class="dias">%1$s</span> e <span class="dias">%2$s</span>', 'cannal-espetaculos'), implode(', ', $items), $last);
     }
-
-    public static function get_status_temporada($temporada){
-        $data_inicio  = get_post_meta( $temporada->ID, '_temporada_data_inicio', true );
-        $data_fim     = get_post_meta( $temporada->ID, '_temporada_data_fim',    true );
-        $hoje         = current_time( 'Y-m-d' );
-        
-        
-        $status_label = 'Sem datas';
-        // Calcular status
-        if ( $data_fim && $data_fim < $hoje ) {
-            $status_label = 'Encerrada';
-        } elseif ( $data_inicio && $data_inicio <= $hoje && ( ! $data_fim || $data_fim >= $hoje ) ) {
-            $status_label = 'Em Cartaz';
-        } elseif ( $data_inicio && $data_inicio > $hoje ) {
-            $status_label = 'Em Breve';
-        } 
-        
-        return $status_label;
+    
+    private static function is_consecutive_math($numeros)
+    {
+        if (empty($numeros)) return false;
+        return (end($numeros) - reset($numeros)) === (count($numeros) - 1);
     }
 }

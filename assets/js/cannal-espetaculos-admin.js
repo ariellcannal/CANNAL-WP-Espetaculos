@@ -330,7 +330,7 @@
 					}
 				});
 			} else {
-				['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'].forEach(function(dia) {
+				[0, 1, 2, 3, 4, 5, 6].forEach(function(dia) {
 					var horarios = [];
 					for (var i = 1; i <= 3; i++) {
 						var h = $('#sessoes_' + dia + '_' + i).val();
@@ -472,7 +472,7 @@
 					}
 				});
 			} else {
-				['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'].forEach(function(dia) {
+				[0, 1, 2, 3, 4, 5, 6].forEach(function(dia) {
 					var horarios = [];
 					for (var i = 1; i <= 3; i++) {
 						var h = $('#modal_sessoes_' + dia + '_' + i).val();
@@ -517,16 +517,25 @@
 				$('div[id^="linha_dia_"]').hide().find('input[type="time"]').val('');
 
 				if (sessoes.temporada) {
-					for (var dia in sessoes.temporada) {
-						var horarios = sessoes.temporada[dia].split(',').map(function(h) { return h.trim(); });
+					// Mapa para ler dados antigos do BD
+					var mapaLegado = {
+						'domingo': 0, 'segunda': 1, 'terca': 2,
+						'quarta': 3, 'quinta': 4, 'sexta': 5, 'sabado': 6
+					};
+
+					for (var diaKey in sessoes.temporada) {
+						// Normalização: converte string legada para número, ou mantém o número atual
+						var diaNum = mapaLegado[diaKey] !== undefined ? mapaLegado[diaKey] : diaKey;
+
+						var horarios = sessoes.temporada[diaKey].split(',').map(function(h) { return h.trim(); });
 
 						if (horarios.length > 0) {
-							// Se existem horários para este dia, exibe a TR
-							$('#linha_dia_' + dia).show();
+							// Exibe a linha usando o número correspondente
+							$('#linha_dia_' + diaNum).show();
 
 							horarios.forEach(function(horario, index) {
 								if (index < 3) {
-									$('#modal_sessoes_' + dia + '_' + (index + 1)).val(horario);
+									$('#modal_sessoes_' + diaNum + '_' + (index + 1)).val(horario);
 								}
 							});
 						}
@@ -623,12 +632,14 @@
 						$('#modal_teatro_endereco').val(response.data.teatro_endereco);
 						$('#modal_diretor').val(response.data.diretor);
 						$('#modal_elenco').val(response.data.elenco);
+						$('#modal_banner_destaque1').val(response.data.banner_destaque1);
+						$('#modal_banner_destaque2').val(response.data.banner_destaque2);
 						$('#modal_data_inicio').val('');
 						$('#modal_data_fim').val('');
 						$('#modal_valores').val(response.data.valores);
 						$('#modal_link_vendas').val(response.data.link_vendas);
 						$('#modal_link_texto').val(response.data.link_texto);
-						$('#modal_data_banner').val('');
+						$('#modal_banner_data').val('');
 
 						if (response.data.sessoes_data) {
 							setModalSessoesData(response.data.sessoes_data);
@@ -673,12 +684,14 @@
 						$('#modal_teatro_endereco').val(response.data.teatro_endereco);
 						$('#modal_diretor').val(response.data.diretor);
 						$('#modal_elenco').val(response.data.elenco);
+						$('#modal_banner_destaque1').val(response.data.banner_destaque1);
+						$('#modal_banner_destaque2').val(response.data.banner_destaque2);
 						$('#modal_data_inicio').val(response.data.data_inicio);
 						$('#modal_data_fim').val(response.data.data_fim);
 						$('#modal_valores').val(response.data.valores);
 						$('#modal_link_vendas').val(response.data.link_vendas);
 						$('#modal_link_texto').val(response.data.link_texto);
-						$('#modal_data_banner').val(response.data.data_banner);
+						$('#modal_banner_data').val(response.data.banner_data);
 
 						if (typeof tinymce !== 'undefined' && tinymce.get('modal_conteudo')) {
 							tinymce.get('modal_conteudo').setContent(response.data.conteudo || '');
@@ -809,12 +822,14 @@
 				teatro_endereco: $('#modal_teatro_endereco').val(),
 				diretor: $('#modal_diretor').val(),
 				elenco: $('#modal_elenco').val(),
+				banner_destaque1: $('#modal_banner_destaque1').val(),
+				banner_destaque2: $('#modal_banner_destaque2').val(),
 				data_inicio: $('#modal_data_inicio').val(),
 				data_fim: $('#modal_data_fim').val(),
 				valores: $('#modal_valores').val(),
 				link_vendas: $('#modal_link_vendas').val(),
 				link_texto: $('#modal_link_texto').val(),
-				data_banner: $('#modal_data_banner').val(),
+				banner_data: $('#modal_banner_data').val(),
 				tipo_sessao: tipoSessao,
 				sessoes_data: sessoesData,
 				conteudo: conteudo
@@ -904,6 +919,59 @@
 	}
 
 	/* =========================================================
+	 * SINCRONIZAÇÃO DE IMAGEM DESTACADA (GUTENBERG)
+	 * ========================================================= */
+	function initGutenbergFeaturedImageSync() {
+		// Verifica se a API do Gutenberg está disponível
+		if (typeof wp !== 'undefined' && wp.data && wp.data.select && wp.data.subscribe) {
+			var wasSaving = false;
+
+			// Inscreve um "espião" para monitorar as ações do editor
+			wp.data.subscribe(function() {
+				var isSavingPost = wp.data.select('core/editor').isSavingPost();
+				var isAutosaving = wp.data.select('core/editor').isAutosavingPost();
+
+				// Ignora autosaves
+				if (isAutosaving) {
+					return;
+				}
+
+				// Se o estado mudou de "salvando" para "terminou de salvar"
+				if (wasSaving && !isSavingPost) {
+					
+					// Delay estratégico (1.5s) para o PHP ter tempo de salvar os metaboxes no banco de dados
+					setTimeout(function() {
+						var currentPost = wp.data.select('core/editor').getCurrentPost();
+						
+						// Usa o HATEOAS nativo da API do Gutenberg para garantir que estamos buscando a URL REST do CPT correto
+						if (currentPost && currentPost._links && currentPost._links.self && currentPost._links.self[0]) {
+							var restUrl = currentPost._links.self[0].href;
+							
+							wp.apiFetch({ url: restUrl }).then(function(post) {
+								
+								// Obtém o ID da imagem que o Gutenberg está mostrando agora na sidebar
+								var currentFeaturedMedia = wp.data.select('core/editor').getEditedPostAttribute('featured_media');
+								
+								// Se a imagem no banco for diferente da imagem da tela...
+								if (post.featured_media !== undefined && post.featured_media !== currentFeaturedMedia) {
+									// ...nós despachamos a atualização no React e o Gutenberg troca a imagem sozinho
+									wp.data.dispatch('core/editor').editPost({ featured_media: post.featured_media });
+								}
+								
+							}).catch(function(error) {
+								console.log('CANNAL: Silenciando erro ao checar imagem destacada.', error);
+							});
+						}
+					}, 1500); 
+				}
+
+				// Atualiza a flag
+				wasSaving = isSavingPost;
+			});
+		}
+	}
+
+	/* =========================================================
 	 * INICIALIZAÇÃO
 	 * ========================================================= */
 
@@ -914,6 +982,7 @@
 		initSessoesDirectEdit();
 		initCopiarConteudo();
 		initModalTemporadas();
+		initGutenbergFeaturedImageSync();
 	});
 
 })(jQuery);

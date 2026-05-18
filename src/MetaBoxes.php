@@ -71,7 +71,7 @@ class CANNALEspetaculos_MetaBoxes
                         'choices' => array(
                             array(
                                 'label' => esc_html__('Livre', 'cannal-espetaculos'),
-                                'value' => 'livre'
+                                'value' => 'L'
                             ),
                             array(
                                 'label' => esc_html__('12 anos', 'cannal-espetaculos'),
@@ -93,8 +93,57 @@ class CANNALEspetaculos_MetaBoxes
                     ),
                     array(
                         'type' => 'tab',
+                        'id' => 'cannal-espetaculos-premios',
+                        'label' => esc_html__('Prêmios', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'list-item',
+                        'id' => '_espetaculo_premios',
+                        'label' => esc_html__('Prêmios', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Prêmios recebidos pelo espetáculo', 'cannal-espetaculos'),
+                        'settings' => array(
+                            array(
+                                'type' => 'select',
+                                'id' => 'premio_tipo',
+                                'label' => esc_html__('Indicação ou Vencedor', 'cannal-espetaculos'),
+                                'choices'   => array(
+                                    array(
+                                        'label' => esc_html__('Indicado', 'cannal-espetaculos'),
+                                        'value' => 'Indicado'
+                                    ),
+                                    array(
+                                        'label' => esc_html__('Vencedor', 'cannal-espetaculos'),
+                                        'value' => 'Vencedor'
+                                    )
+                                )
+                            ),
+                            array(
+                                'type' => 'text',
+                                'id' => 'premio_categoria',
+                                'label' => esc_html__('Categoria do Prêmio', 'cannal-espetaculos')
+                            ),
+                            array(
+                                'type' => 'text',
+                                'id' => 'premio_nome',
+                                'label' => esc_html__('Nome do Prêmio', 'cannal-espetaculos')
+                            ),
+                            array(
+                                'type' => 'text',
+                                'id' => 'premio_ano',
+                                'label' => esc_html__('Ano do Prêmio', 'cannal-espetaculos')
+                            )
+                        )
+                    ),
+                    array(
+                        'type' => 'tab',
                         'id' => 'cannal-espetaculos-midia',
                         'label' => esc_html__('Mídia', 'cannal-espetaculos')
+                    ),
+                    array(
+                        'type' => 'upload',
+                        'id' => '_espetaculo_imagem_principal',
+                        'label' => esc_html__('Imagem Principal', 'cannal-espetaculos'),
+                        'desc' => esc_html__('Imagem principal do espetáculo', 'cannal-espetaculos')
                     ),
                     array(
                         'type' => 'upload',
@@ -105,13 +154,13 @@ class CANNALEspetaculos_MetaBoxes
                     array(
                         'type' => 'upload',
                         'id' => '_espetaculo_logotipo_preto',
-                        'label' => esc_html__('Logotipo do Espetáculo', 'cannal-espetaculos'),
+                        'label' => esc_html__('Logotipo Preto', 'cannal-espetaculos'),
                         'desc' => esc_html__('Logotipo para fundos claros', 'cannal-espetaculos')
                     ),
                     array(
                         'type' => 'upload',
                         'id' => '_espetaculo_logotipo_branco',
-                        'label' => esc_html__('Logotipo do Espetáculo', 'cannal-espetaculos'),
+                        'label' => esc_html__('Logotipo Branco', 'cannal-espetaculos'),
                         'desc' => esc_html__('Logotipo para fundos escuros', 'cannal-espetaculos')
                     ),
                     array(
@@ -157,12 +206,12 @@ class CANNALEspetaculos_MetaBoxes
     public function render_espetaculo_temporadas_meta_box($args = array())
     {
         extract($args); // phpcs:ignore
-        
+
         $post = get_post($post_id);
-        
+
         $temporadas_raw = get_posts(array(
             'post_type' => 'temporada',
-            'posts_per_page' => - 1,
+            'posts_per_page' => -1,
             'meta_key' => '_temporada_espetaculo_id',
             'meta_value' => $post->ID,
             'orderby' => 'meta_value',
@@ -177,23 +226,11 @@ class CANNALEspetaculos_MetaBoxes
             $tipo_sessao = get_post_meta($t->ID, '_temporada_tipo_sessao', true);
             $sessoes_data = get_post_meta($t->ID, '_temporada_sessoes_data', true);
 
-            // Calcular status
-            $status_label = CANNALEspetaculos_DiasHorarios::get_status_temporada($t);
 
-            // Formatar período
-            $periodo = '';
-            if ($data_inicio) {
-                $periodo = date_i18n('d/m/Y', strtotime($data_inicio));
-                if ($data_fim) {
-                    $periodo .= ' – ' . date_i18n('d/m/Y', strtotime($data_fim));
-                }
-            }
+            $status_label = strip_tags(CANNALEspetaculos_DiasHorarios::get_status_temporada($t));
+            $periodo = strip_tags(CANNALEspetaculos_DiasHorarios::get_periodo_temporada($data_inicio, $data_fim));
+            $dias_horarios = strip_tags(CANNALEspetaculos_DiasHorarios::gerar($tipo_sessao, $sessoes_data));
 
-            // Gerar dias e horários
-            $dias_horarios = '';
-            if (class_exists('CANNALEspetaculos_DiasHorarios') && ! empty($sessoes_data)) {
-                $dias_horarios = CANNALEspetaculos_DiasHorarios::gerar($tipo_sessao, $sessoes_data);
-            }
 
             // Adicionar propriedades ao objeto para o template
             $t->teatro = get_post_meta($t->ID, '_temporada_teatro_nome', true);
@@ -229,15 +266,13 @@ class CANNALEspetaculos_MetaBoxes
             return;
         }
 
-        $dias_semana = array(
-            'segunda' => 'Segunda-feira',
-            'terca' => 'Terça-feira',
-            'quarta' => 'Quarta-feira',
-            'quinta' => 'Quinta-feira',
-            'sexta' => 'Sexta-feira',
-            'sabado' => 'Sábado',
-            'domingo' => 'Domingo'
-        );
+        global $wp_locale;
+
+        $dias_semana = array();
+        for ($i = 0; $i <= 6; $i++) {
+            // get_weekday($i) retorna o dia (0 = Domingo, 1 = Segunda, etc.) traduzido
+            $dias_semana[$i] = $wp_locale->get_weekday($i);
+        }
 
         $template = dirname(dirname(__FILE__)) . '/templates/admin/modal-temporada.php';
         if (file_exists($template)) {
@@ -265,10 +300,24 @@ class CANNALEspetaculos_MetaBoxes
 
         $post_data = [];
 
-        if (isset($_POST['espetaculo_sinopse'])) {
+        if (isset($_POST['_espetaculo_imagem_principal'])) {
+            // 1. Descobre o ID do anexo pela URL
+            $attachment_id = attachment_url_to_postid($_POST['_espetaculo_imagem_principal']);
+
+            // 2. Se o WP encontrou a imagem no banco, define como destacada
+            if ($attachment_id) {
+                set_post_thumbnail($post_id, $attachment_id);
+            }
+            wp_send_json_success(array(
+                'mensagem'      => 'Salvo com sucesso!',
+                'attachment_id' => $attachment_id // Enviando o ID de volta pro JS
+            ));
+        }
+
+        if (isset($_POST['_espetaculo_sinopse'])) {
             $post_data['post_excerpt'] = sanitize_textarea_field($_POST['espetaculo_sinopse']);
         }
-        
+
         if (count($post_data)) {
             $post_data['ID'] = $post_id;
             wp_update_post($post_data);

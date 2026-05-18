@@ -300,6 +300,7 @@
 .cannal-editor-header{
 	position: relative;
     z-index: 999;
+	width: fit-content;
 }
 
 .cannal-editor-header label {

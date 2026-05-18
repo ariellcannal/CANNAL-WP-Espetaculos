@@ -132,7 +132,6 @@ class CANNALEspetaculos_Plugin {
         $rewrites = new CANNALEspetaculos_Rewrites();
         $this->loader->add_action( 'init', $rewrites, 'add_rewrite_rules' );
         $this->loader->add_filter( 'query_vars', $rewrites, 'add_query_vars' );
-        $this->loader->add_action( 'template_redirect', $rewrites, 'handle_redirects' );
 
         // Monitorar mudanças em categorias
         $this->loader->add_action( 'created_espetaculo_categoria', $rewrites, 'on_category_change' );

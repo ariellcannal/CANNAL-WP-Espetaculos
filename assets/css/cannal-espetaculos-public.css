@@ -182,40 +182,39 @@
 
 
 /* CLASSIFICAÇÃO INDICATIVA */
-.classificacao-selo {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    border-radius: 5px;
+.classificacao {
+	border-radius: 5px;
     font-weight: bold;
-    text-align: center;
-    margin-top: 5px;
     color: white;
     background: #2c3e50;
-	font-size: 1.2rem;
+	display: inline-block;
+	text-align: center;
+		border: .3px solid white;
+	width: 100%;
+	height: 100%;
+	padding-top: 25%;
 }
 
-.classificacao-livre {
+.classificacao.classificacao-L {
     background: #00A54F;
 }
 
-.classificacao-10 {
+.classificacao.classificacao-10 {
     background: #0072BC;
 }
 
-.classificacao-12 {
+.classificacao.classificacao-12 {
     background: #FFCC00;
 }
 
-.classificacao-14 {
+.classificacao.classificacao-14 {
     background: #F47321;
 }
 
-.classificacao-16 {
+.classificacao.classificacao-16 {
     background: #ED1C24;
 }
 
-.classificacao-18 {
+.classificacao.classificacao-18 {
     background: #000000;
 }
