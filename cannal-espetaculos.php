@@ -56,10 +56,7 @@ require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Plugin.php';
 /**
  * Widgets
  */
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetLista.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetProximas.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetUltimas.php';
-require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetDados.php';
+require CANNAL_ESPETACULOS_PLUGIN_DIR . 'src/Widgets/WidgetSidebar.php';
 
 
 /**

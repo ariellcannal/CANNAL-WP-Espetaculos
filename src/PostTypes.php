@@ -93,6 +93,45 @@ class CANNALEspetaculos_PostTypes {
         );
 
         register_post_type( 'temporada', $args_temporada );
+
+        // Registrar Teatros
+        $labels_teatro = array(
+            'name'                  => 'Teatros',
+            'singular_name'         => 'Teatro',
+            'menu_name'             => 'Teatros',
+            'name_admin_bar'        => 'Teatro',
+            'add_new'               => 'Adicionar Novo',
+            'add_new_item'          => 'Adicionar Novo Teatro',
+            'new_item'              => 'Novo Teatro',
+            'edit_item'             => 'Editar Teatro',
+            'view_item'             => 'Ver Teatro',
+            'all_items'             => 'Teatros',
+            'search_items'          => 'Buscar Teatros',
+            'parent_item_colon'     => 'Teatro Pai:',
+            'not_found'             => 'Nenhum teatro encontrado.',
+            'not_found_in_trash'    => 'Nenhum teatro encontrado na lixeira.'
+        );
+
+        $args_teatro = array(
+            'labels'                => $labels_teatro,
+            'description'           => 'Teatros para espetáculos',
+            'public'                => false,
+            'publicly_queryable'    => false,
+            'show_ui'               => true,
+            'show_in_menu'          => 'CANNAL Espetáculos',
+            'show_in_menu'          => true,
+            'query_var'             => false,
+            'rewrite'               => false,
+            'capability_type'       => 'post',
+            'has_archive'           => false,
+            'hierarchical'          => false,
+            'menu_position'         => 6,
+            'menu_icon'             => 'dashicons-building',
+            'supports'              => array( 'title' ),
+            'show_in_rest'          => true
+        );
+
+        register_post_type( 'teatro', $args_teatro );
     }
 
     /**

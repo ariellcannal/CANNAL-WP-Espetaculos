@@ -598,6 +598,8 @@
 			$('#temporada-modal-title').text('Nova Temporada');
 			$form[0].reset();
 			$('#modal_temporada_id').val('');
+			$('#modal_teatro_id').val('');
+			$('#modal_teatro_search').val(null).trigger('change');
 			$('#modal_sessoes_avulsas_list').empty();
 			$('#modal_tipo_sessao_temporada').prop('checked', true);
 			toggleModalSessoes();
@@ -680,6 +682,7 @@
 					if (response.success) {
 						$('#temporada-modal-title').html(response.data.espetaculo_nome + ' <small>Editar Temporada</small>');
 						$('#modal_temporada_id').val(temporadaId);
+						$('#modal_teatro_id').val(response.data.teatro_id || '');
 						$('#modal_teatro_nome').val(response.data.teatro_nome);
 						$('#modal_teatro_endereco').val(response.data.teatro_endereco);
 						$('#modal_diretor').val(response.data.diretor);
@@ -818,6 +821,7 @@
 				nonce: cannalAjax.nonce,
 				temporada_id: $('#modal_temporada_id').val(),
 				espetaculo_id: $('#modal_espetaculo_id').val(),
+				teatro_id: $('#modal_teatro_id').val(),
 				teatro_nome: $('#modal_teatro_nome').val(),
 				teatro_endereco: $('#modal_teatro_endereco').val(),
 				diretor: $('#modal_diretor').val(),
@@ -919,6 +923,82 @@
 	}
 
 	/* =========================================================
+	 * TEATRO SELECT2
+	 * ========================================================= */
+	function initTeatroSelect2() {
+		if (!$('#modal_teatro_search').length) return;
+
+		// Inicializar Select2
+		$('#modal_teatro_search').select2({
+			placeholder: '--- Buscar ou Criar Teatro ---',
+			allowClear: true,
+			ajax: {
+				url: cannalAjax.ajaxurl,
+				type: 'POST',
+				dataType: 'json',
+				delay: 300,
+				data: function(params) {
+					return {
+						action: 'cannal_search_teatros',
+						search: params.term || '',
+						nonce: cannalAjax.nonce,
+						limit: 10
+					};
+				},
+				processResults: function(response) {
+					if (response.success && response.data.results) {
+						return {
+							results: response.data.results
+						};
+					}
+					return { results: [] };
+				}
+			},
+			templateResult: function(data) {
+				if (!data.id) return data.text;
+				if (data.is_new) {
+					return '<strong>' + data.text + '</strong>';
+				}
+				var html = data.text;
+				if (data.endereco) {
+					html += '<br /><small style="color: #666;">' + data.endereco + '</small>';
+				}
+				return html;
+			},
+			templateSelection: function(data) {
+				if (data.is_new) {
+					return 'Criar novo teatro';
+				}
+				return data.text;
+			}
+		});
+
+		// Quando um teatro é selecionado
+		$(document).on('select2:select', '#modal_teatro_search', function(e) {
+			var selected = e.params.data;
+
+			if (selected.is_new) {
+				// Usuário clicou em "Criar novo teatro"
+				$('#modal_teatro_search').val(null).trigger('change');
+				$('#modal_teatro_nome').val('').focus();
+				$('#teatro_endereco').val('');
+				$('#modal_teatro_id').val('');
+			} else {
+				// Usuário selecionou um teatro existente
+				$('#modal_teatro_id').val(selected.id);
+				$('#modal_teatro_nome').val(selected.text);
+				$('#teatro_endereco').val(selected.endereco || '');
+				$('#modal_teatro_search').val(null).trigger('change');
+			}
+		});
+
+		// Limpar quando o select é limpo
+		$(document).on('select2:unselect', '#modal_teatro_search', function(e) {
+			$('#modal_teatro_id').val('');
+		});
+	}
+
+	/* =========================================================
 	 * SINCRONIZAÇÃO DE IMAGEM DESTACADA (GUTENBERG)
 	 * ========================================================= */
 	function initGutenbergFeaturedImageSync() {
@@ -981,6 +1061,7 @@
 		initIcone();
 		initSessoesDirectEdit();
 		initCopiarConteudo();
+		initTeatroSelect2();
 		initModalTemporadas();
 		initGutenbergFeaturedImageSync();
 	});

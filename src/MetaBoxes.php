@@ -197,6 +197,26 @@ class CANNALEspetaculos_MetaBoxes
                 )
             );
             ot_register_meta_box($espetaculo_detalhes);
+
+            // Meta box para Teatros
+            $teatro_detalhes = array(
+                'id' => 'teatro_detalhes',
+                'title' => esc_html__('Detalhes do Teatro', 'cannal-espetaculos'),
+                'pages' => array(
+                    'teatro'
+                ),
+                'context' => 'normal',
+                'priority' => 'high',
+                'fields' => array(
+                    array(
+                        'type' => 'textarea-simple',
+                        'id' => '_teatro_endereco',
+                        'label' => esc_html__('Endereço', 'cannal-espetaculos'),
+                        'rows' => 3
+                    )
+                )
+            );
+            ot_register_meta_box($teatro_detalhes);
         }
     }
 

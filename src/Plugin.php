@@ -109,6 +109,8 @@ class CANNALEspetaculos_Plugin {
         $this->loader->add_action( 'wp_ajax_cannal_get_temporada', $plugin_admin, 'ajax_get_temporada' );
         $this->loader->add_action( 'wp_ajax_cannal_delete_temporada', $plugin_admin, 'ajax_delete_temporada' );
         $this->loader->add_action( 'wp_ajax_cannal_save_galeria', $plugin_admin, 'ajax_save_galeria' );
+        $this->loader->add_action( 'wp_ajax_cannal_search_teatros', $plugin_admin, 'ajax_search_teatros' );
+        $this->loader->add_action( 'wp_ajax_cannal_create_teatro', $plugin_admin, 'ajax_create_teatro' );
 
         // Registrar post types e taxonomias
         $post_types = new CANNALEspetaculos_PostTypes();
@@ -162,9 +164,7 @@ class CANNALEspetaculos_Plugin {
      * Registra os widgets WordPress nativos do plugin.
      */
     public function register_wp_widgets() {
-        register_widget( 'CANNALEspetaculos_WidgetProximas' );
-        register_widget( 'CANNALEspetaculos_WidgetUltimas' );
-        register_widget( 'CANNALEspetaculos_WidgetDados' );
+        register_widget( 'CANNALEspetaculos_WidgetSidebar' );
     }
 
     /**

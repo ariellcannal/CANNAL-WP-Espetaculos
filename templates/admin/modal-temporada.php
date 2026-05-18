@@ -17,9 +17,17 @@ if ( ! defined( 'ABSPATH' ) ) exit;
         <form id="temporada-form">
             <input type="hidden" id="modal_temporada_id" name="temporada_id" value="" />
             <input type="hidden" id="modal_espetaculo_id" name="espetaculo_id" value="<?php echo esc_attr( $espetaculo_id ); ?>" />
+            <input type="hidden" id="modal_teatro_id" name="teatro_id" value="" />
 
             <div class="cannal-espetaculos-temporada-form-grid">
                 <div class="temporada-coluna">
+                    <div class="form-group">
+                        <label for="modal_teatro_search"><?php esc_html_e( 'Selecionar Teatro', 'cannal-espetaculos' ); ?></label>
+                        <select id="modal_teatro_search" name="teatro_search" class="regular-text" style="width: 100%;">
+                            <option value="">--- Buscar ou Criar Teatro ---</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="modal_teatro_nome"><?php esc_html_e( 'Nome do Teatro', 'cannal-espetaculos' ); ?></label>
                         <input type="text" id="modal_teatro_nome" name="teatro_nome" class="regular-text" required />

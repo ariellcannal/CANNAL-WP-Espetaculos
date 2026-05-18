@@ -37,9 +37,13 @@ class CANNALEspetaculos_Admin
 
         if (in_array($screen->post_type, array(
             'espetaculo',
-            'temporada'
+            'temporada',
+            'teatro'
         ))) {
             wp_enqueue_style($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/css/cannal-espetaculos-admin.css', array(), $this->version, 'all');
+            
+            // Enfileirar Select2
+            wp_enqueue_style('select2-css', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css', array(), '4.0.13');
         }
     }
 
@@ -52,16 +56,21 @@ class CANNALEspetaculos_Admin
 
         if (in_array($screen->post_type, array(
             'espetaculo',
-            'temporada'
+            'temporada',
+            'teatro'
         ))) {
             // Enfileirar media library
             wp_enqueue_media();
+
+            // Enfileirar Select2
+            wp_enqueue_script('select2-js', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js', array('jquery'), '4.0.13', true);
 
             // Enfileirar script principal
             wp_enqueue_script($this->plugin_name, CANNAL_ESPETACULOS_PLUGIN_URL . 'assets/js/cannal-espetaculos-admin.js', array(
                 'jquery',
                 'jquery-ui-sortable',
-                'wp-util'
+                'wp-util',
+                'select2-js'
             ), $this->version, true // Carregar no footer
             );
 
@@ -158,6 +167,7 @@ class CANNALEspetaculos_Admin
         update_post_meta($temporada_id, '_temporada_espetaculo_id', $espetaculo_id);
         update_post_meta($temporada_id, '_temporada_teatro_nome', isset($_POST['teatro_nome']) ? sanitize_text_field($_POST['teatro_nome']) : '');
         update_post_meta($temporada_id, '_temporada_teatro_endereco', isset($_POST['teatro_endereco']) ? sanitize_text_field($_POST['teatro_endereco']) : '');
+        update_post_meta($temporada_id, '_temporada_teatro_id', isset($_POST['teatro_id']) ? intval($_POST['teatro_id']) : 0);
         update_post_meta($temporada_id, '_temporada_elenco', isset($_POST['elenco']) ? sanitize_textarea_field($_POST['elenco']) : '');
         // _temporada_data_inicio e _temporada_data_fim são salvos abaixo com lógica de avulsas
         update_post_meta($temporada_id, '_temporada_valores', isset($_POST['valores']) ? sanitize_textarea_field($_POST['valores']) : '');
@@ -246,6 +256,7 @@ class CANNALEspetaculos_Admin
             'espetaculo_nome' => $espetaculo->post_title,
             'teatro_nome' => get_post_meta($temporada_id, '_temporada_teatro_nome', true),
             'teatro_endereco' => get_post_meta($temporada_id, '_temporada_teatro_endereco', true),
+            'teatro_id' => get_post_meta($temporada_id, '_temporada_teatro_id', true),
             'elenco' => get_post_meta($temporada_id, '_temporada_elenco', true),
             'banner_destaque1' => get_post_meta($temporada_id, '_temporada_banner_destaque1', true),
             'banner_destaque2' => get_post_meta($temporada_id, '_temporada_banner_destaque2', true),
@@ -326,4 +337,114 @@ class CANNALEspetaculos_Admin
             'message' => 'Temporada excluída com sucesso!'
         ));
     }
+
+    /**
+     * AJAX: Buscar teatros por termo de busca.
+     */
+    public function ajax_search_teatros()
+    {
+        check_ajax_referer('cannal_temporada_ajax', 'nonce');
+
+        $search_term = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 10;
+
+        $args = array(
+            'post_type' => 'teatro',
+            'posts_per_page' => $limit,
+            'post_status' => 'publish',
+            's' => $search_term,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        );
+
+        $teatros = get_posts($args);
+        $results = array();
+
+        foreach ($teatros as $teatro) {
+            $endereco = get_post_meta($teatro->ID, '_teatro_endereco', true);
+            $results[] = array(
+                'id' => $teatro->ID,
+                'text' => $teatro->post_title,
+                'endereco' => $endereco
+            );
+        }
+
+        // Adicionar sempre a opção "Criar novo" ao final
+        $results[] = array(
+            'id' => 'new-teatro',
+            'text' => '+ Cadastrar um novo teatro',
+            'endereco' => '',
+            'is_new' => true
+        );
+
+        wp_send_json_success(array(
+            'results' => $results
+        ));
+    }
+
+    /**
+     * AJAX: Criar novo teatro.
+     */
+    public function ajax_create_teatro()
+    {
+        check_ajax_referer('cannal_temporada_ajax', 'nonce');
+
+        if (! current_user_can('edit_posts')) {
+            wp_send_json_error(array(
+                'message' => 'Permissão negada.'
+            ));
+        }
+
+        $teatro_nome = isset($_POST['teatro_nome']) ? sanitize_text_field($_POST['teatro_nome']) : '';
+        $teatro_endereco = isset($_POST['teatro_endereco']) ? sanitize_textarea_field($_POST['teatro_endereco']) : '';
+
+        if (empty($teatro_nome)) {
+            wp_send_json_error(array(
+                'message' => 'Nome do teatro é obrigatório.'
+            ));
+        }
+
+        // Verificar se teatro com este nome já existe
+        $existing = get_posts(array(
+            'post_type' => 'teatro',
+            'post_status' => 'publish',
+            'title' => $teatro_nome,
+            'posts_per_page' => 1
+        ));
+
+        if (! empty($existing)) {
+            wp_send_json_error(array(
+                'message' => 'Um teatro com este nome já existe.',
+                'teatro_id' => $existing[0]->ID,
+                'teatro_nome' => $existing[0]->post_title,
+                'teatro_endereco' => get_post_meta($existing[0]->ID, '_teatro_endereco', true)
+            ));
+        }
+
+        // Criar novo teatro
+        $post_data = array(
+            'post_type' => 'teatro',
+            'post_title' => $teatro_nome,
+            'post_status' => 'publish'
+        );
+
+        $teatro_id = wp_insert_post($post_data);
+
+        if (is_wp_error($teatro_id)) {
+            wp_send_json_error(array(
+                'message' => 'Erro ao criar teatro.'
+            ));
+        }
+
+        // Salvar endereço
+        update_post_meta($teatro_id, '_teatro_endereco', $teatro_endereco);
+
+        wp_send_json_success(array(
+            'message' => 'Teatro criado com sucesso!',
+            'teatro_id' => $teatro_id,
+            'teatro_nome' => $teatro_nome,
+            'teatro_endereco' => $teatro_endereco
+        ));
+    }
 }
+
